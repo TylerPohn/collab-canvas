@@ -247,17 +247,32 @@ export function useShape(canvasId: string, objectId: string) {
 
 // Hook for shape operations with debouncing (for drag/resize)
 export function useShapeOperations(canvasId: string, userId: string) {
+  const queryClient = useQueryClient()
+  const objectSync = getObjectSyncService(queryClient)
   const { updateShape, batchUpdateShapes } = useShapeMutations(canvasId, userId)
 
-  // Debounced update for smooth dragging
+  // PR #9: Use the new debounced update from ObjectSyncService
   const debouncedUpdate = useCallback(
     (
       objectId: string,
       updates: Partial<Omit<Shape, 'id' | 'createdAt' | 'createdBy'>>
     ) => {
-      debounce(() => updateShape(objectId, updates), 100)()
+      objectSync.debouncedUpdateObject(canvasId, objectId, updates, userId)
     },
-    [updateShape]
+    [objectSync, canvasId, userId]
+  )
+
+  // PR #9: Use smart batch update for large operations
+  const smartBatchUpdate = useCallback(
+    async (
+      updates: Array<{
+        objectId: string
+        updates: Partial<Omit<Shape, 'id' | 'createdAt' | 'createdBy'>>
+      }>
+    ) => {
+      await objectSync.smartBatchUpdateObjects(canvasId, updates, userId)
+    },
+    [objectSync, canvasId, userId]
   )
 
   // Batch update for multiple shapes
@@ -276,7 +291,8 @@ export function useShapeOperations(canvasId: string, userId: string) {
   return {
     updateShape,
     debouncedUpdate,
-    batchUpdate
+    batchUpdate,
+    smartBatchUpdate
   }
 }
 

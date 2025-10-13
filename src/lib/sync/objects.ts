@@ -12,6 +12,10 @@ import {
 } from '../firebase/firestore'
 import type { Shape } from '../types'
 
+// Performance optimization constants
+const DRAG_DEBOUNCE_MS = 100
+const MAX_BATCH_SIZE = 10
+
 // Query keys for React Query
 export const objectKeys = {
   all: ['objects'] as const,
@@ -26,6 +30,16 @@ export const objectKeys = {
 export class ObjectSyncService {
   private queryClient: QueryClient
   private subscriptions: Map<string, () => void> = new Map()
+  private debouncedUpdates: Map<string, ReturnType<typeof setTimeout>> =
+    new Map()
+  private pendingUpdates: Map<
+    string,
+    {
+      objectId: string
+      updates: Partial<Omit<Shape, 'id' | 'createdAt' | 'createdBy'>>
+      userId: string
+    }
+  > = new Map()
 
   constructor(queryClient: QueryClient) {
     this.queryClient = queryClient
@@ -60,6 +74,11 @@ export class ObjectSyncService {
   cleanup() {
     this.subscriptions.forEach(unsubscribe => unsubscribe())
     this.subscriptions.clear()
+
+    // Clean up debounced updates
+    this.debouncedUpdates.forEach(timeout => clearTimeout(timeout))
+    this.debouncedUpdates.clear()
+    this.pendingUpdates.clear()
   }
 
   // PR #7: Optimistic updates with conflict resolution
@@ -139,6 +158,59 @@ export class ObjectSyncService {
       this.queryClient.invalidateQueries({ queryKey })
       throw error
     }
+  }
+
+  // PR #9: Debounced update for smooth dragging/resizing
+  debouncedUpdateObject(
+    canvasId: string,
+    objectId: string,
+    updates: Partial<Omit<Shape, 'id' | 'createdAt' | 'createdBy'>>,
+    userId: string
+  ): void {
+    const queryKey = objectKeys.list(canvasId)
+    const now = Date.now()
+    const updateKey = `${canvasId}-${objectId}`
+
+    // Always apply optimistic update immediately for smooth UI
+    this.queryClient.setQueryData(queryKey, (old: Shape[] = []) =>
+      old.map(obj =>
+        obj.id === objectId
+          ? {
+              ...obj,
+              ...updates,
+              updatedAt: now,
+              updatedBy: userId
+            }
+          : obj
+      )
+    )
+
+    // Store pending update
+    this.pendingUpdates.set(updateKey, { objectId, updates, userId })
+
+    // Clear existing debounce timeout
+    const existingTimeout = this.debouncedUpdates.get(updateKey)
+    if (existingTimeout) {
+      clearTimeout(existingTimeout)
+    }
+
+    // Set new debounce timeout
+    const timeout = setTimeout(async () => {
+      const pendingUpdate = this.pendingUpdates.get(updateKey)
+      if (pendingUpdate) {
+        try {
+          await updateObject(canvasId, objectId, pendingUpdate.updates, userId)
+          this.pendingUpdates.delete(updateKey)
+        } catch (error) {
+          console.error('Debounced update failed:', error)
+          // Rollback optimistic update
+          this.queryClient.invalidateQueries({ queryKey })
+        }
+      }
+      this.debouncedUpdates.delete(updateKey)
+    }, DRAG_DEBOUNCE_MS)
+
+    this.debouncedUpdates.set(updateKey, timeout)
   }
 
   async deleteObject(canvasId: string, objectId: string): Promise<void> {
@@ -246,6 +318,38 @@ export class ObjectSyncService {
       // Rollback optimistic update
       this.queryClient.setQueryData(queryKey, originalObjects)
       throw error
+    }
+  }
+
+  // PR #9: Smart batch update that chunks large updates
+  async smartBatchUpdateObjects(
+    canvasId: string,
+    updates: Array<{
+      objectId: string
+      updates: Partial<Omit<Shape, 'id' | 'createdAt' | 'createdBy'>>
+    }>,
+    userId: string
+  ): Promise<void> {
+    // If updates are small, use regular batch update
+    if (updates.length <= MAX_BATCH_SIZE) {
+      return this.batchUpdateObjects(canvasId, updates, userId)
+    }
+
+    // For large updates, chunk them into smaller batches
+    const chunks: Array<
+      Array<{
+        objectId: string
+        updates: Partial<Omit<Shape, 'id' | 'createdAt' | 'createdBy'>>
+      }>
+    > = []
+
+    for (let i = 0; i < updates.length; i += MAX_BATCH_SIZE) {
+      chunks.push(updates.slice(i, i + MAX_BATCH_SIZE))
+    }
+
+    // Process chunks sequentially to avoid overwhelming Firestore
+    for (const chunk of chunks) {
+      await this.batchUpdateObjects(canvasId, chunk, userId)
     }
   }
 

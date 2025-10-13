@@ -218,8 +218,92 @@ Health status is displayed in the app header and can be accessed programmaticall
 
 - **Canvas rendering**: Optimized with Konva.js for smooth 60fps
 - **Real-time updates**: Debounced and batched for efficiency
-- **Cursor tracking**: Throttled to 50ms intervals
+- **Cursor tracking**: Throttled to 50ms intervals with interpolation
 - **Shape updates**: Optimistic updates with conflict resolution
+- **React optimization**: Memoized components to prevent unnecessary re-renders
+
+### Performance Testing
+
+#### Stress Test Script
+
+Run the following manual stress test to verify performance under load:
+
+```bash
+# 1. Start the development server
+npm run dev
+
+# 2. Open multiple browser tabs/windows to the same canvas URL
+# 3. In each tab, perform the following actions rapidly:
+
+# Tab 1: Create many shapes
+# - Switch to rectangle tool
+# - Create 50+ rectangles by clicking and dragging
+# - Switch to circle tool
+# - Create 50+ circles
+# - Switch to text tool
+# - Create 50+ text elements
+
+# Tab 2: Move and resize shapes
+# - Select multiple shapes (Ctrl+click)
+# - Drag them around rapidly
+# - Use transform handles to resize
+# - Rotate shapes
+
+# Tab 3: Pan and zoom
+# - Use mouse wheel to zoom in/out rapidly
+# - Drag canvas to pan around
+# - Switch between different zoom levels
+
+# Tab 4: Multi-user interaction
+# - Move cursor around rapidly
+# - Create shapes while others are moving
+# - Test concurrent editing
+```
+
+#### Performance Targets
+
+- **Canvas FPS**: Maintain 60 FPS during all operations
+- **Sync Latency**:
+  - Object changes < 100ms
+  - Cursor positions < 50ms
+- **Load Capacity**: Handle 500+ shapes and 5+ concurrent users
+- **Memory Usage**: Stable memory usage without leaks
+
+#### Profiling Tools
+
+Use these browser tools to monitor performance:
+
+1. **Chrome DevTools Performance Tab**:
+   - Record performance during stress test
+   - Look for frame drops below 60fps
+   - Check for excessive re-renders
+
+2. **React DevTools Profiler**:
+   - Profile component renders
+   - Identify unnecessary re-renders
+   - Check memoization effectiveness
+
+3. **Network Tab**:
+   - Monitor Firestore request frequency
+   - Verify debouncing is working
+   - Check for excessive network calls
+
+#### Performance Monitoring
+
+The app includes built-in performance monitoring:
+
+- Canvas FPS counter (visible in top-left overlay)
+- Network request throttling indicators
+- Memory usage warnings in console
+- Real-time sync latency measurements
+
+#### Optimization Features
+
+- **Debounced Updates**: Drag/resize operations are debounced to 100ms
+- **Batch Operations**: Multiple shape updates are batched together
+- **Cursor Interpolation**: Smooth cursor movement with 60fps interpolation
+- **Memoized Components**: React components are memoized to prevent re-renders
+- **Smart Batching**: Large operations are automatically chunked
 
 ## Contributing
 
