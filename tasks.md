@@ -69,27 +69,27 @@ collab-canvas/
 
 **Checklist**
 
-- [ ] Create Vite React app (TS) and install deps: `vite react react-dom react-router-dom @tanstack/react-query firebase konva tailwindcss` and utilities.
+- [x] Create Vite React app (TS) and install deps: `vite react react-dom react-router-dom @tanstack/react-query firebase konva tailwindcss` and utilities.
 
   - Files: `package.json`, `tsconfig.json`, `vite.config.ts`
 
-- [ ] Configure Tailwind and global styles.
+- [x] Configure Tailwind and global styles.
 
   - Files: `tailwind.config.ts`, `postcss.config.js`, `src/index.css`
 
-- [ ] Add React Query provider and base app shell with React Router.
+- [x] Add React Query provider and base app shell with React Router.
 
   - Files: `src/lib/react-query/queryClient.ts`, `src/App.tsx`, `src/main.tsx`
 
-- [ ] Add health check utility for monitoring.
+- [x] Add health check utility for monitoring.
 
   - Files: `src/lib/health.ts`
 
-- [ ] Add ESLint/Prettier configs and scripts; set up GitHub Actions CI (typecheck, build).
+- [x] Add ESLint/Prettier configs and scripts; set up GitHub Actions CI (typecheck, build).
 
   - Files: `eslint.config.js` (or `.eslintrc`), `.github/workflows/ci.yml`
 
-- [ ] Add `README.md` and `.env.example`.
+- [x] Add `README.md` and `.env.example`.
 
 ---
 
