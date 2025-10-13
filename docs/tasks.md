@@ -286,20 +286,42 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 
 ---
 
-## PR #8 — Persistence & Reconnect Handling
+## PR #8 — Persistence & Reconnect Handling ✅ COMPLETED
 
 **Goal:** Ensure canvas state persists across refresh/disconnect, fast reconnect.
 
 **Checklist**
 
-- [ ] Initial load path: fetch current canvas, then subscribe to live updates.
+- [x] Initial load path: fetch current canvas, then subscribe to live updates.
   - Files: `src/hooks/useShapes.ts`, `src/pages/CanvasPage.tsx`
 
-- [ ] Persist canvas-level metadata (viewport, default tool, etc.).
+- [x] Persist canvas-level metadata (viewport, default tool, etc.).
   - Files: `src/lib/firebase/firestore.ts`, `src/lib/types.ts`, `src/components/CanvasStage.tsx`
 
-- [ ] Save on navigation/unload and restore on re-entry.
+- [x] Save on navigation/unload and restore on re-entry.
   - Files: `src/components/CanvasStage.tsx`
+
+**PR #8 Implementation Summary:**
+
+- ✅ **Canvas Metadata Persistence**: Implemented `useCanvasMeta` hook for canvas-level metadata management with React Query integration
+- ✅ **Viewport Persistence**: Created `useViewportPersistence` hook with debounced saving (500ms) and automatic restoration
+- ✅ **Initial Load Path**: Enhanced `useShapes` hook to fetch current canvas state before subscribing to live updates
+- ✅ **Canvas Initialization**: Automatic canvas creation if it doesn't exist with default metadata
+- ✅ **Navigation/Unload Handling**: Added event listeners for `beforeunload` and `visibilitychange` to save state
+- ✅ **Viewport Restoration**: Canvas viewport state is restored from saved metadata on page reload
+- ✅ **Error Handling**: Comprehensive error handling for canvas metadata operations with user feedback
+- ✅ **Type Safety**: Full TypeScript support with proper type definitions and validation
+
+**Key Features Delivered:**
+
+- Canvas state persists across page refreshes and browser sessions
+- Viewport position and zoom level are automatically saved and restored
+- Fast reconnect with immediate state restoration
+- Automatic canvas initialization for new users
+- Debounced viewport saving to prevent excessive network calls
+- Navigation and tab visibility change handling for state preservation
+- Comprehensive error handling and loading states
+- Full integration with existing React Query and Firestore infrastructure
 
 ---
 

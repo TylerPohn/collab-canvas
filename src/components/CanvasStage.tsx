@@ -9,7 +9,8 @@ import type {
   Shape,
   TextShape as TextShapeType,
   ToolType,
-  UserPresence
+  UserPresence,
+  ViewportState
 } from '../lib/types'
 import { useSelectionStore } from '../store/selection'
 import CursorLayer from './CursorLayer'
@@ -34,6 +35,8 @@ interface CanvasStageProps {
   onShapeDelete: (ids: string[]) => void
   onShapeDuplicate: (ids: string[]) => void
   onCursorMove: (cursor: { x: number; y: number }) => void
+  onViewportChange?: (viewport: ViewportState) => void
+  initialViewport?: ViewportState
 }
 
 const CanvasStage: React.FC<CanvasStageProps> = ({
@@ -47,7 +50,9 @@ const CanvasStage: React.FC<CanvasStageProps> = ({
   onShapeUpdate,
   onShapeDelete,
   onShapeDuplicate,
-  onCursorMove
+  onCursorMove,
+  onViewportChange,
+  initialViewport
 }) => {
   const stageRef = useRef<Konva.Stage>(null)
   const transformerRef = useRef<Konva.Transformer>(null)
@@ -63,8 +68,9 @@ const CanvasStage: React.FC<CanvasStageProps> = ({
     handleMouseDown: handlePanMouseDown,
     handleMouseMove: handlePanMouseMove,
     handleMouseUp: handlePanMouseUp,
-    isDragging
-  } = usePanZoom()
+    isDragging,
+    setViewport
+  } = usePanZoom(initialViewport)
 
   const { selectedIds, selectShape, clearSelection, isSelected } =
     useSelectionStore()
@@ -316,6 +322,20 @@ const CanvasStage: React.FC<CanvasStageProps> = ({
       stage.batchDraw()
     }
   }, [viewport])
+
+  // PR #8: Save viewport changes
+  useEffect(() => {
+    if (onViewportChange) {
+      onViewportChange(viewport)
+    }
+  }, [viewport, onViewportChange])
+
+  // PR #8: Restore viewport from initial state
+  useEffect(() => {
+    if (initialViewport && setViewport) {
+      setViewport(initialViewport)
+    }
+  }, [initialViewport, setViewport])
 
   return (
     <div className="w-full h-full bg-gray-50 relative overflow-hidden">

@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect } from 'react'
+import {
+  createCanvas,
+  getCanvas,
+  updateCanvasMeta
+} from '../lib/firebase/firestore'
 import { getObjectSyncService, objectKeys } from '../lib/sync/objects'
-import type { Shape } from '../lib/types'
+import type { CanvasMeta, Shape, ViewportState } from '../lib/types'
 
 // PR #7: React Query hooks for object sync with optimistic updates
 export function useShapes(canvasId: string) {
@@ -272,6 +277,123 @@ export function useShapeOperations(canvasId: string, userId: string) {
     updateShape,
     debouncedUpdate,
     batchUpdate
+  }
+}
+
+// PR #8: Canvas metadata hooks for persistence and reconnect handling
+export function useCanvasMeta(canvasId: string, userId: string) {
+  const queryClient = useQueryClient()
+
+  // Query for canvas metadata
+  const {
+    data: canvasMeta,
+    isLoading,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ['canvas-meta', canvasId],
+    queryFn: async () => {
+      const canvas = await getCanvas(canvasId)
+      return canvas?.meta || null
+    },
+    staleTime: 0, // Always consider stale to ensure real-time updates
+    refetchOnWindowFocus: false
+  })
+
+  // Create canvas if it doesn't exist
+  const createCanvasMutation = useMutation({
+    mutationFn: async (
+      meta: Omit<
+        CanvasMeta,
+        'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'
+      >
+    ) => {
+      await createCanvas(canvasId, meta, userId)
+      return {
+        ...meta,
+        id: canvasId,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        createdBy: userId,
+        updatedBy: userId
+      }
+    },
+    onSuccess: newMeta => {
+      queryClient.setQueryData(['canvas-meta', canvasId], newMeta)
+    },
+    onError: error => {
+      console.error('Failed to create canvas:', error)
+    }
+  })
+
+  // Update canvas metadata
+  const updateCanvasMetaMutation = useMutation({
+    mutationFn: async (
+      updates: Partial<Omit<CanvasMeta, 'id' | 'createdAt' | 'createdBy'>>
+    ) => {
+      await updateCanvasMeta(canvasId, updates, userId)
+      return {
+        ...canvasMeta,
+        ...updates,
+        updatedAt: Date.now(),
+        updatedBy: userId
+      }
+    },
+    onSuccess: updatedMeta => {
+      queryClient.setQueryData(['canvas-meta', canvasId], updatedMeta)
+    },
+    onError: error => {
+      console.error('Failed to update canvas metadata:', error)
+    }
+  })
+
+  // Initialize canvas if it doesn't exist
+  const initializeCanvas = useCallback(async () => {
+    if (!canvasMeta && !isLoading) {
+      await createCanvasMutation.mutateAsync({
+        name: 'Untitled Canvas',
+        viewport: { x: 0, y: 0, scale: 1 }
+      })
+    }
+  }, [canvasMeta, isLoading, createCanvasMutation])
+
+  return {
+    canvasMeta,
+    isLoading,
+    error,
+    refetch,
+    initializeCanvas,
+    updateCanvasMeta: updateCanvasMetaMutation.mutateAsync,
+    isCreating: createCanvasMutation.isPending,
+    isUpdating: updateCanvasMetaMutation.isPending,
+    createError: createCanvasMutation.error,
+    updateError: updateCanvasMetaMutation.error
+  }
+}
+
+// PR #8: Viewport persistence hook
+export function useViewportPersistence(canvasId: string, userId: string) {
+  const { canvasMeta, updateCanvasMeta } = useCanvasMeta(canvasId, userId)
+
+  // Save viewport state with debouncing
+  const saveViewport = useCallback(
+    (viewport: ViewportState) => {
+      debounce(() => {
+        updateCanvasMeta({ viewport })
+      }, 500)()
+    },
+    [updateCanvasMeta]
+  )
+
+  // Restore viewport from saved state
+  const restoreViewport = useCallback((): ViewportState => {
+    return canvasMeta?.viewport || { x: 0, y: 0, scale: 1 }
+  }, [canvasMeta])
+
+  return {
+    saveViewport,
+    restoreViewport,
+    savedViewport: canvasMeta?.viewport
   }
 }
 

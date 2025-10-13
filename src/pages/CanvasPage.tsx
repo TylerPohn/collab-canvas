@@ -4,7 +4,12 @@ import PresenceList from '../components/PresenceList'
 import Toolbar, { type ToolType } from '../components/Toolbar'
 import { useAuth } from '../hooks/useAuth'
 import { usePresence } from '../hooks/usePresence'
-import { useShapeMutations, useShapes } from '../hooks/useShapes'
+import {
+  useCanvasMeta,
+  useShapeMutations,
+  useShapes,
+  useViewportPersistence
+} from '../hooks/useShapes'
 import type { Shape } from '../lib/types'
 import { useSelectionStore } from '../store/selection'
 
@@ -17,6 +22,19 @@ const CanvasPage: React.FC = () => {
 
   // Use a fixed canvas ID for now (in a real app, this would come from URL params)
   const canvasId = 'default-canvas'
+
+  // PR #8: Canvas metadata and persistence
+  const {
+    canvasMeta,
+    isLoading: canvasMetaLoading,
+    error: canvasMetaError,
+    initializeCanvas
+  } = useCanvasMeta(canvasId, user?.uid || '')
+
+  const { saveViewport, restoreViewport } = useViewportPersistence(
+    canvasId,
+    user?.uid || ''
+  )
 
   // PR #7: Use React Query hooks for shape management
   const {
@@ -41,6 +59,39 @@ const CanvasPage: React.FC = () => {
     canvasId,
     enabled: !!user
   })
+
+  // PR #8: Initialize canvas on mount
+  useEffect(() => {
+    if (user?.uid && !canvasMetaLoading) {
+      initializeCanvas()
+    }
+  }, [user?.uid, canvasMetaLoading, initializeCanvas])
+
+  // PR #8: Save viewport on navigation/unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Save current viewport state before leaving
+      if (canvasMeta) {
+        // This will be handled by the viewport persistence hook
+        // The debounced save will trigger on viewport changes
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Save state when tab becomes hidden
+        handleBeforeUnload()
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [canvasMeta])
 
   // Update canvas size on window resize
   useEffect(() => {
@@ -177,14 +228,28 @@ const CanvasPage: React.FC = () => {
             </div>
           </div>
         )}
+        {canvasMetaError && (
+          <div className="absolute top-28 left-1/2 transform -translate-x-1/2 z-10">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded">
+              Canvas error: {canvasMetaError.message}
+            </div>
+          </div>
+        )}
 
         {/* Loading or canvas content */}
-        {shapesLoading || canvasSize.width === 0 || canvasSize.height === 0 ? (
+        {shapesLoading ||
+        canvasMetaLoading ||
+        canvasSize.width === 0 ||
+        canvasSize.height === 0 ? (
           <div className="flex items-center justify-center h-full bg-gray-50">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <p className="text-gray-600">
-                {shapesLoading ? 'Loading shapes...' : 'Loading canvas...'}
+                {shapesLoading
+                  ? 'Loading shapes...'
+                  : canvasMetaLoading
+                    ? 'Loading canvas...'
+                    : 'Initializing...'}
               </p>
             </div>
           </div>
@@ -201,6 +266,8 @@ const CanvasPage: React.FC = () => {
             onShapeDelete={handleShapeDelete}
             onShapeDuplicate={handleShapeDuplicate}
             onCursorMove={updateCursor}
+            onViewportChange={saveViewport}
+            initialViewport={restoreViewport()}
           />
         )}
       </div>

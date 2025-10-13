@@ -1,31 +1,29 @@
 import type Konva from 'konva'
-import { useCallback, useRef, useState } from 'react'
-
-interface Viewport {
-  x: number
-  y: number
-  scale: number
-}
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { ViewportState } from '../lib/types'
 
 interface PanZoomState {
-  viewport: Viewport
+  viewport: ViewportState
   handleWheel: (e: Konva.KonvaEventObject<WheelEvent>) => void
   handleMouseDown: (e: Konva.KonvaEventObject<MouseEvent>) => void
   handleMouseMove: (e: Konva.KonvaEventObject<MouseEvent>) => void
   handleMouseUp: (e: Konva.KonvaEventObject<MouseEvent>) => void
   isDragging: boolean
+  setViewport: (viewport: ViewportState) => void
 }
 
 const MIN_SCALE = 0.1
 const MAX_SCALE = 5.0
 const SCALE_FACTOR = 0.001
 
-export const usePanZoom = (): PanZoomState => {
-  const [viewport, setViewport] = useState<Viewport>({
-    x: 0,
-    y: 0,
-    scale: 1.0
-  })
+export const usePanZoom = (initialViewport?: ViewportState): PanZoomState => {
+  const [viewport, setViewport] = useState<ViewportState>(
+    initialViewport || {
+      x: 0,
+      y: 0,
+      scale: 1.0
+    }
+  )
 
   const [isDragging, setIsDragging] = useState(false)
   const lastPointerPosition = useRef({ x: 0, y: 0 })
@@ -100,12 +98,20 @@ export const usePanZoom = (): PanZoomState => {
     setIsDragging(false)
   }, [])
 
+  // Update viewport when initialViewport changes
+  useEffect(() => {
+    if (initialViewport) {
+      setViewport(initialViewport)
+    }
+  }, [initialViewport])
+
   return {
     viewport,
     handleWheel,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
-    isDragging
+    isDragging,
+    setViewport
   }
 }
