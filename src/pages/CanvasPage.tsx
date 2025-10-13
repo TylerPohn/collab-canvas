@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import CanvasStage from '../components/CanvasStage'
+import EmptyCanvasState from '../components/EmptyCanvasState'
 import PresenceList from '../components/PresenceList'
 import Toolbar, { type ToolType } from '../components/Toolbar'
 import { useAuth } from '../hooks/useAuth'
@@ -10,6 +11,7 @@ import {
   useShapes,
   useViewportPersistence
 } from '../hooks/useShapes'
+import { useToast } from '../hooks/useToast'
 import type { Shape } from '../lib/types'
 import { useSelectionStore } from '../store/selection'
 
@@ -19,6 +21,7 @@ const CanvasPage: React.FC = () => {
 
   const { selectedIds, hasSelection } = useSelectionStore()
   const { user } = useAuth()
+  const { showError, showSuccess } = useToast()
 
   // Use a fixed canvas ID for now (in a real app, this would come from URL params)
   const canvasId = 'default-canvas'
@@ -93,6 +96,25 @@ const CanvasPage: React.FC = () => {
     }
   }, [canvasMeta])
 
+  // Error handling via toasts
+  useEffect(() => {
+    if (presenceError) {
+      showError('Connection Error', 'Unable to sync with other users')
+    }
+  }, [presenceError, showError])
+
+  useEffect(() => {
+    if (shapesError) {
+      showError('Sync Error', 'Unable to load canvas data')
+    }
+  }, [shapesError, showError])
+
+  useEffect(() => {
+    if (canvasMetaError) {
+      showError('Canvas Error', 'Unable to load canvas settings')
+    }
+  }, [canvasMetaError, showError])
+
   // Update canvas size on window resize
   useEffect(() => {
     const updateCanvasSize = () => {
@@ -123,11 +145,13 @@ const CanvasPage: React.FC = () => {
 
       try {
         await createShape(shapeData)
+        showSuccess('Shape created', 'Your shape has been added to the canvas')
       } catch (error) {
         console.error('Failed to create shape:', error)
+        showError('Failed to create shape', 'Please try again')
       }
     },
-    [createShape, user?.uid]
+    [createShape, user?.uid, showSuccess, showError]
   )
 
   // PR #7: Handle shape updates with React Query
@@ -139,9 +163,10 @@ const CanvasPage: React.FC = () => {
         await updateShape(id, updates)
       } catch (error) {
         console.error('Failed to update shape:', error)
+        showError('Failed to update shape', 'Your changes could not be saved')
       }
     },
-    [updateShape, user?.uid]
+    [updateShape, user?.uid, showError]
   )
 
   // PR #7: Handle shape deletion with React Query
@@ -153,11 +178,16 @@ const CanvasPage: React.FC = () => {
         } else {
           await batchDeleteShapes(ids)
         }
+        showSuccess(
+          'Shapes deleted',
+          `${ids.length} shape${ids.length > 1 ? 's' : ''} removed from canvas`
+        )
       } catch (error) {
         console.error('Failed to delete shapes:', error)
+        showError('Failed to delete shapes', 'Please try again')
       }
     },
-    [deleteShape, batchDeleteShapes]
+    [deleteShape, batchDeleteShapes, showSuccess, showError]
   )
 
   // PR #7: Handle shape duplication with React Query
@@ -175,11 +205,16 @@ const CanvasPage: React.FC = () => {
 
       try {
         await batchCreateShapes(duplicatedShapes)
+        showSuccess(
+          'Shapes duplicated',
+          `${ids.length} shape${ids.length > 1 ? 's' : ''} duplicated`
+        )
       } catch (error) {
         console.error('Failed to duplicate shapes:', error)
+        showError('Failed to duplicate shapes', 'Please try again')
       }
     },
-    [shapes, batchCreateShapes, user?.uid]
+    [shapes, batchCreateShapes, user?.uid, showSuccess, showError]
   )
 
   const handleDelete = () => {
@@ -213,29 +248,6 @@ const CanvasPage: React.FC = () => {
           </div>
         )}
 
-        {/* Connection status indicators */}
-        {presenceError && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded">
-              Presence error: {presenceError}
-            </div>
-          </div>
-        )}
-        {shapesError && (
-          <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10">
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded">
-              Shapes error: {shapesError.message}
-            </div>
-          </div>
-        )}
-        {canvasMetaError && (
-          <div className="absolute top-28 left-1/2 transform -translate-x-1/2 z-10">
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded">
-              Canvas error: {canvasMetaError.message}
-            </div>
-          </div>
-        )}
-
         {/* Loading or canvas content */}
         {shapesLoading ||
         canvasMetaLoading ||
@@ -243,32 +255,50 @@ const CanvasPage: React.FC = () => {
         canvasSize.height === 0 ? (
           <div className="flex items-center justify-center h-full bg-gray-50">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">
-                {shapesLoading
-                  ? 'Loading shapes...'
-                  : canvasMetaLoading
-                    ? 'Loading canvas...'
-                    : 'Initializing...'}
-              </p>
+              <div className="relative mb-6">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 mx-auto"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto absolute top-0 left-1/2 transform -translate-x-1/2"></div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-lg font-medium text-gray-900">
+                  {shapesLoading
+                    ? 'Loading shapes...'
+                    : canvasMetaLoading
+                      ? 'Loading canvas...'
+                      : 'Initializing...'}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Setting up your collaborative workspace
+                </p>
+              </div>
             </div>
           </div>
         ) : (
-          <CanvasStage
-            width={canvasSize.width}
-            height={canvasSize.height}
-            selectedTool={selectedTool}
-            shapes={shapes}
-            presence={presence}
-            currentUserId={user?.uid || ''}
-            onShapeCreate={handleShapeCreate}
-            onShapeUpdate={handleShapeUpdate}
-            onShapeDelete={handleShapeDelete}
-            onShapeDuplicate={handleShapeDuplicate}
-            onCursorMove={updateCursor}
-            onViewportChange={saveViewport}
-            initialViewport={restoreViewport()}
-          />
+          <div className="relative w-full h-full">
+            <CanvasStage
+              width={canvasSize.width}
+              height={canvasSize.height}
+              selectedTool={selectedTool}
+              shapes={shapes}
+              presence={presence}
+              currentUserId={user?.uid || ''}
+              onShapeCreate={handleShapeCreate}
+              onShapeUpdate={handleShapeUpdate}
+              onShapeDelete={handleShapeDelete}
+              onShapeDuplicate={handleShapeDuplicate}
+              onCursorMove={updateCursor}
+              onViewportChange={saveViewport}
+              initialViewport={restoreViewport()}
+            />
+
+            {/* Show empty state when no shapes exist */}
+            {shapes.length === 0 && (
+              <EmptyCanvasState
+                selectedTool={selectedTool}
+                onGetStarted={() => setSelectedTool('rectangle')}
+              />
+            )}
+          </div>
         )}
       </div>
     </div>

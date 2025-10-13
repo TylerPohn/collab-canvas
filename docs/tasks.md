@@ -375,7 +375,7 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 - [ ] Verify client-side Firebase usage and environment configuration.
   - Files: `src/lib/firebase/client.ts`, environment setup
 
-- [ ] Final UI polish (empty states, loading spinners, error toasts).
+- [x] Final UI polish (empty states, loading spinners, error toasts).
   - Files: `src/pages/CanvasPage.tsx`, `src/components/*`
 
 - [ ] Add demo script to README and a 3–5 min video plan.

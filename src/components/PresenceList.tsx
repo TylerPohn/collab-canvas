@@ -18,7 +18,23 @@ const PresenceList: React.FC<PresenceListProps> = ({
     .sort((a, b) => a.displayName.localeCompare(b.displayName))
 
   if (otherUsers.length === 0) {
-    return null
+    return (
+      <div
+        className={`bg-white rounded-lg shadow-md border border-gray-200 p-3 ${className}`}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-medium text-gray-700">Online (1)</h3>
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+        </div>
+
+        <div className="text-center py-2">
+          <p className="text-xs text-gray-500">You're the only one here</p>
+          <p className="text-xs text-gray-400 mt-1">
+            Invite others to collaborate
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
