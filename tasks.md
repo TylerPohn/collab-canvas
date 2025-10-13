@@ -141,22 +141,22 @@ collab-canvas/
 
 ---
 
-## PR #4 — Canvas Shell (Stage, Pan/Zoom, Toolbar)
+## PR #4 — Canvas Shell (Stage, Pan/Zoom, Toolbar) ✅ COMPLETED
 
 **Goal:** Render a large workspace with smooth pan/zoom and basic toolbar.
 
 **Checklist**
 
-- [ ] Add `CanvasStage` (Konva Stage + Layer), responsive to viewport.
+- [x] Add `CanvasStage` (Konva Stage + Layer), responsive to viewport.
   - Files: `src/components/CanvasStage.tsx`
 
-- [ ] Implement pan/zoom hook and attach to stage.
+- [x] Implement pan/zoom hook and attach to stage.
   - Files: `src/hooks/usePanZoom.ts`, `src/components/CanvasStage.tsx`
 
-- [ ] Create minimal `Toolbar` (shape tools: select, rectangle, circle, text; delete/duplicate).
+- [x] Create minimal `Toolbar` (shape tools: select, rectangle, circle, text; delete/duplicate).
   - Files: `src/components/Toolbar.tsx`
 
-- [ ] Scaffold `/canvas` page to mount the stage and toolbar.
+- [x] Scaffold `/canvas` page to mount the stage and toolbar.
   - Files: `src/pages/CanvasPage.tsx`
 
 ---

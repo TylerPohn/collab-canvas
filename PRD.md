@@ -78,7 +78,6 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 ### **Backend**
 
 - **Firebase** (preferred for MVP speed):
-
   - **Firestore** or **Realtime Database** for syncing canvas state.
   - **Firebase Auth** for Google OAuth authentication.
   - Built-in **WebSocket-like** sync eliminates manual socket management.
@@ -113,7 +112,6 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 
 - **Canvas FPS:** Maintain 60 FPS for pan, zoom, and object manipulation.
 - **Sync Speed:**
-
   - Object changes < 100ms latency
   - Cursor positions < 50ms latency
 
