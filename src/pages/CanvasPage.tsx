@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import CanvasStage from '../components/CanvasStage'
+import PresenceList from '../components/PresenceList'
 import Toolbar, { type ToolType } from '../components/Toolbar'
+import { useAuth } from '../hooks/useAuth'
+import { usePresence } from '../hooks/usePresence'
 import type { Shape } from '../lib/types'
 import { useSelectionStore } from '../store/selection'
 
@@ -10,6 +13,20 @@ const CanvasPage: React.FC = () => {
   const [shapes, setShapes] = useState<Shape[]>([])
 
   const { selectedIds, hasSelection } = useSelectionStore()
+  const { user } = useAuth()
+
+  // Use a fixed canvas ID for now (in a real app, this would come from URL params)
+  const canvasId = 'default-canvas'
+
+  // Presence functionality
+  const {
+    presence,
+    updateCursor,
+    error: presenceError
+  } = usePresence({
+    canvasId,
+    enabled: !!user
+  })
 
   // Update canvas size on window resize
   useEffect(() => {
@@ -130,16 +147,34 @@ const CanvasPage: React.FC = () => {
       />
 
       <div className="flex-1 relative">
+        {/* Presence list overlay */}
+        {user && (
+          <div className="absolute top-4 right-4 z-10">
+            <PresenceList presence={presence} currentUserId={user.uid} />
+          </div>
+        )}
+
+        {/* Connection status indicator */}
+        {presenceError && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded">
+              Connection error: {presenceError}
+            </div>
+          </div>
+        )}
         {canvasSize.width > 0 && canvasSize.height > 0 ? (
           <CanvasStage
             width={canvasSize.width}
             height={canvasSize.height}
             selectedTool={selectedTool}
             shapes={shapes}
+            presence={presence}
+            currentUserId={user?.uid || ''}
             onShapeCreate={handleShapeCreate}
             onShapeUpdate={handleShapeUpdate}
             onShapeDelete={handleShapeDelete}
             onShapeDuplicate={handleShapeDuplicate}
+            onCursorMove={updateCursor}
           />
         ) : (
           <div className="flex items-center justify-center h-full bg-gray-50">

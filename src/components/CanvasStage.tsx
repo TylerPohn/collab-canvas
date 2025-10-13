@@ -8,9 +8,11 @@ import type {
   RectangleShape as RectangleShapeType,
   Shape,
   TextShape as TextShapeType,
-  ToolType
+  ToolType,
+  UserPresence
 } from '../lib/types'
 import { useSelectionStore } from '../store/selection'
+import CursorLayer from './CursorLayer'
 import CircleShape from './Shapes/CircleShape'
 import RectangleShape from './Shapes/RectangleShape'
 import TextShape from './Shapes/TextShape'
@@ -20,6 +22,8 @@ interface CanvasStageProps {
   height: number
   selectedTool: ToolType
   shapes: Shape[]
+  presence: UserPresence[]
+  currentUserId: string
   onShapeCreate: (
     shape: Omit<
       Shape,
@@ -29,6 +33,7 @@ interface CanvasStageProps {
   onShapeUpdate: (id: string, updates: Partial<Shape>) => void
   onShapeDelete: (ids: string[]) => void
   onShapeDuplicate: (ids: string[]) => void
+  onCursorMove: (cursor: { x: number; y: number }) => void
 }
 
 const CanvasStage: React.FC<CanvasStageProps> = ({
@@ -36,10 +41,13 @@ const CanvasStage: React.FC<CanvasStageProps> = ({
   height,
   selectedTool,
   shapes,
+  presence,
+  currentUserId,
   onShapeCreate,
   onShapeUpdate,
   onShapeDelete,
-  onShapeDuplicate
+  onShapeDuplicate,
+  onCursorMove
 }) => {
   const stageRef = useRef<Konva.Stage>(null)
   const transformerRef = useRef<Konva.Transformer>(null)
@@ -155,13 +163,32 @@ const CanvasStage: React.FC<CanvasStageProps> = ({
 
   const handleStageMouseMove = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent>) => {
+      // Track cursor position for presence
+      const stage = e.target.getStage()
+      if (stage) {
+        const pointer = stage.getPointerPosition()
+        if (pointer) {
+          // Transform pointer position to world coordinates
+          const worldX = (pointer.x - viewport.x) / viewport.scale
+          const worldY = (pointer.y - viewport.y) / viewport.scale
+          onCursorMove({ x: worldX, y: worldY })
+        }
+      }
+
       if (isDrawing && drawingStart && selectedTool !== 'select') {
         // Handle drawing preview (could add visual feedback here)
       } else if (selectedTool === 'select') {
         handlePanMouseMove(e)
       }
     },
-    [isDrawing, drawingStart, selectedTool, handlePanMouseMove]
+    [
+      isDrawing,
+      drawingStart,
+      selectedTool,
+      handlePanMouseMove,
+      viewport,
+      onCursorMove
+    ]
   )
 
   const handleStageMouseUp = useCallback(
@@ -360,6 +387,13 @@ const CanvasStage: React.FC<CanvasStageProps> = ({
             }}
           />
         </Layer>
+
+        {/* Cursor layer for other users */}
+        <CursorLayer
+          presence={presence}
+          currentUserId={currentUserId}
+          viewport={viewport}
+        />
       </Stage>
 
       {/* Canvas info overlay */}
