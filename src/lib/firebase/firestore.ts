@@ -16,7 +16,8 @@ import {
 import type { CanvasDocument, CanvasMeta, Shape, UserPresence } from '../types'
 import { db } from './client'
 
-// Collection references
+// Collection references - PR #7: Firestore data model
+// Structure: canvases/{canvasId} and canvases/{canvasId}/objects/{objectId}
 const CANVASES_COLLECTION = 'canvases'
 const OBJECTS_COLLECTION = 'objects'
 const PRESENCE_COLLECTION = 'presence'
@@ -26,7 +27,7 @@ export const canvasCollection = () => collection(db, CANVASES_COLLECTION)
 export const canvasDoc = (canvasId: string) =>
   doc(db, CANVASES_COLLECTION, canvasId)
 
-// Object operations
+// Object operations - PR #7: Objects stored as subcollection under canvas
 export const objectsCollection = (canvasId: string) =>
   collection(db, CANVASES_COLLECTION, canvasId, OBJECTS_COLLECTION)
 export const objectDoc = (canvasId: string, objectId: string) =>

@@ -4,19 +4,33 @@ import PresenceList from '../components/PresenceList'
 import Toolbar, { type ToolType } from '../components/Toolbar'
 import { useAuth } from '../hooks/useAuth'
 import { usePresence } from '../hooks/usePresence'
+import { useShapeMutations, useShapes } from '../hooks/useShapes'
 import type { Shape } from '../lib/types'
 import { useSelectionStore } from '../store/selection'
 
 const CanvasPage: React.FC = () => {
   const [selectedTool, setSelectedTool] = useState<ToolType>('select')
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
-  const [shapes, setShapes] = useState<Shape[]>([])
 
   const { selectedIds, hasSelection } = useSelectionStore()
   const { user } = useAuth()
 
   // Use a fixed canvas ID for now (in a real app, this would come from URL params)
   const canvasId = 'default-canvas'
+
+  // PR #7: Use React Query hooks for shape management
+  const {
+    shapes,
+    isLoading: shapesLoading,
+    error: shapesError
+  } = useShapes(canvasId)
+  const {
+    createShape,
+    updateShape,
+    deleteShape,
+    batchCreateShapes,
+    batchDeleteShapes
+  } = useShapeMutations(canvasId, user?.uid || '')
 
   // Presence functionality
   const {
@@ -46,81 +60,75 @@ const CanvasPage: React.FC = () => {
     setSelectedTool(tool)
   }
 
-  // Generate unique ID for shapes
-  const generateId = () => {
-    return `shape_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-  }
-
-  // Handle shape creation
+  // PR #7: Handle shape creation with React Query
   const handleShapeCreate = useCallback(
-    (
+    async (
       shapeData: Omit<
         Shape,
         'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'
       >
     ) => {
-      const now = Date.now()
-      const newShape = {
-        ...shapeData,
-        id: generateId(),
-        createdAt: now,
-        createdBy: 'current-user', // TODO: Get from auth context in future PRs
-        updatedAt: now,
-        updatedBy: 'current-user'
-      } as Shape
+      if (!user?.uid) return
 
-      setShapes(prev => [...prev, newShape])
+      try {
+        await createShape(shapeData)
+      } catch (error) {
+        console.error('Failed to create shape:', error)
+      }
     },
-    []
+    [createShape, user?.uid]
   )
 
-  // Handle shape updates
+  // PR #7: Handle shape updates with React Query
   const handleShapeUpdate = useCallback(
-    (id: string, updates: Partial<Shape>) => {
-      setShapes(prev =>
-        prev.map(shape =>
-          shape.id === id
-            ? ({
-                ...shape,
-                ...updates,
-                updatedAt: Date.now(),
-                updatedBy: 'current-user'
-              } as Shape)
-            : shape
-        )
-      )
+    async (id: string, updates: Partial<Shape>) => {
+      if (!user?.uid) return
+
+      try {
+        await updateShape(id, updates)
+      } catch (error) {
+        console.error('Failed to update shape:', error)
+      }
     },
-    []
+    [updateShape, user?.uid]
   )
 
-  // Handle shape deletion
-  const handleShapeDelete = useCallback((ids: string[]) => {
-    setShapes(prev => prev.filter(shape => !ids.includes(shape.id)))
-  }, [])
-
-  // Handle shape duplication
-  const handleShapeDuplicate = useCallback(
-    (ids: string[]) => {
-      const shapesToDuplicate = shapes.filter(shape => ids.includes(shape.id))
-      const now = Date.now()
-
-      const duplicatedShapes = shapesToDuplicate.map(
-        shape =>
-          ({
-            ...shape,
-            id: generateId(),
-            x: shape.x + 20, // Offset duplicated shapes
-            y: shape.y + 20,
-            createdAt: now,
-            createdBy: 'current-user',
-            updatedAt: now,
-            updatedBy: 'current-user'
-          }) as Shape
-      )
-
-      setShapes(prev => [...prev, ...duplicatedShapes])
+  // PR #7: Handle shape deletion with React Query
+  const handleShapeDelete = useCallback(
+    async (ids: string[]) => {
+      try {
+        if (ids.length === 1) {
+          await deleteShape(ids[0])
+        } else {
+          await batchDeleteShapes(ids)
+        }
+      } catch (error) {
+        console.error('Failed to delete shapes:', error)
+      }
     },
-    [shapes]
+    [deleteShape, batchDeleteShapes]
+  )
+
+  // PR #7: Handle shape duplication with React Query
+  const handleShapeDuplicate = useCallback(
+    async (ids: string[]) => {
+      if (!user?.uid) return
+
+      const shapesToDuplicate = shapes.filter(shape => ids.includes(shape.id))
+
+      const duplicatedShapes = shapesToDuplicate.map(shape => ({
+        ...shape,
+        x: shape.x + 20, // Offset duplicated shapes
+        y: shape.y + 20
+      }))
+
+      try {
+        await batchCreateShapes(duplicatedShapes)
+      } catch (error) {
+        console.error('Failed to duplicate shapes:', error)
+      }
+    },
+    [shapes, batchCreateShapes, user?.uid]
   )
 
   const handleDelete = () => {
@@ -154,15 +162,33 @@ const CanvasPage: React.FC = () => {
           </div>
         )}
 
-        {/* Connection status indicator */}
+        {/* Connection status indicators */}
         {presenceError && (
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded">
-              Connection error: {presenceError}
+              Presence error: {presenceError}
             </div>
           </div>
         )}
-        {canvasSize.width > 0 && canvasSize.height > 0 ? (
+        {shapesError && (
+          <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded">
+              Shapes error: {shapesError.message}
+            </div>
+          </div>
+        )}
+
+        {/* Loading or canvas content */}
+        {shapesLoading || canvasSize.width === 0 || canvasSize.height === 0 ? (
+          <div className="flex items-center justify-center h-full bg-gray-50">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">
+                {shapesLoading ? 'Loading shapes...' : 'Loading canvas...'}
+              </p>
+            </div>
+          </div>
+        ) : (
           <CanvasStage
             width={canvasSize.width}
             height={canvasSize.height}
@@ -176,13 +202,6 @@ const CanvasPage: React.FC = () => {
             onShapeDuplicate={handleShapeDuplicate}
             onCursorMove={updateCursor}
           />
-        ) : (
-          <div className="flex items-center justify-center h-full bg-gray-50">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading canvas...</p>
-            </div>
-          </div>
         )}
       </div>
     </div>

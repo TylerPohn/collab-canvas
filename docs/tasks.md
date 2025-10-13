@@ -244,23 +244,45 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 
 ---
 
-## PR #7 — Object Sync (Create/Update/Delete) with React Query
+## PR #7 — Object Sync (Create/Update/Delete) with React Query ✅ COMPLETED
 
 **Goal:** Server state for shapes with optimistic UI, conflict policy documented.
 
 **Checklist**
 
-- [ ] Define Firestore data model: `canvases/{canvasId}`, `canvases/{canvasId}/objects/{objectId}`.
+- [x] Define Firestore data model: `canvases/{canvasId}`, `canvases/{canvasId}/objects/{objectId}`.
   - Files: `src/lib/schema.ts`, `src/lib/types.ts`, `src/lib/firebase/firestore.ts`
 
-- [ ] Queries & subscriptions for objects (React Query + Firestore snapshot bridge).
+- [x] Queries & subscriptions for objects (React Query + Firestore snapshot bridge).
   - Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`
 
-- [ ] Mutations for create/move/resize/rotate/delete/duplicate with optimistic updates.
+- [x] Mutations for create/move/resize/rotate/delete/duplicate with optimistic updates.
   - Files: `src/hooks/useShapes.ts`, `src/components/CanvasStage.tsx`
 
-- [ ] Conflict handling: **last write wins** via `updatedAt` + `updatedBy`.
+- [x] Conflict handling: **last write wins** via `updatedAt` + `updatedBy`.
   - Files: `src/lib/sync/objects.ts`, `src/lib/types.ts`
+
+**PR #7 Implementation Summary:**
+
+- ✅ **Firestore Data Model**: Implemented proper data structure with `canvases/{canvasId}` and `canvases/{canvasId}/objects/{objectId}` subcollections
+- ✅ **React Query Integration**: Created `ObjectSyncService` class that bridges React Query with Firestore real-time subscriptions
+- ✅ **Optimistic Updates**: All CRUD operations include immediate UI feedback with automatic rollback on errors
+- ✅ **Real-time Synchronization**: Objects sync across multiple users in real-time via Firestore `onSnapshot` listeners
+- ✅ **Conflict Resolution**: Implemented "last write wins" policy using `updatedAt` and `updatedBy` timestamps
+- ✅ **Batch Operations**: Efficient batch create/update/delete operations for multiple shapes
+- ✅ **Error Handling**: Comprehensive error handling with user feedback and automatic rollback
+- ✅ **Performance**: Debounced updates for smooth dragging and efficient network usage
+- ✅ **Type Safety**: Full TypeScript support with proper type definitions and validation
+
+**Key Features Delivered:**
+
+- Real-time object synchronization across multiple users
+- Optimistic updates with automatic rollback on errors
+- Conflict resolution with timestamp-based "last write wins"
+- Batch operations for efficient multi-shape operations
+- Comprehensive error handling and user feedback
+- Performance optimizations with debouncing
+- Full TypeScript type safety and validation
 
 ---
 
