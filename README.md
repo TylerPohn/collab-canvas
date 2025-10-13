@@ -47,21 +47,38 @@ A real-time collaborative canvas application built with React, TypeScript, and F
    npm install
    ```
 
-3. Set up environment variables:
+3. Set up Firebase project:
+
+   a. Go to [Firebase Console](https://console.firebase.google.com/)
+   b. Create a new project or select an existing one
+   c. Enable Authentication with Google provider
+   d. Create a Firestore database in production mode
+   e. Get your Firebase configuration from Project Settings > General > Your apps
+
+4. Set up environment variables:
 
    ```bash
    cp .env.example .env.local
    ```
 
-   Edit `.env.local` with your Firebase configuration values.
+   Edit `.env.local` with your Firebase configuration values from step 3e:
 
-4. Start the development server:
+   ```env
+   VITE_FIREBASE_API_KEY=your_api_key_here
+   VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
+   ```
+
+5. Start the development server:
 
    ```bash
    npm run dev
    ```
 
-5. Open [http://localhost:5173](http://localhost:5173) in your browser.
+6. Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## Available Scripts
 
@@ -105,15 +122,57 @@ src/
 └── main.tsx             # App entry point
 ```
 
+## Firebase Setup
+
+### Authentication Setup
+
+1. In Firebase Console, go to Authentication > Sign-in method
+2. Enable Google provider
+3. Add your domain to authorized domains (localhost:5173 for development)
+
+### Firestore Setup
+
+1. In Firebase Console, go to Firestore Database
+2. Create database in production mode
+3. Set up security rules (see below)
+
+### Security Rules
+
+Add these Firestore security rules:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Canvas documents
+    match /canvases/{canvasId} {
+      allow read, write: if request.auth != null;
+
+      // Objects within a canvas
+      match /objects/{objectId} {
+        allow read, write: if request.auth != null;
+      }
+
+      // Presence within a canvas
+      match /presence/{userId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}
+```
+
 ## Environment Variables
 
 See `.env.example` for all required environment variables:
 
-- `VITE_FIREBASE_*` - Firebase configuration
-- `VITE_APP_VERSION` - Application version
-- `VITE_DEFAULT_CANVAS_ID` - Default canvas ID
-- `VITE_CURSOR_UPDATE_INTERVAL` - Cursor update frequency (ms)
-- `VITE_SHAPE_UPDATE_DEBOUNCE` - Shape update debounce (ms)
+- `VITE_FIREBASE_API_KEY` - Firebase API key
+- `VITE_FIREBASE_AUTH_DOMAIN` - Firebase auth domain
+- `VITE_FIREBASE_PROJECT_ID` - Firebase project ID
+- `VITE_FIREBASE_STORAGE_BUCKET` - Firebase storage bucket
+- `VITE_FIREBASE_MESSAGING_SENDER_ID` - Firebase messaging sender ID
+- `VITE_FIREBASE_APP_ID` - Firebase app ID
 
 ## Development
 

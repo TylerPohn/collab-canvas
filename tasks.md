@@ -70,23 +70,18 @@ collab-canvas/
 **Checklist**
 
 - [x] Create Vite React app (TS) and install deps: `vite react react-dom react-router-dom @tanstack/react-query firebase konva tailwindcss` and utilities.
-
   - Files: `package.json`, `tsconfig.json`, `vite.config.ts`
 
 - [x] Configure Tailwind and global styles.
-
   - Files: `tailwind.config.ts`, `postcss.config.js`, `src/index.css`
 
 - [x] Add React Query provider and base app shell with React Router.
-
   - Files: `src/lib/react-query/queryClient.ts`, `src/App.tsx`, `src/main.tsx`
 
 - [x] Add health check utility for monitoring.
-
   - Files: `src/lib/health.ts`
 
 - [x] Add ESLint/Prettier configs and scripts; set up GitHub Actions CI (typecheck, build).
-
   - Files: `eslint.config.js` (or `.eslintrc`), `.github/workflows/ci.yml`
 
 - [x] Add `README.md` and `.env.example`.
@@ -99,19 +94,16 @@ collab-canvas/
 
 **Checklist**
 
-- [ ] Configure Firebase client initialization.
-
+- [x] Configure Firebase client initialization.
   - Files: `lib/firebase/client.ts`
 
-- [ ] Create Firestore helpers for collections (canvas, objects, presence).
-
+- [x] Create Firestore helpers for collections (canvas, objects, presence).
   - Files: `lib/firebase/firestore.ts`
 
-- [ ] Define app-wide types and schemas.
-
+- [x] Define app-wide types and schemas.
   - Files: `lib/types.ts`, `lib/schema.ts`
 
-- [ ] Document env vars in `.env.example` and update `README.md`.
+- [x] Document env vars in `.env.example` and update `README.md`.
 
 ---
 
@@ -122,19 +114,15 @@ collab-canvas/
 **Checklist**
 
 - [ ] Auth context/provider with Firebase Auth (Google OAuth only).
-
   - Files: `src/components/providers/AuthProvider.tsx`
 
 - [ ] Build Login page (React Router route).
-
   - Files: `src/pages/LoginPage.tsx`
 
 - [ ] Add Google account display name and avatar in header layout.
-
   - Files: `src/App.tsx` (header), possibly `src/components/ProfileMenu.tsx` (optional)
 
 - [ ] Guard `/canvas` route to require auth (redirect if not logged in).
-
   - Files: `src/pages/CanvasPage.tsx`, `src/components/providers/AuthProvider.tsx`
 
 ---
@@ -146,19 +134,15 @@ collab-canvas/
 **Checklist**
 
 - [ ] Add `CanvasStage` (Konva Stage + Layer), responsive to viewport.
-
   - Files: `src/components/CanvasStage.tsx`
 
 - [ ] Implement pan/zoom hook and attach to stage.
-
   - Files: `src/hooks/usePanZoom.ts`, `src/components/CanvasStage.tsx`
 
 - [ ] Create minimal `Toolbar` (shape tools: select, rectangle, circle, text; delete/duplicate).
-
   - Files: `src/components/Toolbar.tsx`
 
 - [ ] Scaffold `/canvas` page to mount the stage and toolbar.
-
   - Files: `src/pages/CanvasPage.tsx`
 
 ---
@@ -170,19 +154,15 @@ collab-canvas/
 **Checklist**
 
 - [ ] Implement shape components and wiring to Konva nodes.
-
   - Files: `src/components/Shapes/RectangleShape.tsx`, `src/components/Shapes/CircleShape.tsx`, `src/components/Shapes/TextShape.tsx`
 
 - [ ] Selection state (single + marquee). Keep UI-only selection in local store.
-
   - Files: `src/store/selection.ts`, `src/components/CanvasStage.tsx`
 
 - [ ] Transformer handles for selected nodes; keyboard shortcuts (delete, dup, arrow nudge).
-
   - Files: `src/components/CanvasStage.tsx`, `src/hooks/useCanvasShortcuts.ts`
 
 - [ ] Utilities for geometry, ids, cloning.
-
   - Files: `src/lib/utils/geometry.ts` (optional), extend `src/lib/types.ts`
 
 ---
@@ -194,19 +174,15 @@ collab-canvas/
 **Checklist**
 
 - [ ] Presence service: join/leave room; heartbeat; track cursor positions.
-
   - Files: `src/lib/sync/presence.ts`, `src/hooks/usePresence.ts`
 
 - [ ] Cursor layer to render other users' cursors + labels.
-
   - Files: `src/components/CursorLayer.tsx`
 
 - [ ] Presence list UI.
-
   - Files: `src/components/PresenceList.tsx`, `src/pages/CanvasPage.tsx`
 
 - [ ] React Query integration for presence subscription and updates.
-
   - Files: `src/hooks/usePresence.ts`, `src/lib/react-query/queryClient.ts`
 
 _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat documents** for presence tracking. Implementation choice lives in `src/lib/sync/presence.ts`.
@@ -220,19 +196,15 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 **Checklist**
 
 - [ ] Define Firestore data model: `canvases/{canvasId}`, `canvases/{canvasId}/objects/{objectId}`.
-
   - Files: `src/lib/schema.ts`, `src/lib/types.ts`, `src/lib/firebase/firestore.ts`
 
 - [ ] Queries & subscriptions for objects (React Query + Firestore snapshot bridge).
-
   - Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`
 
 - [ ] Mutations for create/move/resize/rotate/delete/duplicate with optimistic updates.
-
   - Files: `src/hooks/useShapes.ts`, `src/components/CanvasStage.tsx`
 
 - [ ] Conflict handling: **last write wins** via `updatedAt` + `updatedBy`.
-
   - Files: `src/lib/sync/objects.ts`, `src/lib/types.ts`
 
 ---
@@ -244,15 +216,12 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 **Checklist**
 
 - [ ] Initial load path: fetch current canvas, then subscribe to live updates.
-
   - Files: `src/hooks/useShapes.ts`, `src/pages/CanvasPage.tsx`
 
 - [ ] Persist canvas-level metadata (viewport, default tool, etc.).
-
   - Files: `src/lib/firebase/firestore.ts`, `src/lib/types.ts`, `src/components/CanvasStage.tsx`
 
 - [ ] Save on navigation/unload and restore on re-entry.
-
   - Files: `src/components/CanvasStage.tsx`
 
 ---
@@ -264,19 +233,15 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 **Checklist**
 
 - [ ] Batch/transaction writes for bursty updates; debounce drag/resize network patches.
-
   - Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`
 
 - [ ] Throttle cursor broadcasts; interpolate cursor motion locally for smoothness.
-
   - Files: `src/lib/sync/presence.ts`, `src/hooks/usePresence.ts`, `src/components/CursorLayer.tsx`
 
 - [ ] Avoid excessive React re-renders (memoization; Konva refs).
-
   - Files: `src/components/CanvasStage.tsx`, `src/components/Shapes/*`
 
 - [ ] Stress test script (manual playbook) & profiling notes in README.
-
   - Files: `README.md`
 
 ---
@@ -288,19 +253,15 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 **Checklist**
 
 - [ ] Hook up Vercel project; configure Firebase env vars.
-
   - Files: `README.md`, `.env.example`, Vercel project settings
 
 - [ ] Verify client-side Firebase usage and environment configuration.
-
   - Files: `src/lib/firebase/client.ts`, environment setup
 
 - [ ] Final UI polish (empty states, loading spinners, error toasts).
-
   - Files: `src/pages/CanvasPage.tsx`, `src/components/*`
 
 - [ ] Add demo script to README and a 3–5 min video plan.
-
   - Files: `README.md`
 
 ---
@@ -312,11 +273,9 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 **Checklist**
 
 - [ ] Define callable canvas API surface to be used later by AI.
-
   - Files: `src/lib/sync/objects.ts` (export high-level create/move/resize), `src/lib/types.ts`
 
 - [ ] Add `/src/lib/ai/tools.ts` with TypeScript signatures (no implementation yet).
-
   - Files: `src/lib/ai/tools.ts`
 
 ---
@@ -545,7 +504,6 @@ setupTests.ts   // RTL + JSDOM setup
 ## CI Addendum
 
 - Update `.github/workflows/ci.yml` to run:
-
   1. `pnpm test:unit` (Vitest)
   2. Start **Firebase Emulators** (Auth, Firestore)
   3. `pnpm test:e2e` (Playwright) against local Vite dev server
