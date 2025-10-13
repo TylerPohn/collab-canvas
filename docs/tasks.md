@@ -202,23 +202,43 @@ collab-canvas/
 
 ---
 
-## PR #6 — Real-Time Presence & Multiplayer Cursors
+## PR #6 — Real-Time Presence & Multiplayer Cursors ✅ COMPLETED
 
-**Goal:** Show who’s online and render live cursors with names.
+**Goal:** Show who's online and render live cursors with names.
 
 **Checklist**
 
-- [ ] Presence service: join/leave room; heartbeat; track cursor positions.
+- [x] Presence service: join/leave room; heartbeat; track cursor positions.
   - Files: `src/lib/sync/presence.ts`, `src/hooks/usePresence.ts`
 
-- [ ] Cursor layer to render other users' cursors + labels.
+- [x] Cursor layer to render other users' cursors + labels.
   - Files: `src/components/CursorLayer.tsx`
 
-- [ ] Presence list UI.
+- [x] Presence list UI.
   - Files: `src/components/PresenceList.tsx`, `src/pages/CanvasPage.tsx`
 
-- [ ] React Query integration for presence subscription and updates.
-  - Files: `src/hooks/usePresence.ts`, `src/lib/react-query/queryClient.ts`
+- [x] React Query integration for presence subscription and updates.
+  - Files: `src/hooks/usePresence.ts`, `src/hooks/usePresenceQuery.ts`
+
+**PR #6 Implementation Summary:**
+
+- ✅ **Presence Service**: Implemented heartbeat system (30s intervals), cursor tracking with throttling (100ms), and automatic cleanup
+- ✅ **Cursor Layer**: Real-time cursor rendering with user labels, proper viewport transformation, and Konva integration
+- ✅ **Presence List UI**: Online user display with avatars, user count, and responsive design
+- ✅ **React Query Integration**: Full integration with mutations, subscriptions, error handling, and cache management
+- ✅ **Real-time Updates**: Live cursor positions and presence status updates across multiple users
+- ✅ **Performance Optimized**: Throttled updates, efficient rendering, and proper memory management
+- ✅ **Type Safety**: Full TypeScript support with proper error handling and type definitions
+
+**Key Features Delivered:**
+
+- Real-time presence tracking with heartbeat system
+- Live cursor rendering with user names and avatars
+- Presence list showing online users with status indicators
+- Automatic room join/leave with proper cleanup
+- React Query integration for state management
+- Error handling and connection status indicators
+- Performance optimizations with throttling and efficient updates
 
 _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat documents** for presence tracking. Implementation choice lives in `src/lib/sync/presence.ts`.
 
