@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useRef, useState } from 'react'
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Circle, Group, Layer, Text } from 'react-konva'
 import type { UserPresence } from '../lib/types'
 
@@ -25,10 +25,20 @@ export interface CursorLayerProps {
 
 const CursorLayer: React.FC<CursorLayerProps> = memo(
   ({ presence, currentUserId, viewport }: CursorLayerProps) => {
-    // Filter out current user's presence
-    const otherUsers = presence.filter(
-      (p: UserPresence) => p.userId !== currentUserId
+    console.log(
+      `[CursorLayer] Received presence:`,
+      presence,
+      `currentUserId: ${currentUserId}`
     )
+
+    // Filter out current user's presence - memoize to prevent infinite loops
+    const otherUsers = useMemo(() => {
+      const filtered = presence.filter(
+        (p: UserPresence) => p.userId !== currentUserId
+      )
+      console.log(`[CursorLayer] Filtered other users:`, filtered)
+      return filtered
+    }, [presence, currentUserId])
 
     // PR #9: Cursor interpolation state
     const [interpolatedCursors, setInterpolatedCursors] = useState<
@@ -79,6 +89,11 @@ const CursorLayer: React.FC<CursorLayerProps> = memo(
 
     // PR #9: Animation loop for cursor interpolation
     useEffect(() => {
+      // Only start animation if there are cursors to animate
+      if (interpolatedCursors.size === 0) {
+        return
+      }
+
       const animate = () => {
         setInterpolatedCursors(prev => {
           const newCursors = new Map(prev)
@@ -113,13 +128,25 @@ const CursorLayer: React.FC<CursorLayerProps> = memo(
           cancelAnimationFrame(animationFrameRef.current)
         }
       }
-    }, [])
+    }, [interpolatedCursors.size])
+
+    console.log(
+      `[CursorLayer] Rendering ${interpolatedCursors.size} cursors:`,
+      Array.from(interpolatedCursors.entries())
+    )
 
     return (
       <Layer>
         {Array.from(interpolatedCursors.entries()).map(([userId, cursor]) => {
           const user = otherUsers.find((u: UserPresence) => u.userId === userId)
-          if (!user) return null
+          if (!user) {
+            console.log(`[CursorLayer] No user found for cursor ${userId}`)
+            return null
+          }
+
+          console.log(
+            `[CursorLayer] Rendering cursor for user ${user.displayName} at (${cursor.x}, ${cursor.y})`
+          )
 
           return (
             <Group key={userId}>

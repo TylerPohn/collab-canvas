@@ -45,6 +45,10 @@ class PresenceServiceImpl implements PresenceService {
     canvasId: string,
     user: { uid: string; displayName: string | null; photoURL: string | null }
   ): Promise<void> {
+    console.log(
+      `[PresenceService] joinRoom called for canvas: ${canvasId}, user: ${user.uid}`
+    )
+
     // Clean up previous room if exists
     if (this.currentCanvasId && this.currentUserId) {
       await this.leaveRoom(this.currentCanvasId, this.currentUserId)
@@ -54,17 +58,23 @@ class PresenceServiceImpl implements PresenceService {
     this.currentUserId = user.uid
 
     // Set initial presence
-    await updatePresence(canvasId, user.uid, {
+    const initialPresence = {
       userId: user.uid,
       displayName: user.displayName || 'Anonymous',
       avatar: user.photoURL || undefined,
       cursor: { x: 0, y: 0 },
       lastSeen: Date.now(),
       isActive: true
-    })
+    }
+
+    console.log(`[PresenceService] Setting initial presence:`, initialPresence)
+    await updatePresence(canvasId, user.uid, initialPresence)
 
     // Start heartbeat
     this.startHeartbeat(canvasId, user.uid)
+    console.log(
+      `[PresenceService] Successfully joined room and started heartbeat`
+    )
   }
 
   async leaveRoom(canvasId: string, userId: string): Promise<void> {
@@ -101,6 +111,9 @@ class PresenceServiceImpl implements PresenceService {
     cursor: { x: number; y: number }
   ): void {
     const throttleKey = `${canvasId}-${userId}`
+    console.log(
+      `[PresenceService] updateCursor called for ${userId} at (${cursor.x}, ${cursor.y})`
+    )
 
     // Clear existing throttle timeout
     const existingTimeout = this.cursorThrottleTimeouts.get(throttleKey)
@@ -110,6 +123,9 @@ class PresenceServiceImpl implements PresenceService {
 
     // Set new throttle timeout
     const timeout = setTimeout(async () => {
+      console.log(
+        `[PresenceService] Throttled cursor update executing for ${userId}`
+      )
       await updatePresence(canvasId, userId, {
         cursor,
         lastSeen: Date.now(),
@@ -125,12 +141,17 @@ class PresenceServiceImpl implements PresenceService {
     canvasId: string,
     callback: (presence: UserPresence[]) => void
   ): () => void {
+    console.log(
+      `[PresenceService] subscribeToPresence called for canvas: ${canvasId}`
+    )
     return subscribeToPresence(canvasId, presence => {
+      console.log(`[PresenceService] Raw presence received:`, presence)
       // Filter out stale presence (users who haven't been seen recently)
       const now = Date.now()
       const activePresence = presence.filter(
         p => p.isActive && now - p.lastSeen < PRESENCE_TIMEOUT
       )
+      console.log(`[PresenceService] Filtered active presence:`, activePresence)
       callback(activePresence)
     })
   }

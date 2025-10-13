@@ -17,6 +17,7 @@ import CursorLayer from './CursorLayer'
 import CircleShape from './Shapes/CircleShape'
 import RectangleShape from './Shapes/RectangleShape'
 import TextShape from './Shapes/TextShape'
+import TextEditor from './TextEditor'
 
 interface CanvasStageProps {
   width: number
@@ -55,6 +56,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
     onViewportChange,
     initialViewport
   }) => {
+    console.log(`[CanvasStage] Received ${shapes.length} shapes:`, shapes)
     const stageRef = useRef<Konva.Stage>(null)
     const transformerRef = useRef<Konva.Transformer>(null)
     const [isDrawing, setIsDrawing] = useState(false)
@@ -62,6 +64,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
       x: number
       y: number
     } | null>(null)
+    const [editingTextId, setEditingTextId] = useState<string | null>(null)
 
     const {
       viewport,
@@ -306,15 +309,47 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
             rotation: node.rotation()
           })
         } else if (shape.type === 'text') {
+          // For text shapes, scale affects fontSize
+          const currentFontSize = shape.fontSize || 16
+          const newFontSize = Math.max(
+            8,
+            currentFontSize * Math.max(scaleX, scaleY)
+          )
+
           onShapeUpdate(id, {
             x: node.x(),
             y: node.y(),
+            fontSize: newFontSize,
             rotation: node.rotation()
           })
         }
       },
       [shapes, onShapeUpdate]
     )
+
+    // Handle text double-click for editing
+    const handleTextDoubleClick = useCallback(
+      (id: string, e: Konva.KonvaEventObject<MouseEvent>) => {
+        e.cancelBubble = true
+        setEditingTextId(id)
+        clearSelection()
+      },
+      [clearSelection]
+    )
+
+    // Handle text editing save
+    const handleTextSave = useCallback(
+      (id: string, newText: string) => {
+        onShapeUpdate(id, { text: newText })
+        setEditingTextId(null)
+      },
+      [onShapeUpdate]
+    )
+
+    // Handle text editing cancel
+    const handleTextCancel = useCallback(() => {
+      setEditingTextId(null)
+    }, [])
 
     // Update stage position and scale
     useEffect(() => {
@@ -394,6 +429,10 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                     <TextShape
                       {...commonProps}
                       shape={shape as TextShapeType}
+                      onDoubleClick={(e: Konva.KonvaEventObject<MouseEvent>) =>
+                        handleTextDoubleClick(shape.id, e)
+                      }
+                      isEditing={editingTextId === shape.id}
                     />
                   )
                 default:
@@ -421,6 +460,24 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
             viewport={viewport}
           />
         </Stage>
+
+        {/* Text Editor */}
+        {editingTextId &&
+          (() => {
+            const editingShape = shapes.find(
+              s => s.id === editingTextId && s.type === 'text'
+            ) as TextShapeType | undefined
+            return editingShape ? (
+              <TextEditor
+                shape={editingShape}
+                isVisible={true}
+                onSave={text => handleTextSave(editingTextId, text)}
+                onCancel={handleTextCancel}
+                stagePosition={{ x: viewport.x, y: viewport.y }}
+                stageScale={viewport.scale}
+              />
+            ) : null
+          })()}
 
         {/* Canvas info overlay */}
         <div className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm px-3 py-2 rounded-lg shadow-sm text-sm text-gray-600">

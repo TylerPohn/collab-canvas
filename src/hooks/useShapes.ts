@@ -13,6 +13,8 @@ export function useShapes(canvasId: string) {
   const queryClient = useQueryClient()
   const objectSync = getObjectSyncService(queryClient)
 
+  console.log(`[useShapes] Hook called for canvas: ${canvasId}`)
+
   // Query for all objects in the canvas
   const {
     data: shapes = [],
@@ -21,14 +23,20 @@ export function useShapes(canvasId: string) {
     refetch
   } = useQuery({
     queryKey: objectKeys.list(canvasId),
-    queryFn: () => objectSync.getAllObjects(canvasId),
+    queryFn: () => {
+      console.log(`[useShapes] Query function called for canvas: ${canvasId}`)
+      return objectSync.getAllObjects(canvasId)
+    },
     staleTime: 0, // Always consider stale to ensure real-time updates
     refetchOnWindowFocus: false
   })
 
+  console.log(`[useShapes] Current shapes state:`, { shapes, isLoading, error })
+
   // Subscribe to real-time updates
   useEffect(() => {
     if (canvasId) {
+      console.log(`[useShapes] Setting up subscription for canvas: ${canvasId}`)
       const unsubscribe = objectSync.subscribeToObjects(canvasId)
       return unsubscribe
     }
@@ -37,6 +45,9 @@ export function useShapes(canvasId: string) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      console.log(
+        `[useShapes] Cleaning up subscription for canvas: ${canvasId}`
+      )
       objectSync.unsubscribeFromObjects(canvasId)
     }
   }, [canvasId, objectSync])
@@ -366,12 +377,16 @@ export function useCanvasMeta(canvasId: string, userId: string) {
   // Initialize canvas if it doesn't exist
   const initializeCanvas = useCallback(async () => {
     if (!canvasMeta && !isLoading) {
-      await createCanvasMutation.mutateAsync({
-        name: 'Untitled Canvas',
-        viewport: { x: 0, y: 0, scale: 1 }
-      })
+      // Check if canvas already exists in Firestore before creating
+      const existingCanvas = await getCanvas(canvasId)
+      if (!existingCanvas) {
+        await createCanvasMutation.mutateAsync({
+          name: 'Untitled Canvas',
+          viewport: { x: 0, y: 0, scale: 1 }
+        })
+      }
     }
-  }, [canvasMeta, isLoading, createCanvasMutation])
+  }, [canvasMeta, isLoading, createCanvasMutation.mutateAsync, canvasId])
 
   return {
     canvasMeta,
@@ -391,14 +406,20 @@ export function useCanvasMeta(canvasId: string, userId: string) {
 export function useViewportPersistence(canvasId: string, userId: string) {
   const { canvasMeta, updateCanvasMeta } = useCanvasMeta(canvasId, userId)
 
+  // Create debounced function once and reuse it
+  const debouncedUpdateCanvasMeta = useCallback(
+    debounce((viewport: ViewportState) => {
+      updateCanvasMeta({ viewport })
+    }, 500),
+    [updateCanvasMeta]
+  )
+
   // Save viewport state with debouncing
   const saveViewport = useCallback(
     (viewport: ViewportState) => {
-      debounce(() => {
-        updateCanvasMeta({ viewport })
-      }, 500)()
+      debouncedUpdateCanvasMeta(viewport)
     },
-    [updateCanvasMeta]
+    [debouncedUpdateCanvasMeta]
   )
 
   // Restore viewport from saved state
@@ -414,7 +435,7 @@ export function useViewportPersistence(canvasId: string, userId: string) {
 }
 
 // Simple debounce utility
-function debounce<T extends (...args: unknown[]) => unknown>(
+function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {

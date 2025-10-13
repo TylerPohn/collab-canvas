@@ -9,10 +9,25 @@ interface TextShapeProps {
   onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void
   onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => void
   onTransformEnd: (e: Konva.KonvaEventObject<Event>) => void
+  onDoubleClick?: (e: Konva.KonvaEventObject<MouseEvent>) => void
+  isEditing?: boolean
 }
 
 const TextShape: React.FC<TextShapeProps> = memo(
-  ({ shape, isSelected, onSelect, onDragEnd, onTransformEnd }) => {
+  ({
+    shape,
+    isSelected,
+    onSelect,
+    onDragEnd,
+    onTransformEnd,
+    onDoubleClick,
+    isEditing
+  }) => {
+    // Hide the text shape when it's being edited
+    if (isEditing) {
+      return null
+    }
+
     return (
       <Text
         id={shape.id}
@@ -27,6 +42,8 @@ const TextShape: React.FC<TextShapeProps> = memo(
         draggable
         onClick={onSelect}
         onTap={onSelect}
+        onDblClick={onDoubleClick}
+        onDblTap={onDoubleClick}
         onDragEnd={onDragEnd}
         onTransformEnd={onTransformEnd}
         shadowColor="rgba(0, 0, 0, 0.1)"
