@@ -200,9 +200,38 @@ Health status is displayed in the app header and can be accessed programmaticall
 
 ### Vercel (Recommended)
 
-1. Connect your repository to Vercel
-2. Set environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
+1. **Connect Repository**:
+   - Go to [Vercel Dashboard](https://vercel.com/dashboard)
+   - Click "New Project"
+   - Import your GitHub repository
+   - Select the `collab-canvas` folder as the root directory
+
+2. **Configure Build Settings**:
+   - Framework Preset: `Vite`
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+   - Install Command: `npm install`
+
+3. **Set Environment Variables**:
+   In your Vercel project settings, add these environment variables:
+
+   ```
+   VITE_FIREBASE_API_KEY=your_api_key_here
+   VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
+   ```
+
+4. **Configure Firebase for Production**:
+   - In Firebase Console, go to Authentication > Settings > Authorized domains
+   - Add your Vercel domain (e.g., `your-app.vercel.app`)
+   - Update Firestore security rules if needed for production
+
+5. **Deploy**:
+   - Click "Deploy" to trigger the first deployment
+   - Future pushes to your main branch will auto-deploy
 
 ### Manual Deployment
 
@@ -213,6 +242,53 @@ Health status is displayed in the app header and can be accessed programmaticall
    ```
 
 2. Deploy the `dist/` folder to your hosting provider
+
+### Environment Variables for Production
+
+All environment variables must be prefixed with `VITE_` to be accessible in the browser:
+
+| Variable                            | Description                  | Example                           |
+| ----------------------------------- | ---------------------------- | --------------------------------- |
+| `VITE_FIREBASE_API_KEY`             | Firebase API key             | `AIzaSyC...`                      |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | Firebase auth domain         | `my-project.firebaseapp.com`      |
+| `VITE_FIREBASE_PROJECT_ID`          | Firebase project ID          | `my-project-12345`                |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | Firebase storage bucket      | `my-project.appspot.com`          |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID | `123456789012`                    |
+| `VITE_FIREBASE_APP_ID`              | Firebase app ID              | `1:123456789012:web:abcdef123456` |
+
+### Firebase Production Setup
+
+1. **Authentication**:
+   - Enable Google provider in Firebase Console
+   - Add your production domain to authorized domains
+   - Configure OAuth consent screen if needed
+
+2. **Firestore**:
+   - Ensure database is in production mode
+   - Update security rules for production use
+   - Consider setting up indexes for better performance
+
+3. **Security Rules**:
+
+   ```javascript
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /canvases/{canvasId} {
+         allow read, write: if request.auth != null;
+
+         match /objects/{objectId} {
+           allow read, write: if request.auth != null;
+         }
+
+         match /presence/{userId} {
+           allow read: if request.auth != null;
+           allow write: if request.auth != null && request.auth.uid == userId;
+         }
+       }
+     }
+   }
+   ```
 
 ## Performance
 

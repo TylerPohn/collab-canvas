@@ -37,84 +37,32 @@ const LandingPage: React.FC = () => {
 
   // Show welcome page for unauthenticated users
   return (
-    <div className="text-center">
-      <h2 className="text-3xl font-bold text-gray-900 mb-4">
+    <div className="text-center max-w-2xl mx-auto">
+      <h2 className="text-4xl font-bold text-gray-900 mb-6">
         Welcome to Collab Canvas
       </h2>
-      <p className="text-lg text-gray-600 mb-8">
+      <p className="text-xl text-gray-600 mb-12">
         A real-time collaborative canvas application
       </p>
-      <div className="space-y-4">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
+      <div className="space-y-6">
+        <div className="bg-white p-8 rounded-xl shadow-lg">
+          <h3 className="text-2xl font-semibold text-gray-900 mb-6">
             Ready to Collaborate!
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-gray-600 mb-8 text-lg">
             Create, edit, and collaborate on shapes in real-time with other
             users.
           </p>
-          <div className="space-y-2 text-left text-gray-600">
-            <div className="flex items-center">
-              <svg
-                className="w-5 h-5 text-green-500 mr-2"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Real-time collaborative canvas
-            </div>
-            <div className="flex items-center">
-              <svg
-                className="w-5 h-5 text-green-500 mr-2"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Shape creation and manipulation
-            </div>
-            <div className="flex items-center">
-              <svg
-                className="w-5 h-5 text-green-500 mr-2"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Multi-user presence and cursors
-            </div>
-            <div className="flex items-center">
-              <svg
-                className="w-5 h-5 text-green-500 mr-2"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Firebase authentication
-            </div>
-          </div>
-          <div className="mt-6">
+          <ul className="space-y-3 text-left text-gray-600 list-disc list-inside">
+            <li>Real-time collaborative canvas</li>
+            <li>Shape creation and manipulation</li>
+            <li>Multi-user presence and cursors</li>
+            <li>Firebase authentication</li>
+          </ul>
+          <div className="mt-8">
             <a
               href="/login"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+              className="inline-flex items-center px-8 py-3 border border-transparent text-lg font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
             >
               Get Started
             </a>

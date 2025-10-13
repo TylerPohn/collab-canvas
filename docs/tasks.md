@@ -363,23 +363,41 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 
 ---
 
-## PR #10 — Deployment, Env, and Polishing
+## PR #10 — Deployment, Env, and Polishing ✅ COMPLETED
 
 **Goal:** Public deploy + CI passing + minimal polish for demo.
 
 **Checklist**
 
-- [ ] Hook up Vercel project; configure Firebase env vars.
-  - Files: `README.md`, `.env.example`, Vercel project settings
+- [x] Hook up Vercel project; configure Firebase env vars.
+  - Files: `README.md`, `.env.example`, `vercel.json`, Vercel project settings
 
-- [ ] Verify client-side Firebase usage and environment configuration.
+- [x] Verify client-side Firebase usage and environment configuration.
   - Files: `src/lib/firebase/client.ts`, environment setup
 
 - [x] Final UI polish (empty states, loading spinners, error toasts).
   - Files: `src/pages/CanvasPage.tsx`, `src/components/*`
 
-- [ ] Add demo script to README and a 3–5 min video plan.
+- [x] Add demo script to README and a 3–5 min video plan.
   - Files: `README.md`
+
+**PR #10 Implementation Summary:**
+
+- ✅ **Environment Variables**: Created comprehensive `.env.example` with all required Firebase configuration variables
+- ✅ **Vercel Configuration**: Added `vercel.json` with proper build settings, routing, and environment variable mapping
+- ✅ **Deployment Documentation**: Updated README with detailed Vercel deployment instructions, environment setup, and Firebase production configuration
+- ✅ **Environment Variable Validation**: Verified Firebase client properly validates all required environment variables
+- ✅ **Production Setup Guide**: Added comprehensive guide for Firebase production setup including authentication, Firestore, and security rules
+- ✅ **Build Configuration**: Configured Vercel for optimal Vite build with proper caching and routing
+
+**Key Features Delivered:**
+
+- Complete environment variable documentation and examples
+- Vercel deployment configuration with proper routing and caching
+- Step-by-step deployment guide for Vercel
+- Firebase production setup instructions
+- Environment variable validation and error handling
+- Production-ready build configuration
 
 ---
 
