@@ -8,45 +8,45 @@ Below is a proposed sequence of **pull requests (PRs)** to build and ship the Co
 
 ```
 collab-canvas/
-├─ app/
-│  ├─ (auth)/
-│  │  └─ login/page.tsx
-│  ├─ canvas/page.tsx
-│  ├─ layout.tsx
-│  ├─ globals.css
-│  └─ api/health/route.ts
-├─ components/
-│  ├─ CanvasStage.tsx
-│  ├─ CursorLayer.tsx
-│  ├─ PresenceList.tsx
-│  ├─ Toolbar.tsx
-│  ├─ Shapes/
-│  │  ├─ RectangleShape.tsx
-│  │  ├─ CircleShape.tsx
-│  │  └─ TextShape.tsx
-│  └─ providers/AuthProvider.tsx
-├─ hooks/
-│  ├─ usePanZoom.ts
-│  ├─ usePresence.ts
-│  ├─ useShapes.ts
-│  └─ useCanvasShortcuts.ts
-├─ lib/
-│  ├─ firebase/client.ts
-│  ├─ firebase/firestore.ts
-│  ├─ react-query/queryClient.ts
-│  ├─ schema.ts
-│  ├─ types.ts
-│  ├─ sync/objects.ts
-│  └─ sync/presence.ts
-├─ store/
-│  └─ selection.ts
+├─ src/
+│  ├─ pages/
+│  │  ├─ LoginPage.tsx
+│  │  └─ CanvasPage.tsx
+│  ├─ components/
+│  │  ├─ CanvasStage.tsx
+│  │  ├─ CursorLayer.tsx
+│  │  ├─ PresenceList.tsx
+│  │  ├─ Toolbar.tsx
+│  │  ├─ Shapes/
+│  │  │  ├─ RectangleShape.tsx
+│  │  │  ├─ CircleShape.tsx
+│  │  │  └─ TextShape.tsx
+│  │  └─ providers/AuthProvider.tsx
+│  ├─ hooks/
+│  │  ├─ usePanZoom.ts
+│  │  ├─ usePresence.ts
+│  │  ├─ useShapes.ts
+│  │  └─ useCanvasShortcuts.ts
+│  ├─ lib/
+│  │  ├─ firebase/client.ts
+│  │  ├─ firebase/firestore.ts
+│  │  ├─ react-query/queryClient.ts
+│  │  ├─ schema.ts
+│  │  ├─ types.ts
+│  │  ├─ sync/objects.ts
+│  │  └─ sync/presence.ts
+│  ├─ store/
+│  │  └─ selection.ts
+│  ├─ App.tsx
+│  ├─ main.tsx
+│  └─ index.css
 ├─ public/
 │  └─ favicon.ico
 ├─ .github/workflows/ci.yml
 ├─ .env.example
 ├─ package.json
 ├─ tsconfig.json
-├─ next.config.js
+├─ vite.config.ts
 ├─ postcss.config.js
 ├─ tailwind.config.ts
 ├─ eslint.config.js (or .eslintrc.cjs)
@@ -55,7 +55,7 @@ collab-canvas/
 
 **Notes**
 
-- **Next.js 14 + App Router + TypeScript**.
+- **Vite + React + TypeScript** with React Router for navigation.
 - **Tailwind CSS** for speed.
 - **Konva.js** for canvas rendering (chosen for performance with multiple concurrent users).
 - **Firebase (Auth + Firestore)** for sync; **React Query** for server state & optimistic updates.
@@ -69,21 +69,21 @@ collab-canvas/
 
 **Checklist**
 
-- [ ] Create Next.js app (TS) and install deps: `next react react-dom @tanstack/react-query firebase konva tailwindcss` and utilities.
+- [ ] Create Vite React app (TS) and install deps: `vite react react-dom react-router-dom @tanstack/react-query firebase konva tailwindcss` and utilities.
 
-  - Files: `package.json`, `tsconfig.json`, `next.config.js`
+  - Files: `package.json`, `tsconfig.json`, `vite.config.ts`
 
 - [ ] Configure Tailwind and global styles.
 
-  - Files: `tailwind.config.ts`, `postcss.config.js`, `app/globals.css`
+  - Files: `tailwind.config.ts`, `postcss.config.js`, `src/index.css`
 
-- [ ] Add React Query provider and base layout shell.
+- [ ] Add React Query provider and base app shell with React Router.
 
-  - Files: `lib/react-query/queryClient.ts`, `app/layout.tsx`
+  - Files: `src/lib/react-query/queryClient.ts`, `src/App.tsx`, `src/main.tsx`
 
-- [ ] Add health endpoint for uptime checks.
+- [ ] Add health check utility for monitoring.
 
-  - Files: `app/api/health/route.ts`
+  - Files: `src/lib/health.ts`
 
 - [ ] Add ESLint/Prettier configs and scripts; set up GitHub Actions CI (typecheck, build).
 
@@ -123,19 +123,19 @@ collab-canvas/
 
 - [ ] Auth context/provider with Firebase Auth (Google OAuth only).
 
-  - Files: `components/providers/AuthProvider.tsx`
+  - Files: `src/components/providers/AuthProvider.tsx`
 
-- [ ] Build Login page (App Router route).
+- [ ] Build Login page (React Router route).
 
-  - Files: `app/(auth)/login/page.tsx`
+  - Files: `src/pages/LoginPage.tsx`
 
 - [ ] Add Google account display name and avatar in header layout.
 
-  - Files: `app/layout.tsx` (header), possibly `components/ProfileMenu.tsx` (optional)
+  - Files: `src/App.tsx` (header), possibly `src/components/ProfileMenu.tsx` (optional)
 
 - [ ] Guard `/canvas` route to require auth (redirect if not logged in).
 
-  - Files: `app/canvas/page.tsx`, `components/providers/AuthProvider.tsx`
+  - Files: `src/pages/CanvasPage.tsx`, `src/components/providers/AuthProvider.tsx`
 
 ---
 
@@ -147,19 +147,19 @@ collab-canvas/
 
 - [ ] Add `CanvasStage` (Konva Stage + Layer), responsive to viewport.
 
-  - Files: `components/CanvasStage.tsx`
+  - Files: `src/components/CanvasStage.tsx`
 
 - [ ] Implement pan/zoom hook and attach to stage.
 
-  - Files: `hooks/usePanZoom.ts`, `components/CanvasStage.tsx`
+  - Files: `src/hooks/usePanZoom.ts`, `src/components/CanvasStage.tsx`
 
 - [ ] Create minimal `Toolbar` (shape tools: select, rectangle, circle, text; delete/duplicate).
 
-  - Files: `components/Toolbar.tsx`
+  - Files: `src/components/Toolbar.tsx`
 
 - [ ] Scaffold `/canvas` page to mount the stage and toolbar.
 
-  - Files: `app/canvas/page.tsx`
+  - Files: `src/pages/CanvasPage.tsx`
 
 ---
 
@@ -171,19 +171,19 @@ collab-canvas/
 
 - [ ] Implement shape components and wiring to Konva nodes.
 
-  - Files: `components/Shapes/RectangleShape.tsx`, `components/Shapes/CircleShape.tsx`, `components/Shapes/TextShape.tsx`
+  - Files: `src/components/Shapes/RectangleShape.tsx`, `src/components/Shapes/CircleShape.tsx`, `src/components/Shapes/TextShape.tsx`
 
 - [ ] Selection state (single + marquee). Keep UI-only selection in local store.
 
-  - Files: `store/selection.ts`, `components/CanvasStage.tsx`
+  - Files: `src/store/selection.ts`, `src/components/CanvasStage.tsx`
 
 - [ ] Transformer handles for selected nodes; keyboard shortcuts (delete, dup, arrow nudge).
 
-  - Files: `components/CanvasStage.tsx`, `hooks/useCanvasShortcuts.ts`
+  - Files: `src/components/CanvasStage.tsx`, `src/hooks/useCanvasShortcuts.ts`
 
 - [ ] Utilities for geometry, ids, cloning.
 
-  - Files: `lib/utils/geometry.ts` (optional), extend `lib/types.ts`
+  - Files: `src/lib/utils/geometry.ts` (optional), extend `src/lib/types.ts`
 
 ---
 
@@ -195,21 +195,21 @@ collab-canvas/
 
 - [ ] Presence service: join/leave room; heartbeat; track cursor positions.
 
-  - Files: `lib/sync/presence.ts`, `hooks/usePresence.ts`
+  - Files: `src/lib/sync/presence.ts`, `src/hooks/usePresence.ts`
 
-- [ ] Cursor layer to render other users’ cursors + labels.
+- [ ] Cursor layer to render other users' cursors + labels.
 
-  - Files: `components/CursorLayer.tsx`
+  - Files: `src/components/CursorLayer.tsx`
 
 - [ ] Presence list UI.
 
-  - Files: `components/PresenceList.tsx`, `app/canvas/page.tsx`
+  - Files: `src/components/PresenceList.tsx`, `src/pages/CanvasPage.tsx`
 
 - [ ] React Query integration for presence subscription and updates.
 
-  - Files: `hooks/usePresence.ts`, `lib/react-query/queryClient.ts`
+  - Files: `src/hooks/usePresence.ts`, `src/lib/react-query/queryClient.ts`
 
-_Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat documents** for presence tracking. Implementation choice lives in `lib/sync/presence.ts`.
+_Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat documents** for presence tracking. Implementation choice lives in `src/lib/sync/presence.ts`.
 
 ---
 
@@ -221,19 +221,19 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 
 - [ ] Define Firestore data model: `canvases/{canvasId}`, `canvases/{canvasId}/objects/{objectId}`.
 
-  - Files: `lib/schema.ts`, `lib/types.ts`, `lib/firebase/firestore.ts`
+  - Files: `src/lib/schema.ts`, `src/lib/types.ts`, `src/lib/firebase/firestore.ts`
 
 - [ ] Queries & subscriptions for objects (React Query + Firestore snapshot bridge).
 
-  - Files: `lib/sync/objects.ts`, `hooks/useShapes.ts`
+  - Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`
 
 - [ ] Mutations for create/move/resize/rotate/delete/duplicate with optimistic updates.
 
-  - Files: `hooks/useShapes.ts`, `components/CanvasStage.tsx`
+  - Files: `src/hooks/useShapes.ts`, `src/components/CanvasStage.tsx`
 
 - [ ] Conflict handling: **last write wins** via `updatedAt` + `updatedBy`.
 
-  - Files: `lib/sync/objects.ts`, `lib/types.ts`
+  - Files: `src/lib/sync/objects.ts`, `src/lib/types.ts`
 
 ---
 
@@ -245,15 +245,15 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 
 - [ ] Initial load path: fetch current canvas, then subscribe to live updates.
 
-  - Files: `hooks/useShapes.ts`, `app/canvas/page.tsx`
+  - Files: `src/hooks/useShapes.ts`, `src/pages/CanvasPage.tsx`
 
 - [ ] Persist canvas-level metadata (viewport, default tool, etc.).
 
-  - Files: `lib/firebase/firestore.ts`, `lib/types.ts`, `components/CanvasStage.tsx`
+  - Files: `src/lib/firebase/firestore.ts`, `src/lib/types.ts`, `src/components/CanvasStage.tsx`
 
 - [ ] Save on navigation/unload and restore on re-entry.
 
-  - Files: `components/CanvasStage.tsx`
+  - Files: `src/components/CanvasStage.tsx`
 
 ---
 
@@ -265,15 +265,15 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 
 - [ ] Batch/transaction writes for bursty updates; debounce drag/resize network patches.
 
-  - Files: `lib/sync/objects.ts`, `hooks/useShapes.ts`
+  - Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`
 
 - [ ] Throttle cursor broadcasts; interpolate cursor motion locally for smoothness.
 
-  - Files: `lib/sync/presence.ts`, `hooks/usePresence.ts`, `components/CursorLayer.tsx`
+  - Files: `src/lib/sync/presence.ts`, `src/hooks/usePresence.ts`, `src/components/CursorLayer.tsx`
 
 - [ ] Avoid excessive React re-renders (memoization; Konva refs).
 
-  - Files: `components/CanvasStage.tsx`, `components/Shapes/*`
+  - Files: `src/components/CanvasStage.tsx`, `src/components/Shapes/*`
 
 - [ ] Stress test script (manual playbook) & profiling notes in README.
 
@@ -291,13 +291,13 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 
   - Files: `README.md`, `.env.example`, Vercel project settings
 
-- [ ] Verify SSR/CSR boundaries and Firebase usage in Next.js App Router.
+- [ ] Verify client-side Firebase usage and environment configuration.
 
-  - Files: `lib/firebase/client.ts`, any server-only modules
+  - Files: `src/lib/firebase/client.ts`, environment setup
 
 - [ ] Final UI polish (empty states, loading spinners, error toasts).
 
-  - Files: `app/canvas/page.tsx`, `components/*`
+  - Files: `src/pages/CanvasPage.tsx`, `src/components/*`
 
 - [ ] Add demo script to README and a 3–5 min video plan.
 
@@ -313,18 +313,18 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 
 - [ ] Define callable canvas API surface to be used later by AI.
 
-  - Files: `lib/sync/objects.ts` (export high-level create/move/resize), `lib/types.ts`
+  - Files: `src/lib/sync/objects.ts` (export high-level create/move/resize), `src/lib/types.ts`
 
-- [ ] Add `/lib/ai/tools.ts` with TypeScript signatures (no implementation yet).
+- [ ] Add `/src/lib/ai/tools.ts` with TypeScript signatures (no implementation yet).
 
-  - Files: `lib/ai/tools.ts`
+  - Files: `src/lib/ai/tools.ts`
 
 ---
 
 ## Data Models (summary)
 
 ```ts
-// lib/types.ts
+// src/lib/types.ts
 export type ShapeType = 'rect' | 'circle' | 'text'
 export interface ShapeBase {
   id: string
@@ -392,11 +392,11 @@ setupTests.ts   // RTL + JSDOM setup
 
 **Unit**
 
-- **Smoke render** of `app/layout.tsx` without crashing.
+- **Smoke render** of `src/App.tsx` without crashing.
 
 **Integration/E2E**
 
-- **Health endpoint** responds 200.
+- **Health check utility** works correctly.
 
 ---
 
@@ -405,7 +405,7 @@ setupTests.ts   // RTL + JSDOM setup
 **Add/Update**
 
 - Emulator-based tests to verify SDK init and R/W to Firestore.
-- Files: `lib/firebase/client.ts`, `lib/firebase/firestore.ts`
+- Files: `src/lib/firebase/client.ts`, `src/lib/firebase/firestore.ts`
 - Tests: `tests/integration/firebase.emu.spec.ts`
 
 **Integration** (with Emulators)
@@ -423,7 +423,7 @@ setupTests.ts   // RTL + JSDOM setup
 
 **Add/Update**
 
-- Files under test: `components/providers/AuthProvider.tsx`, `app/(auth)/*`
+- Files under test: `src/components/providers/AuthProvider.tsx`, `src/pages/LoginPage.tsx`
 - Tests: `tests/unit/AuthProvider.spec.tsx`, `tests/e2e/auth-flow.spec.ts`
 
 **Unit**
@@ -440,7 +440,7 @@ setupTests.ts   // RTL + JSDOM setup
 
 **Add/Update**
 
-- Files: `components/CanvasStage.tsx`, `hooks/usePanZoom.ts`, `components/Toolbar.tsx`
+- Files: `src/components/CanvasStage.tsx`, `src/hooks/usePanZoom.ts`, `src/components/Toolbar.tsx`
 - Tests: `tests/unit/usePanZoom.spec.ts`, `tests/e2e/pan-zoom-toolbar.spec.ts`
 
 **Unit**
@@ -457,7 +457,7 @@ setupTests.ts   // RTL + JSDOM setup
 
 **Add/Update**
 
-- Files: `components/Shapes/*`, `store/selection.ts`, `hooks/useCanvasShortcuts.ts`, optional `lib/utils/geometry.ts`
+- Files: `src/components/Shapes/*`, `src/store/selection.ts`, `src/hooks/useCanvasShortcuts.ts`, optional `src/lib/utils/geometry.ts`
 - Tests: `tests/unit/geometry.spec.ts`, `tests/e2e/shapes-crud.spec.ts`
 
 **Unit**
@@ -476,7 +476,7 @@ setupTests.ts   // RTL + JSDOM setup
 
 **Add/Update**
 
-- Files: `lib/sync/presence.ts`, `hooks/usePresence.ts`, `components/CursorLayer.tsx`, `components/PresenceList.tsx`
+- Files: `src/lib/sync/presence.ts`, `src/hooks/usePresence.ts`, `src/components/CursorLayer.tsx`, `src/components/PresenceList.tsx`
 - Tests: `tests/integration/presence-two-clients.spec.ts`, `tests/unit/throttle-utils.spec.ts`
 
 **Integration (Emulators + Playwright, 2 pages)**
@@ -493,7 +493,7 @@ setupTests.ts   // RTL + JSDOM setup
 
 **Add/Update**
 
-- Files: `lib/sync/objects.ts`, `hooks/useShapes.ts`, `lib/firebase/firestore.ts`, `lib/types.ts`
+- Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`, `src/lib/firebase/firestore.ts`, `src/lib/types.ts`
 - Tests: `tests/integration/objects-sync.spec.ts`, `tests/unit/useShapes.spec.ts`
 
 **Integration (Emulators, 2 pages)**
@@ -512,7 +512,7 @@ setupTests.ts   // RTL + JSDOM setup
 
 **Add/Update**
 
-- Files: `hooks/useShapes.ts`, `lib/firebase/firestore.ts`, `components/CanvasStage.tsx`
+- Files: `src/hooks/useShapes.ts`, `src/lib/firebase/firestore.ts`, `src/components/CanvasStage.tsx`
 - Tests: `tests/e2e/reconnect-persistence.spec.ts`
 
 **E2E (Emulators)**
@@ -525,7 +525,7 @@ setupTests.ts   // RTL + JSDOM setup
 
 **Add/Update**
 
-- Files: `lib/sync/objects.ts`, `hooks/useShapes.ts`, `hooks/usePresence.ts`
+- Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`, `src/hooks/usePresence.ts`
 - Tests: `tests/unit/debounce-batching.spec.ts`
 
 **Unit**
@@ -548,6 +548,6 @@ setupTests.ts   // RTL + JSDOM setup
 
   1. `pnpm test:unit` (Vitest)
   2. Start **Firebase Emulators** (Auth, Firestore)
-  3. `pnpm test:e2e` (Playwright) against local dev server
+  3. `pnpm test:e2e` (Playwright) against local Vite dev server
 
 - Cache `~/.cache/ms-playwright` and node modules to speed up runs.

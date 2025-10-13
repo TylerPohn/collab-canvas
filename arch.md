@@ -2,7 +2,7 @@ flowchart LR
 %% ========= CLIENT APP =========
 subgraph Client
 direction TB
-A1[app - App Router - layout tsx - auth login or signup - canvas page tsx]
+A1[src - main tsx - App tsx - pages - auth login - canvas page]
 A2[components - CanvasStage Konva - Shapes - CursorLayer - PresenceList - Toolbar - AuthProvider]
 A3[hooks - usePanZoom - useShapes React Query - usePresence React Query - useCanvasShortcuts]
 A4[store - selection ts UI only]
@@ -30,9 +30,9 @@ end
 %% ========= HOSTING DELIVERY =========
 subgraph Hosting
 direction TB
-H1[Vercel Next js hosting]
+H1[Vercel Vite hosting]
 H2[Firebase Hosting optional]
-H3[NPM scripts build - pnpm build start test]
+H3[NPM scripts build - pnpm dev build preview test]
 end
 
 %% ========= DATA FLOWS =========

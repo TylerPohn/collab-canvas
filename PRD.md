@@ -91,7 +91,7 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 
 ### **Hosting & Deployment**
 
-- **Frontend:** Vercel or Firebase Hosting.
+- **Frontend:** Vercel, Netlify, or Firebase Hosting (Vite builds to static files).
 - **Backend:** Firebase (single environment for MVP).
 
 ---
