@@ -87,7 +87,7 @@ export interface SelectionState {
 }
 
 // Tool types for the toolbar
-export type ToolType = 'select' | 'rect' | 'circle' | 'text'
+export type ToolType = 'select' | 'rectangle' | 'circle' | 'text'
 
 // Viewport state
 export interface ViewportState {

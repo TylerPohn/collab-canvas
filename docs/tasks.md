@@ -15,24 +15,24 @@ collab-canvas/
 │  ├─ components/
 │  │  ├─ ProfileMenu.tsx ✅
 │  │  ├─ ProtectedRoute.tsx ✅
-│  │  ├─ CanvasStage.tsx (planned)
+│  │  ├─ CanvasStage.tsx ✅
 │  │  ├─ CursorLayer.tsx (planned)
 │  │  ├─ PresenceList.tsx (planned)
-│  │  ├─ Toolbar.tsx (planned)
-│  │  ├─ Shapes/ (planned)
-│  │  │  ├─ RectangleShape.tsx
-│  │  │  ├─ CircleShape.tsx
-│  │  │  └─ TextShape.tsx
+│  │  ├─ Toolbar.tsx ✅
+│  │  ├─ Shapes/ ✅
+│  │  │  ├─ RectangleShape.tsx ✅
+│  │  │  ├─ CircleShape.tsx ✅
+│  │  │  └─ TextShape.tsx ✅
 │  │  └─ providers/
 │  │     └─ AuthProvider.tsx ✅
 │  ├─ contexts/
 │  │  └─ AuthContext.tsx ✅
 │  ├─ hooks/
 │  │  ├─ useAuth.ts ✅
-│  │  ├─ usePanZoom.ts (planned)
+│  │  ├─ usePanZoom.ts ✅
 │  │  ├─ usePresence.ts (planned)
 │  │  ├─ useShapes.ts (planned)
-│  │  └─ useCanvasShortcuts.ts (planned)
+│  │  └─ useCanvasShortcuts.ts ✅
 │  ├─ lib/
 │  │  ├─ firebase/
 │  │  │  ├─ client.ts ✅
@@ -45,8 +45,8 @@ collab-canvas/
 │  │  ├─ sync/ (planned)
 │  │  │  ├─ objects.ts
 │  │  │  └─ presence.ts
-│  ├─ store/ (planned)
-│  │  └─ selection.ts
+│  ├─ store/ ✅
+│  │  └─ selection.ts ✅
 │  ├─ App.tsx ✅
 │  ├─ main.tsx ✅
 │  └─ index.css ✅
@@ -73,7 +73,8 @@ collab-canvas/
 - **Tailwind CSS** for speed.
 - **Konva.js** for canvas rendering (chosen for performance with multiple concurrent users).
 - **Firebase (Auth + Firestore)** for sync; **React Query** for server state & optimistic updates.
-- Local UI-only state (e.g., selection) in a tiny store (or component state) under `store/`.
+- **Zustand** for local UI-only state management (selection store).
+- **Shape System**: Full CRUD operations implemented with local state, ready for real-time sync in PR #6.
 
 ---
 
@@ -161,23 +162,43 @@ collab-canvas/
 
 ---
 
-## PR #5 — Shape Primitives & Selection/Transforms
+## PR #5 — Shape Primitives & Selection/Transforms ✅ COMPLETED
 
 **Goal:** Create/move/resize/rotate/delete/duplicate for rectangles, circles, and text.
 
 **Checklist**
 
-- [ ] Implement shape components and wiring to Konva nodes.
+- [x] Implement shape components and wiring to Konva nodes.
   - Files: `src/components/Shapes/RectangleShape.tsx`, `src/components/Shapes/CircleShape.tsx`, `src/components/Shapes/TextShape.tsx`
 
-- [ ] Selection state (single + marquee). Keep UI-only selection in local store.
+- [x] Selection state (single + marquee). Keep UI-only selection in local store.
   - Files: `src/store/selection.ts`, `src/components/CanvasStage.tsx`
 
-- [ ] Transformer handles for selected nodes; keyboard shortcuts (delete, dup, arrow nudge).
+- [x] Transformer handles for selected nodes; keyboard shortcuts (delete, dup, arrow nudge).
   - Files: `src/components/CanvasStage.tsx`, `src/hooks/useCanvasShortcuts.ts`
 
-- [ ] Utilities for geometry, ids, cloning.
+- [ ] ~~Utilities for geometry, ids, cloning.~~ (Skipped per user request - focusing on simple shapes)
   - Files: `src/lib/utils/geometry.ts` (optional), extend `src/lib/types.ts`
+
+**PR #5 Implementation Summary:**
+
+- ✅ **Shape Components**: Created RectangleShape, CircleShape, and TextShape components with full Konva integration
+- ✅ **Selection System**: Implemented Zustand-based selection store with single/multi-select support
+- ✅ **Transform Handles**: Added Konva Transformer for resize/rotate operations on selected shapes
+- ✅ **Keyboard Shortcuts**: Delete (Del), Duplicate (Cmd/Ctrl+D), Arrow key nudging (5px)
+- ✅ **Shape Creation**: Click-and-drag for rectangles/circles, click-to-create for text
+- ✅ **Shape Manipulation**: Drag to move, transform handles for resize/rotate, visual selection feedback
+- ✅ **Type Safety**: Full TypeScript support with proper Konva event types
+- ✅ **Code Quality**: All linting errors resolved, successful production build
+
+**Key Features Delivered:**
+
+- Create, select, move, resize, rotate, delete, and duplicate shapes
+- Multi-selection with Ctrl/Cmd+click
+- Visual feedback with blue selection borders and transformer handles
+- Smooth pan/zoom integration with shape tools
+- Toolbar state management (enable/disable buttons based on selection)
+- Local shape state management ready for future real-time sync
 
 ---
 
