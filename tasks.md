@@ -4,54 +4,68 @@ Below is a proposed sequence of **pull requests (PRs)** to build and ship the Co
 
 ---
 
-## Project File Structure (proposed)
+## Project File Structure (current)
 
 ```
 collab-canvas/
 ├─ src/
 │  ├─ pages/
-│  │  ├─ LoginPage.tsx
-│  │  └─ CanvasPage.tsx
+│  │  ├─ LoginPage.tsx ✅
+│  │  └─ CanvasPage.tsx ✅
 │  ├─ components/
-│  │  ├─ CanvasStage.tsx
-│  │  ├─ CursorLayer.tsx
-│  │  ├─ PresenceList.tsx
-│  │  ├─ Toolbar.tsx
-│  │  ├─ Shapes/
+│  │  ├─ ProfileMenu.tsx ✅
+│  │  ├─ ProtectedRoute.tsx ✅
+│  │  ├─ CanvasStage.tsx (planned)
+│  │  ├─ CursorLayer.tsx (planned)
+│  │  ├─ PresenceList.tsx (planned)
+│  │  ├─ Toolbar.tsx (planned)
+│  │  ├─ Shapes/ (planned)
 │  │  │  ├─ RectangleShape.tsx
 │  │  │  ├─ CircleShape.tsx
 │  │  │  └─ TextShape.tsx
-│  │  └─ providers/AuthProvider.tsx
+│  │  └─ providers/
+│  │     └─ AuthProvider.tsx ✅
+│  ├─ contexts/
+│  │  └─ AuthContext.tsx ✅
 │  ├─ hooks/
-│  │  ├─ usePanZoom.ts
-│  │  ├─ usePresence.ts
-│  │  ├─ useShapes.ts
-│  │  └─ useCanvasShortcuts.ts
+│  │  ├─ useAuth.ts ✅
+│  │  ├─ usePanZoom.ts (planned)
+│  │  ├─ usePresence.ts (planned)
+│  │  ├─ useShapes.ts (planned)
+│  │  └─ useCanvasShortcuts.ts (planned)
 │  ├─ lib/
-│  │  ├─ firebase/client.ts
-│  │  ├─ firebase/firestore.ts
-│  │  ├─ react-query/queryClient.ts
-│  │  ├─ schema.ts
-│  │  ├─ types.ts
-│  │  ├─ sync/objects.ts
-│  │  └─ sync/presence.ts
-│  ├─ store/
+│  │  ├─ firebase/
+│  │  │  ├─ client.ts ✅
+│  │  │  └─ firestore.ts ✅
+│  │  ├─ react-query/
+│  │  │  └─ queryClient.ts ✅
+│  │  ├─ health.ts ✅
+│  │  ├─ schema.ts ✅
+│  │  ├─ types.ts ✅
+│  │  ├─ sync/ (planned)
+│  │  │  ├─ objects.ts
+│  │  │  └─ presence.ts
+│  ├─ store/ (planned)
 │  │  └─ selection.ts
-│  ├─ App.tsx
-│  ├─ main.tsx
-│  └─ index.css
+│  ├─ App.tsx ✅
+│  ├─ main.tsx ✅
+│  └─ index.css ✅
 ├─ public/
-│  └─ favicon.ico
-├─ .github/workflows/ci.yml
-├─ .env.example
-├─ package.json
-├─ tsconfig.json
-├─ vite.config.ts
-├─ postcss.config.js
-├─ tailwind.config.ts
-├─ eslint.config.js (or .eslintrc.cjs)
-└─ README.md
+│  └─ vite.svg ✅
+├─ .github/workflows/ci.yml (planned)
+├─ .env.example ✅
+├─ package.json ✅
+├─ tsconfig.json ✅
+├─ tsconfig.app.json ✅
+├─ tsconfig.node.json ✅
+├─ vite.config.ts ✅
+├─ postcss.config.js ✅
+├─ tailwind.config.ts ✅
+├─ eslint.config.js ✅
+└─ README.md ✅
 ```
+
+**Legend:** ✅ = Completed, (planned) = Future PRs
 
 **Notes**
 
@@ -107,23 +121,23 @@ collab-canvas/
 
 ---
 
-## PR #3 — Authentication UI & Flow
+## PR #3 — Authentication UI & Flow ✅ COMPLETED
 
 **Goal:** Login page with Google OAuth, user display name, and auth provider.
 
 **Checklist**
 
-- [ ] Auth context/provider with Firebase Auth (Google OAuth only).
-  - Files: `src/components/providers/AuthProvider.tsx`
+- [x] Auth context/provider with Firebase Auth (Google OAuth only).
+  - Files: `src/components/providers/AuthProvider.tsx`, `src/contexts/AuthContext.tsx`, `src/hooks/useAuth.ts`
 
-- [ ] Build Login page (React Router route).
+- [x] Build Login page (React Router route).
   - Files: `src/pages/LoginPage.tsx`
 
-- [ ] Add Google account display name and avatar in header layout.
-  - Files: `src/App.tsx` (header), possibly `src/components/ProfileMenu.tsx` (optional)
+- [x] Add Google account display name and avatar in header layout.
+  - Files: `src/App.tsx` (header), `src/components/ProfileMenu.tsx`
 
-- [ ] Guard `/canvas` route to require auth (redirect if not logged in).
-  - Files: `src/pages/CanvasPage.tsx`, `src/components/providers/AuthProvider.tsx`
+- [x] Guard `/canvas` route to require auth (redirect if not logged in).
+  - Files: `src/pages/CanvasPage.tsx`, `src/components/ProtectedRoute.tsx`
 
 ---
 
