@@ -45,8 +45,9 @@ const CursorLayer: React.FC<CursorLayerProps> = memo(
         const newCursors = new Map(prev)
 
         otherUsers.forEach((user: UserPresence) => {
-          const transformedX = (user.cursor.x - viewport.x) / viewport.scale
-          const transformedY = (user.cursor.y - viewport.y) / viewport.scale
+          // Use world coordinates directly - Stage will handle the transformation
+          const transformedX = user.cursor.x
+          const transformedY = user.cursor.y
 
           const existing = newCursors.get(user.userId)
           if (existing) {
