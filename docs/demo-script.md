@@ -2,11 +2,11 @@
 
 ## Opening (15 seconds)
 
-"Welcome to CollabCanvas - a real-time collaborative design tool that brings multiple users together on a shared canvas. Think of it as a simplified Figma, built with React, Konva.js, and Firebase for seamless multiplayer collaboration."
+"I'm Tyler Pohn and this is my CollabCanvas built with React, Konva.js, and Firebase.
 
 ## Authentication & Setup (20 seconds)
 
-"First, let me show you the authentication flow. Users sign in with Google OAuth, and their display names and avatars are immediately visible to other collaborators. Notice how the presence system tracks who's online in real-time."
+"First, let me show you the authentication flow. Users sign in with Google OAuth, and their display names and avatars are immediately visible to other collaborators. The presence system tracks who's online in real-time, which we'll see in a minute."
 
 _[Show login page, then switch to canvas]_
 
@@ -31,11 +31,12 @@ _[Create several shapes, demonstrate transformations]_
 
 _[Switch to second browser/device]_
 
-Watch what happens when I create a shape on this device... _[create shape]_ ...it appears instantly on the other screen. Now let me move this circle... _[move shape]_ ...and you can see the movement is synchronized in real-time.
+Watch what happens when I create a shape on the other device... _[create shape]_ ...it appears instantly on this screen. Now let me move this circle... _[move shape]_ ...and you can see the movement is synchronized in real-time.
 
 The presence system shows live cursors with user names. See how my cursor appears on both screens as I move around? This gives collaborators immediate awareness of who's working where.
 
-The call to update a cursor's coordinates is debounced, so its not going to update until 
+The firebase updates to a cursor's coordinates are debounced in the UI such that it won't update until the cursor stops moving. I blew up my free tier tracking moving cursors, so it'll remain like this for now. 
+
 Let me demonstrate simultaneous editing - I'll resize a shape on both devices at the same time... _[create shapes simultaneously]_ ...and watch how the system handles concurrent updates without conflicts. 
 
 The 'last write wins' conflict resolution ensures data consistency while maintaining the collaborative experience."
@@ -46,13 +47,12 @@ _[Show presence list, cursor movement, simultaneous editing]_
 
 "CollabCanvas includes several productivity features:
 
-- Multi-selection with Ctrl+click for batch operations
 - Keyboard shortcuts: Delete key to remove objects, Cmd+D to duplicate
 - Arrow keys for precise 5-pixel nudging
 - Double-click text to edit inline
 - Persistent state - if I refresh the page, all my work is preserved
 
-The system uses React Query for optimistic updates and Firebase Firestore for real-time synchronization, ensuring reliability even with network interruptions."
+The system uses React Query for optimistic updates and Firebase Firestore for real-time synchronization, ensuring durability."
 
 _[Demonstrate keyboard shortcuts, text editing, refresh to show persistence]_
 
@@ -62,18 +62,10 @@ _[Demonstrate keyboard shortcuts, text editing, refresh to show persistence]_
 
 - Konva.js provides high-performance 2D rendering
 - Firebase handles real-time sync with sub-100ms latency
-- React Query manages local state with optimistic updates
+- React Query manages local state
 - The system supports 500+ objects and 5+ concurrent users without performance degradation
 
 This solid foundation is ready for the next phase: AI-powered canvas manipulation through natural language commands."
-
-_[Show performance metrics if available, or mention the technical stack]_
-
-## Closing & Future Vision (10 seconds)
-
-"CollabCanvas demonstrates the future of collaborative design tools - where multiple users can work together seamlessly in real-time. The next step is adding AI agents that can understand natural language commands like 'create a login form' or 'arrange these elements in a grid.'
-
-This is the foundation for how humans and AI will design together in the future. Thank you for watching!"
 
 ---
 

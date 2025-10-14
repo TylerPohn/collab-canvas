@@ -141,15 +141,19 @@ const CanvasPage: React.FC = () => {
         Shape,
         'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'
       >
-    ) => {
-      if (!user?.uid) return
+    ): Promise<Shape> => {
+      if (!user?.uid) {
+        throw new Error('User not authenticated')
+      }
 
       try {
-        await createShape(shapeData)
+        const createdShape = await createShape(shapeData)
         showSuccess('Shape created', 'Your shape has been added to the canvas')
+        return createdShape
       } catch (error) {
         console.error('Failed to create shape:', error)
         showError('Failed to create shape', 'Please try again')
+        throw error
       }
     },
     [createShape, user?.uid, showSuccess, showError]

@@ -49,9 +49,10 @@ const TextEditor: React.FC<TextEditorProps> = ({
   if (!isVisible) return null
 
   // Calculate position accounting for stage transform
-  // Position at the bottom-left corner of the text
-  const x = (shape.x + stagePosition.x) * stageScale
-  const y = (shape.y + stagePosition.y) * stageScale
+  // The stage position and scale are already applied to the canvas
+  // We need to convert world coordinates to screen coordinates
+  const x = shape.x * stageScale + stagePosition.x
+  const y = shape.y * stageScale + stagePosition.y
 
   return (
     <div

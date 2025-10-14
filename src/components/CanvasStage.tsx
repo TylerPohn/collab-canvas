@@ -31,7 +31,7 @@ interface CanvasStageProps {
       Shape,
       'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'
     >
-  ) => void
+  ) => Promise<Shape>
   onShapeUpdate: (id: string, updates: Partial<Shape>) => void
   onShapeDelete: (ids: string[]) => void
   onShapeDuplicate: (ids: string[]) => void
@@ -328,7 +328,20 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 }
               }
 
-              onShapeCreate(shapeData)
+              // For text shapes, automatically enter edit mode after creation
+              if (selectedTool === 'text') {
+                onShapeCreate(shapeData)
+                  .then(createdShape => {
+                    if (createdShape && createdShape.type === 'text') {
+                      setEditingTextId(createdShape.id)
+                    }
+                  })
+                  .catch(error => {
+                    console.error('Failed to create text shape:', error)
+                  })
+              } else {
+                onShapeCreate(shapeData)
+              }
             }
           }
           setIsDrawing(false)
