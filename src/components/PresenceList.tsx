@@ -12,9 +12,9 @@ const PresenceList: React.FC<PresenceListProps> = ({
   currentUserId,
   className = ''
 }) => {
-  // Filter out current user and sort by display name
+  // Filter out current user and users without userId, then sort by display name
   const otherUsers = presence
-    .filter(p => p.userId !== currentUserId)
+    .filter(p => p.userId && p.userId !== currentUserId)
     .sort((a, b) =>
       (a.displayName || 'Anonymous').localeCompare(b.displayName || 'Anonymous')
     )
@@ -45,7 +45,7 @@ const PresenceList: React.FC<PresenceListProps> = ({
     >
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-medium text-gray-700">
-          Online ({otherUsers.length})
+          Online ({otherUsers.length + 1})
         </h3>
         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
       </div>

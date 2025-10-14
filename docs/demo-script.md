@@ -35,6 +35,7 @@ Watch what happens when I create a shape on this device... _[create shape]_ ...i
 
 The presence system shows live cursors with user names. See how my cursor appears on both screens as I move around? This gives collaborators immediate awareness of who's working where.
 
+The call to update a cursor's coordinates is debounced, so its not going to update until 
 Let me demonstrate simultaneous editing - I'll resize a shape on both devices at the same time... _[create shapes simultaneously]_ ...and watch how the system handles concurrent updates without conflicts. 
 
 The 'last write wins' conflict resolution ensures data consistency while maintaining the collaborative experience."
