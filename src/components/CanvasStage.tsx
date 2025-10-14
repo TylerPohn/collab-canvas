@@ -288,6 +288,23 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
       [selectShape]
     )
 
+    // Handle shape drag move - update cursor position during drag
+    const handleShapeDragMove = useCallback(
+      (e: Konva.KonvaEventObject<DragEvent>) => {
+        const stage = e.target.getStage()
+        if (stage) {
+          const pointer = stage.getPointerPosition()
+          if (pointer) {
+            // Transform pointer position to world coordinates
+            const worldX = (pointer.x - viewport.x) / viewport.scale
+            const worldY = (pointer.y - viewport.y) / viewport.scale
+            onCursorMove({ x: worldX, y: worldY })
+          }
+        }
+      },
+      [viewport.x, viewport.y, viewport.scale, onCursorMove]
+    )
+
     // Handle shape drag end
     const handleShapeDragEnd = useCallback(
       (id: string, e: Konva.KonvaEventObject<DragEvent>) => {
@@ -427,6 +444,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 isSelected: isSelected(shape.id),
                 onSelect: (e: Konva.KonvaEventObject<MouseEvent>) =>
                   handleShapeSelect(shape.id, e),
+                onDragMove: handleShapeDragMove,
                 onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) =>
                   handleShapeDragEnd(shape.id, e),
                 onTransformEnd: (e: Konva.KonvaEventObject<Event>) =>

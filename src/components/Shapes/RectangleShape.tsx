@@ -7,12 +7,13 @@ interface RectangleShapeProps {
   shape: RectangleShapeType
   isSelected: boolean
   onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void
+  onDragMove: (e: Konva.KonvaEventObject<DragEvent>) => void
   onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => void
   onTransformEnd: (e: Konva.KonvaEventObject<Event>) => void
 }
 
 const RectangleShape: React.FC<RectangleShapeProps> = memo(
-  ({ shape, isSelected, onSelect, onDragEnd, onTransformEnd }) => {
+  ({ shape, isSelected, onSelect, onDragMove, onDragEnd, onTransformEnd }) => {
     return (
       <Rect
         id={shape.id}
@@ -27,6 +28,7 @@ const RectangleShape: React.FC<RectangleShapeProps> = memo(
         draggable
         onClick={onSelect}
         onTap={onSelect}
+        onDragMove={onDragMove}
         onDragEnd={onDragEnd}
         onTransformEnd={onTransformEnd}
         shadowColor="rgba(0, 0, 0, 0.1)"

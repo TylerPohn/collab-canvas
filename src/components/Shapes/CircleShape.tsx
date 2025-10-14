@@ -7,12 +7,13 @@ interface CircleShapeProps {
   shape: CircleShapeType
   isSelected: boolean
   onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void
+  onDragMove: (e: Konva.KonvaEventObject<DragEvent>) => void
   onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => void
   onTransformEnd: (e: Konva.KonvaEventObject<Event>) => void
 }
 
 const CircleShape: React.FC<CircleShapeProps> = memo(
-  ({ shape, isSelected, onSelect, onDragEnd, onTransformEnd }) => {
+  ({ shape, isSelected, onSelect, onDragMove, onDragEnd, onTransformEnd }) => {
     return (
       <Circle
         id={shape.id}
@@ -26,6 +27,7 @@ const CircleShape: React.FC<CircleShapeProps> = memo(
         draggable
         onClick={onSelect}
         onTap={onSelect}
+        onDragMove={onDragMove}
         onDragEnd={onDragEnd}
         onTransformEnd={onTransformEnd}
         shadowColor="rgba(0, 0, 0, 0.1)"

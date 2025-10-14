@@ -45,6 +45,11 @@ const CursorLayer: React.FC<CursorLayerProps> = memo(
         const newCursors = new Map(prev)
 
         otherUsers.forEach((user: UserPresence) => {
+          // Skip users without cursor data
+          if (!user.cursor) {
+            return
+          }
+
           // Use world coordinates directly - Stage will handle the transformation
           const transformedX = user.cursor.x
           const transformedY = user.cursor.y
@@ -161,7 +166,7 @@ const CursorLayer: React.FC<CursorLayerProps> = memo(
               <Text
                 x={cursor.x + 12}
                 y={cursor.y - 8}
-                text={user.displayName}
+                text={user.displayName || 'Anonymous'}
                 fontSize={12}
                 fontFamily="Arial, sans-serif"
                 fill="#374151"

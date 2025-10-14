@@ -15,7 +15,9 @@ const PresenceList: React.FC<PresenceListProps> = ({
   // Filter out current user and sort by display name
   const otherUsers = presence
     .filter(p => p.userId !== currentUserId)
-    .sort((a, b) => a.displayName.localeCompare(b.displayName))
+    .sort((a, b) =>
+      (a.displayName || 'Anonymous').localeCompare(b.displayName || 'Anonymous')
+    )
 
   if (otherUsers.length === 0) {
     return (
@@ -65,7 +67,7 @@ const PresenceList: React.FC<PresenceListProps> = ({
               ) : (
                 <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center">
                   <span className="text-xs font-medium text-gray-600">
-                    {user.displayName.charAt(0).toUpperCase()}
+                    {(user.displayName || 'A').charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
@@ -75,7 +77,7 @@ const PresenceList: React.FC<PresenceListProps> = ({
 
             {/* Display name */}
             <span className="text-gray-700 truncate max-w-24">
-              {user.displayName}
+              {user.displayName || 'Anonymous'}
             </span>
           </div>
         ))}
