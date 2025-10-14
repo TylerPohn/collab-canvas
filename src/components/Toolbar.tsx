@@ -1,6 +1,6 @@
 import React from 'react'
 
-export type ToolType = 'select' | 'rectangle' | 'circle' | 'text'
+export type ToolType = 'select' | 'pan' | 'rectangle' | 'circle' | 'text'
 
 interface ToolbarProps {
   selectedTool: ToolType
@@ -21,6 +21,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
 }) => {
   const tools: { type: ToolType; label: string; icon: string }[] = [
     { type: 'select', label: 'Select', icon: '↖' },
+    { type: 'pan', label: 'Pan', icon: '✋' },
     { type: 'rectangle', label: 'Rectangle', icon: '▭' },
     { type: 'circle', label: 'Circle', icon: '○' },
     { type: 'text', label: 'Text', icon: 'T' }
@@ -100,7 +101,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <div className="ml-auto hidden lg:block">
           <div className="bg-gray-50 border border-gray-200 rounded-md px-3 py-2">
             <p className="text-sm text-gray-600 font-medium">
-              {selectedTool === 'select' && 'Click and drag to select objects'}
+              {selectedTool === 'select' && 'Click to select objects'}
+              {selectedTool === 'pan' && 'Click and drag to pan the canvas'}
               {selectedTool === 'rectangle' &&
                 'Click and drag to create rectangle'}
               {selectedTool === 'circle' && 'Click and drag to create circle'}

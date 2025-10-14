@@ -7,6 +7,7 @@ interface TextShapeProps {
   shape: TextShapeType
   isSelected: boolean
   onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void
+  onDragStart: () => void
   onDragMove: (e: Konva.KonvaEventObject<DragEvent>) => void
   onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => void
   onTransformEnd: (e: Konva.KonvaEventObject<Event>) => void
@@ -19,6 +20,7 @@ const TextShape: React.FC<TextShapeProps> = memo(
     shape,
     isSelected,
     onSelect,
+    onDragStart,
     onDragMove,
     onDragEnd,
     onTransformEnd,
@@ -46,6 +48,7 @@ const TextShape: React.FC<TextShapeProps> = memo(
         onTap={onSelect}
         onDblClick={onDoubleClick}
         onDblTap={onDoubleClick}
+        onDragStart={onDragStart}
         onDragMove={onDragMove}
         onDragEnd={onDragEnd}
         onTransformEnd={onTransformEnd}

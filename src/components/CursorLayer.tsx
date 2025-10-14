@@ -137,6 +137,16 @@ const CursorLayer: React.FC<CursorLayerProps> = memo(
             return null
           }
 
+          // Calculate cursor size inversely proportional to scale to maintain consistent visual size
+          const cursorScale = 1 / viewport.scale
+          const cursorRadius = 4 * cursorScale
+          const cursorTipRadius = 2 * cursorScale
+          const cursorTipOffset = 6 * cursorScale
+          const labelFontSize = 12 * cursorScale
+          const labelOffsetX = 12 * cursorScale
+          const labelOffsetY = -8 * cursorScale
+          const labelPadding = 4 * cursorScale
+
           return (
             <Group key={userId}>
               {/* Cursor pointer */}
@@ -145,37 +155,37 @@ const CursorLayer: React.FC<CursorLayerProps> = memo(
                 <Circle
                   x={0}
                   y={0}
-                  radius={4}
+                  radius={cursorRadius}
                   fill="#3b82f6"
                   stroke="#1e40af"
-                  strokeWidth={1}
+                  strokeWidth={1 * cursorScale}
                 />
 
                 {/* Cursor pointer tip */}
                 <Circle
-                  x={6}
-                  y={6}
-                  radius={2}
+                  x={cursorTipOffset}
+                  y={cursorTipOffset}
+                  radius={cursorTipRadius}
                   fill="#3b82f6"
                   stroke="#1e40af"
-                  strokeWidth={1}
+                  strokeWidth={1 * cursorScale}
                 />
               </Group>
 
               {/* User label */}
               <Text
-                x={cursor.x + 12}
-                y={cursor.y - 8}
+                x={cursor.x + labelOffsetX}
+                y={cursor.y + labelOffsetY}
                 text={user.displayName || 'Anonymous'}
-                fontSize={12}
+                fontSize={labelFontSize}
                 fontFamily="Arial, sans-serif"
                 fill="#374151"
-                padding={4}
+                padding={labelPadding}
                 background="#ffffff"
-                cornerRadius={4}
+                cornerRadius={4 * cursorScale}
                 shadowColor="#000000"
-                shadowBlur={2}
-                shadowOffset={{ x: 0, y: 1 }}
+                shadowBlur={2 * cursorScale}
+                shadowOffset={{ x: 0, y: 1 * cursorScale }}
                 shadowOpacity={0.1}
               />
             </Group>

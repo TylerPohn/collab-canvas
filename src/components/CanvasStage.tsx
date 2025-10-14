@@ -74,6 +74,24 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
       fontSize?: number
     } | null>(null)
     const [editingTextId, setEditingTextId] = useState<string | null>(null)
+    const [isSelecting, setIsSelecting] = useState(false)
+    const [selectionStart, setSelectionStart] = useState<{
+      x: number
+      y: number
+    } | null>(null)
+    const [selectionRect, setSelectionRect] = useState<{
+      x: number
+      y: number
+      width: number
+      height: number
+    } | null>(null)
+    const [initialShapePositions, setInitialShapePositions] = useState<
+      Map<string, { x: number; y: number }>
+    >(new Map())
+    const [dragOffset, setDragOffset] = useState<{
+      x: number
+      y: number
+    } | null>(null)
 
     const {
       viewport,
@@ -163,9 +181,24 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
 
         // If clicking on empty space, clear selection and start drawing if tool is selected
         if (e.target === stage) {
-          clearSelection()
-
-          if (selectedTool !== 'select') {
+          if (selectedTool === 'pan') {
+            // Handle pan tool
+            handlePanMouseDown(e)
+          } else if (selectedTool === 'select') {
+            // Handle selection tool - start selection rectangle
+            const pointer = stage.getPointerPosition()
+            if (pointer) {
+              // Transform to world coordinates
+              const worldX = (pointer.x - viewport.x) / viewport.scale
+              const worldY = (pointer.y - viewport.y) / viewport.scale
+              setIsSelecting(true)
+              setSelectionStart({ x: worldX, y: worldY })
+              setSelectionRect({ x: worldX, y: worldY, width: 0, height: 0 })
+              // Don't clear selection immediately - let user drag to select multiple
+            }
+          } else {
+            // Handle drawing tools (rectangle, circle, text)
+            clearSelection()
             const pointer = stage.getPointerPosition()
             if (pointer) {
               // Transform to world coordinates
@@ -174,9 +207,6 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
               setIsDrawing(true)
               setDrawingStart({ x: worldX, y: worldY })
             }
-          } else {
-            // Handle pan/zoom for select tool
-            handlePanMouseDown(e)
           }
         }
       },
@@ -204,7 +234,26 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
           }
         }
 
-        if (isDrawing && drawingStart && selectedTool !== 'select') {
+        if (isSelecting && selectionStart && selectedTool === 'select') {
+          // Handle selection rectangle preview
+          const stage = e.target.getStage()
+          if (stage) {
+            const pointer = stage.getPointerPosition()
+            if (pointer) {
+              // Transform to world coordinates
+              const worldX = (pointer.x - viewport.x) / viewport.scale
+              const worldY = (pointer.y - viewport.y) / viewport.scale
+
+              // Update selection rectangle
+              setSelectionRect({
+                x: Math.min(selectionStart.x, worldX),
+                y: Math.min(selectionStart.y, worldY),
+                width: Math.abs(worldX - selectionStart.x),
+                height: Math.abs(worldY - selectionStart.y)
+              })
+            }
+          }
+        } else if (isDrawing && drawingStart && selectedTool !== 'select') {
           // Handle drawing preview
           const stage = e.target.getStage()
           if (stage) {
@@ -261,11 +310,13 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
               setPreviewShape(previewData)
             }
           }
-        } else if (selectedTool === 'select') {
+        } else if (selectedTool === 'pan') {
           handlePanMouseMove(e)
         }
       },
       [
+        isSelecting,
+        selectionStart,
         isDrawing,
         drawingStart,
         selectedTool,
@@ -279,7 +330,51 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
 
     const handleStageMouseUp = useCallback(
       (e: Konva.KonvaEventObject<MouseEvent>) => {
-        if (isDrawing && drawingStart && selectedTool !== 'select') {
+        if (isSelecting && selectionStart && selectedTool === 'select') {
+          // Complete selection rectangle
+          if (
+            selectionRect &&
+            selectionRect.width > 5 &&
+            selectionRect.height > 5
+          ) {
+            // Find shapes that intersect with the selection rectangle
+            const shapesInSelection = shapes.filter(shape => {
+              const shapeBounds = {
+                x: shape.x,
+                y: shape.y,
+                width:
+                  shape.type === 'circle' ? shape.radius * 2 : shape.width || 0,
+                height:
+                  shape.type === 'circle' ? shape.radius * 2 : shape.height || 0
+              }
+
+              // Check if shapes intersect with selection rectangle
+              return !(
+                shapeBounds.x + shapeBounds.width < selectionRect.x ||
+                selectionRect.x + selectionRect.width < shapeBounds.x ||
+                shapeBounds.y + shapeBounds.height < selectionRect.y ||
+                selectionRect.y + selectionRect.height < shapeBounds.y
+              )
+            })
+
+            // Select all shapes in the selection rectangle
+            if (shapesInSelection.length > 0) {
+              useSelectionStore
+                .getState()
+                .selectMultiple(shapesInSelection.map(s => s.id))
+            } else {
+              // If no shapes in selection, clear selection
+              clearSelection()
+            }
+          } else {
+            // If selection rectangle is too small, clear selection
+            clearSelection()
+          }
+
+          setIsSelecting(false)
+          setSelectionStart(null)
+          setSelectionRect(null)
+        } else if (isDrawing && drawingStart && selectedTool !== 'select') {
           const stage = e.target.getStage()
           if (stage) {
             const pointer = stage.getPointerPosition()
@@ -347,11 +442,15 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
           setIsDrawing(false)
           setDrawingStart(null)
           setPreviewShape(null)
-        } else if (selectedTool === 'select') {
+        } else if (selectedTool === 'pan') {
           handlePanMouseUp(e)
         }
       },
       [
+        isSelecting,
+        selectionStart,
+        selectionRect,
+        shapes,
         isDrawing,
         drawingStart,
         selectedTool,
@@ -359,7 +458,8 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         handlePanMouseUp,
         viewport.x,
         viewport.y,
-        viewport.scale
+        viewport.scale,
+        clearSelection
       ]
     )
 
@@ -386,6 +486,24 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
       [selectShape]
     )
 
+    // Handle shape drag start - capture initial positions for multi-drag
+    const handleShapeDragStart = useCallback(
+      (id: string) => {
+        // If multiple shapes are selected, capture their initial positions
+        if (selectedIds.length > 1 && selectedIds.includes(id)) {
+          const positions = new Map<string, { x: number; y: number }>()
+          selectedIds.forEach(selectedId => {
+            const shape = shapes.find(s => s.id === selectedId)
+            if (shape) {
+              positions.set(selectedId, { x: shape.x, y: shape.y })
+            }
+          })
+          setInitialShapePositions(positions)
+        }
+      },
+      [selectedIds, shapes]
+    )
+
     // Handle shape drag move - update cursor position during drag
     const handleShapeDragMove = useCallback(
       (e: Konva.KonvaEventObject<DragEvent>) => {
@@ -399,20 +517,74 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
             onCursorMove({ x: worldX, y: worldY })
           }
         }
+
+        // If we're dragging a shape that's part of a multi-selection, calculate drag offset
+        const draggedShapeId = e.target.id()
+        if (
+          selectedIds.length > 1 &&
+          selectedIds.includes(draggedShapeId) &&
+          initialShapePositions.size > 0
+        ) {
+          const initialPos = initialShapePositions.get(draggedShapeId)
+          if (initialPos) {
+            const node = e.target
+            const currentX = node.x()
+            const currentY = node.y()
+            const offsetX = currentX - initialPos.x
+            const offsetY = currentY - initialPos.y
+            setDragOffset({ x: offsetX, y: offsetY })
+          }
+        }
       },
-      [viewport.x, viewport.y, viewport.scale, onCursorMove]
+      [
+        viewport.x,
+        viewport.y,
+        viewport.scale,
+        onCursorMove,
+        selectedIds,
+        initialShapePositions
+      ]
     )
 
     // Handle shape drag end
     const handleShapeDragEnd = useCallback(
       (id: string, e: Konva.KonvaEventObject<DragEvent>) => {
         const node = e.target
-        onShapeUpdate(id, {
-          x: node.x(),
-          y: node.y()
-        })
+        const newX = node.x()
+        const newY = node.y()
+
+        // If multiple shapes are selected and we have initial positions
+        if (selectedIds.length > 1 && initialShapePositions.size > 0) {
+          const initialPos = initialShapePositions.get(id)
+          if (initialPos) {
+            // Calculate the drag offset
+            const deltaX = newX - initialPos.x
+            const deltaY = newY - initialPos.y
+
+            // Apply the same offset to all selected shapes
+            selectedIds.forEach(selectedId => {
+              const initialPos = initialShapePositions.get(selectedId)
+              if (initialPos) {
+                onShapeUpdate(selectedId, {
+                  x: initialPos.x + deltaX,
+                  y: initialPos.y + deltaY
+                })
+              }
+            })
+
+            // Clear the initial positions and drag offset
+            setInitialShapePositions(new Map())
+            setDragOffset(null)
+          }
+        } else {
+          // Single shape drag
+          onShapeUpdate(id, {
+            x: newX,
+            y: newY
+          })
+        }
       },
-      [onShapeUpdate]
+      [selectedIds, initialShapePositions, onShapeUpdate]
     )
 
     // Handle shape transform end
@@ -528,9 +700,13 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
           style={{
             cursor: isDragging
               ? 'grabbing'
-              : selectedTool === 'select'
+              : selectedTool === 'pan'
                 ? 'grab'
-                : 'crosshair'
+                : selectedTool === 'select'
+                  ? isSelecting
+                    ? 'crosshair'
+                    : 'default'
+                  : 'crosshair'
           }}
         >
           <Layer>
@@ -542,6 +718,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 isSelected: isSelected(shape.id),
                 onSelect: (e: Konva.KonvaEventObject<MouseEvent>) =>
                   handleShapeSelect(shape.id, e),
+                onDragStart: () => handleShapeDragStart(shape.id),
                 onDragMove: handleShapeDragMove,
                 onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) =>
                   handleShapeDragEnd(shape.id, e),
@@ -624,6 +801,90 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 )}
               </>
             )}
+
+            {/* Selection rectangle during multi-select */}
+            {selectionRect && (
+              <Rect
+                x={selectionRect.x}
+                y={selectionRect.y}
+                width={selectionRect.width}
+                height={selectionRect.height}
+                fill="rgba(59, 130, 246, 0.1)"
+                stroke="#3b82f6"
+                strokeWidth={1}
+                dash={[4, 4]}
+                listening={false}
+              />
+            )}
+
+            {/* Multi-drag preview shapes */}
+            {dragOffset &&
+              selectedIds.length > 1 &&
+              initialShapePositions.size > 0 && (
+                <>
+                  {selectedIds.map(shapeId => {
+                    const shape = shapes.find(s => s.id === shapeId)
+                    const initialPos = initialShapePositions.get(shapeId)
+                    if (!shape || !initialPos) return null
+
+                    const previewX = initialPos.x + dragOffset.x
+                    const previewY = initialPos.y + dragOffset.y
+
+                    switch (shape.type) {
+                      case 'rect':
+                        return (
+                          <Rect
+                            key={`preview-${shapeId}`}
+                            x={previewX}
+                            y={previewY}
+                            width={shape.width}
+                            height={shape.height}
+                            fill="rgba(59, 130, 246, 0.2)"
+                            stroke="#3b82f6"
+                            strokeWidth={1}
+                            dash={[3, 3]}
+                            listening={false}
+                            rotation={shape.rotation || 0}
+                          />
+                        )
+                      case 'circle':
+                        return (
+                          <Circle
+                            key={`preview-${shapeId}`}
+                            x={previewX}
+                            y={previewY}
+                            radius={shape.radius}
+                            fill="rgba(16, 185, 129, 0.2)"
+                            stroke="#10b981"
+                            strokeWidth={1}
+                            dash={[3, 3]}
+                            listening={false}
+                            rotation={shape.rotation || 0}
+                          />
+                        )
+                      case 'text':
+                        return (
+                          <Text
+                            key={`preview-${shapeId}`}
+                            x={previewX}
+                            y={previewY}
+                            text={shape.text}
+                            fontSize={shape.fontSize || 16}
+                            fill="rgba(55, 65, 81, 0.2)"
+                            stroke="#374151"
+                            strokeWidth={1}
+                            dash={[2, 2]}
+                            listening={false}
+                            fontFamily="Inter, system-ui, sans-serif"
+                            rotation={shape.rotation || 0}
+                          />
+                        )
+                      default:
+                        return null
+                    }
+                  })}
+                </>
+              )}
 
             {/* Transformer for selected shapes */}
             <Transformer
