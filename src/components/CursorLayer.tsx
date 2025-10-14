@@ -25,18 +25,11 @@ export interface CursorLayerProps {
 
 const CursorLayer: React.FC<CursorLayerProps> = memo(
   ({ presence, currentUserId, viewport }: CursorLayerProps) => {
-    console.log(
-      `[CursorLayer] Received presence:`,
-      presence,
-      `currentUserId: ${currentUserId}`
-    )
-
     // Filter out current user's presence - memoize to prevent infinite loops
     const otherUsers = useMemo(() => {
       const filtered = presence.filter(
         (p: UserPresence) => p.userId !== currentUserId
       )
-      console.log(`[CursorLayer] Filtered other users:`, filtered)
       return filtered
     }, [presence, currentUserId])
 
@@ -130,23 +123,13 @@ const CursorLayer: React.FC<CursorLayerProps> = memo(
       }
     }, [interpolatedCursors.size])
 
-    console.log(
-      `[CursorLayer] Rendering ${interpolatedCursors.size} cursors:`,
-      Array.from(interpolatedCursors.entries())
-    )
-
     return (
       <Layer>
         {Array.from(interpolatedCursors.entries()).map(([userId, cursor]) => {
           const user = otherUsers.find((u: UserPresence) => u.userId === userId)
           if (!user) {
-            console.log(`[CursorLayer] No user found for cursor ${userId}`)
             return null
           }
-
-          console.log(
-            `[CursorLayer] Rendering cursor for user ${user.displayName} at (${cursor.x}, ${cursor.y})`
-          )
 
           return (
             <Group key={userId}>

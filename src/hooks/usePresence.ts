@@ -30,10 +30,6 @@ export function usePresence({
   const [error, setError] = useState<string | null>(null)
   const hasJoinedRef = useRef(false)
 
-  console.log(
-    `[usePresence] Hook called for canvas: ${canvasId}, enabled: ${enabled}, user: ${user?.uid}`
-  )
-
   // React Query mutations
   const joinRoomMutation = useJoinPresenceRoom()
   const leaveRoomMutation = useLeavePresenceRoom()
@@ -43,7 +39,6 @@ export function usePresence({
   usePresenceSubscription(
     canvasId,
     newPresence => {
-      console.log(`[usePresence] Received presence update:`, newPresence)
       setPresence(newPresence)
     },
     enabled && !!user
@@ -57,9 +52,6 @@ export function usePresence({
 
     const joinRoom = async () => {
       try {
-        console.log(
-          `[usePresence] Joining room for canvas: ${canvasId}, user: ${user.uid}`
-        )
         setError(null)
         await joinRoomMutation.mutateAsync({
           canvasId,
@@ -71,7 +63,6 @@ export function usePresence({
         })
         hasJoinedRef.current = true
         setIsConnected(true)
-        console.log(`[usePresence] Successfully joined room`)
       } catch (err) {
         console.error('[usePresence] Failed to join presence room:', err)
         setError(err instanceof Error ? err.message : 'Failed to join room')
@@ -134,25 +125,15 @@ export function usePresence({
   // Update cursor position
   const updateCursor = (cursor: { x: number; y: number }) => {
     if (!user || !canvasId || !isConnected) {
-      console.log(
-        `[usePresence] updateCursor skipped - user: ${!!user}, canvasId: ${canvasId}, connected: ${isConnected}`
-      )
       return
     }
 
-    console.log(`[usePresence] Updating cursor position:`, cursor)
     updateCursorMutation.mutate({
       canvasId,
       userId: user.uid,
       cursor
     })
   }
-
-  console.log(`[usePresence] Returning state:`, {
-    presence,
-    isConnected,
-    error
-  })
 
   return {
     presence,

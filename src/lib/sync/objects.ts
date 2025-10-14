@@ -48,21 +48,13 @@ export class ObjectSyncService {
   // Subscribe to objects for a canvas
   subscribeToObjects(canvasId: string) {
     const queryKey = objectKeys.list(canvasId)
-    console.log(
-      `[ObjectSync] subscribeToObjects called for canvas: ${canvasId}`
-    )
 
     // Clean up existing subscription
     this.unsubscribeFromObjects(canvasId)
 
     const unsubscribe = subscribeToObjects(canvasId, objects => {
-      console.log(
-        `[ObjectSync] subscribeToObjects callback received ${objects.length} objects:`,
-        objects
-      )
       // Update React Query cache with latest objects
       this.queryClient.setQueryData(queryKey, objects)
-      console.log(`[ObjectSync] Updated React Query cache for key:`, queryKey)
     })
 
     this.subscriptions.set(canvasId, unsubscribe)
@@ -101,11 +93,6 @@ export class ObjectSyncService {
     const queryKey = objectKeys.list(canvasId)
     const now = Date.now()
 
-    console.log(
-      `[ObjectSync] createObject called for canvas ${canvasId}:`,
-      object
-    )
-
     // Generate ID
     const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
@@ -119,23 +106,15 @@ export class ObjectSyncService {
       updatedBy: userId
     } as Shape
 
-    console.log(`[ObjectSync] Created optimistic object:`, optimisticObject)
-
     // Optimistic update
     this.queryClient.setQueryData(queryKey, (old: Shape[] = []) => {
       const newShapes = [...old, optimisticObject]
-      console.log(
-        `[ObjectSync] Updated React Query cache with ${newShapes.length} objects:`,
-        newShapes
-      )
       return newShapes
     })
 
     try {
       // Create in Firestore
-      console.log(`[ObjectSync] Writing to Firestore:`, optimisticObject)
       await createObject(canvasId, optimisticObject, userId)
-      console.log(`[ObjectSync] Successfully wrote to Firestore`)
 
       // Return the created object
       return optimisticObject
@@ -144,9 +123,6 @@ export class ObjectSyncService {
       // Rollback optimistic update
       this.queryClient.setQueryData(queryKey, (old: Shape[] = []) => {
         const rolledBack = old.filter(obj => obj.id !== id)
-        console.log(
-          `[ObjectSync] Rolled back cache to ${rolledBack.length} objects`
-        )
         return rolledBack
       })
       throw error

@@ -158,25 +158,15 @@ export async function getObject(
 }
 
 export async function getAllObjects(canvasId: string): Promise<Shape[]> {
-  console.log(`[Firestore] getAllObjects called for canvas: ${canvasId}`)
   const objectsRef = objectsCollection(canvasId)
   const snapshot = await getDocs(objectsRef)
-
-  console.log(
-    `[Firestore] getAllObjects - Found ${snapshot.docs.length} documents`
-  )
 
   const objects = snapshot.docs.map(doc => {
     const data = doc.data()
     const shape = { id: doc.id, ...data } as Shape
-    console.log(`[Firestore] getAllObjects - Document ${doc.id}:`, shape)
     return shape
   })
 
-  console.log(
-    `[Firestore] getAllObjects - Returning ${objects.length} objects:`,
-    objects
-  )
   return objects
 }
 
@@ -265,21 +255,12 @@ export function subscribeToObjects(
   const q = query(objectsRef, orderBy('createdAt', 'asc'))
 
   return onSnapshot(q, snapshot => {
-    console.log(
-      `[Firestore] subscribeToObjects - Snapshot received for canvas ${canvasId}: ${snapshot.docs.length} documents`
-    )
-
     const objects = snapshot.docs.map(doc => {
       const data = doc.data()
       const shape = { id: doc.id, ...data } as Shape
-      console.log(`[Firestore] subscribeToObjects - Document ${doc.id}:`, shape)
       return shape
     })
 
-    console.log(
-      `[Firestore] subscribeToObjects - Calling callback with ${objects.length} objects:`,
-      objects
-    )
     callback(objects)
   })
 }
@@ -306,10 +287,6 @@ export async function updatePresence(
   userId: string,
   presence: Partial<UserPresence>
 ): Promise<void> {
-  console.log(
-    `[Firestore] updatePresence called for canvas: ${canvasId}, user: ${userId}`,
-    presence
-  )
   const presenceRef = presenceDoc(canvasId, userId)
 
   const presenceData = {
@@ -317,9 +294,7 @@ export async function updatePresence(
     lastSeen: Date.now()
   }
 
-  console.log(`[Firestore] Writing presence data:`, presenceData)
   await setDoc(presenceRef, presenceData, { merge: true })
-  console.log(`[Firestore] Successfully updated presence`)
 }
 
 export async function removePresence(
@@ -334,24 +309,15 @@ export function subscribeToPresence(
   canvasId: string,
   callback: (presence: UserPresence[]) => void
 ): Unsubscribe {
-  console.log(`[Firestore] subscribeToPresence called for canvas: ${canvasId}`)
   const presenceRef = presenceCollection(canvasId)
   const q = query(presenceRef, where('isActive', '==', true))
 
   return onSnapshot(q, snapshot => {
-    console.log(
-      `[Firestore] Presence snapshot received: ${snapshot.docs.length} documents`
-    )
     const presence = snapshot.docs.map(doc => {
       const data = doc.data()
       const presenceItem = { id: doc.id, ...data } as unknown as UserPresence
-      console.log(`[Firestore] Presence document ${doc.id}:`, presenceItem)
       return presenceItem
     })
-    console.log(
-      `[Firestore] Calling presence callback with ${presence.length} users:`,
-      presence
-    )
     callback(presence)
   })
 }

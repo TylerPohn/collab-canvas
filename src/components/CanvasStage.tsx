@@ -56,7 +56,6 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
     onViewportChange,
     initialViewport
   }) => {
-    console.log(`[CanvasStage] Received ${shapes.length} shapes:`, shapes)
     const stageRef = useRef<Konva.Stage>(null)
     const transformerRef = useRef<Konva.Transformer>(null)
     const [isDrawing, setIsDrawing] = useState(false)

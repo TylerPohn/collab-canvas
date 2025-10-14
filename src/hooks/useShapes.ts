@@ -13,8 +13,6 @@ export function useShapes(canvasId: string) {
   const queryClient = useQueryClient()
   const objectSync = getObjectSyncService(queryClient)
 
-  console.log(`[useShapes] Hook called for canvas: ${canvasId}`)
-
   // Query for all objects in the canvas
   const {
     data: shapes = [],
@@ -24,19 +22,15 @@ export function useShapes(canvasId: string) {
   } = useQuery({
     queryKey: objectKeys.list(canvasId),
     queryFn: () => {
-      console.log(`[useShapes] Query function called for canvas: ${canvasId}`)
       return objectSync.getAllObjects(canvasId)
     },
     staleTime: 0, // Always consider stale to ensure real-time updates
     refetchOnWindowFocus: false
   })
 
-  console.log(`[useShapes] Current shapes state:`, { shapes, isLoading, error })
-
   // Subscribe to real-time updates
   useEffect(() => {
     if (canvasId) {
-      console.log(`[useShapes] Setting up subscription for canvas: ${canvasId}`)
       const unsubscribe = objectSync.subscribeToObjects(canvasId)
       return unsubscribe
     }
@@ -45,9 +39,6 @@ export function useShapes(canvasId: string) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      console.log(
-        `[useShapes] Cleaning up subscription for canvas: ${canvasId}`
-      )
       objectSync.unsubscribeFromObjects(canvasId)
     }
   }, [canvasId, objectSync])

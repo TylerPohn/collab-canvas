@@ -46,11 +46,6 @@ const CanvasPage: React.FC = () => {
     error: shapesError
   } = useShapes(canvasId)
 
-  console.log(`[CanvasPage] Current shapes state:`, {
-    shapes,
-    shapesLoading,
-    shapesError
-  })
   const {
     createShape,
     updateShape,
