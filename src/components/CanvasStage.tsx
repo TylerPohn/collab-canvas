@@ -1,6 +1,6 @@
 import type Konva from 'konva'
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react'
-import { Layer, Stage, Transformer } from 'react-konva'
+import { Circle, Layer, Rect, Stage, Text, Transformer } from 'react-konva'
 import { useCanvasShortcuts } from '../hooks/useCanvasShortcuts'
 import { usePanZoom } from '../hooks/usePanZoom'
 import type {
@@ -62,6 +62,16 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
     const [drawingStart, setDrawingStart] = useState<{
       x: number
       y: number
+    } | null>(null)
+    const [previewShape, setPreviewShape] = useState<{
+      type: 'rect' | 'circle' | 'text'
+      x: number
+      y: number
+      width?: number
+      height?: number
+      radius?: number
+      text?: string
+      fontSize?: number
     } | null>(null)
     const [editingTextId, setEditingTextId] = useState<string | null>(null)
 
@@ -195,7 +205,62 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         }
 
         if (isDrawing && drawingStart && selectedTool !== 'select') {
-          // Handle drawing preview (could add visual feedback here)
+          // Handle drawing preview
+          const stage = e.target.getStage()
+          if (stage) {
+            const pointer = stage.getPointerPosition()
+            if (pointer) {
+              // Transform to world coordinates
+              const worldX = (pointer.x - viewport.x) / viewport.scale
+              const worldY = (pointer.y - viewport.y) / viewport.scale
+
+              // Create preview shape based on tool
+              let previewData: {
+                type: 'rect' | 'circle' | 'text'
+                x: number
+                y: number
+                width?: number
+                height?: number
+                radius?: number
+                text?: string
+                fontSize?: number
+              }
+
+              if (selectedTool === 'rectangle') {
+                previewData = {
+                  type: 'rect',
+                  x: Math.min(drawingStart.x, worldX),
+                  y: Math.min(drawingStart.y, worldY),
+                  width: Math.abs(worldX - drawingStart.x),
+                  height: Math.abs(worldY - drawingStart.y)
+                }
+              } else if (selectedTool === 'circle') {
+                previewData = {
+                  type: 'circle',
+                  x: (drawingStart.x + worldX) / 2,
+                  y: (drawingStart.y + worldY) / 2,
+                  radius: Math.abs(worldX - drawingStart.x) / 2
+                }
+              } else if (selectedTool === 'text') {
+                previewData = {
+                  type: 'text',
+                  x: Math.min(drawingStart.x, worldX),
+                  y: Math.min(drawingStart.y, worldY),
+                  text: 'Text',
+                  fontSize: 16
+                }
+              } else {
+                // Fallback for select tool (shouldn't happen)
+                previewData = {
+                  type: 'rect',
+                  x: 0,
+                  y: 0
+                }
+              }
+
+              setPreviewShape(previewData)
+            }
+          }
         } else if (selectedTool === 'select') {
           handlePanMouseMove(e)
         }
@@ -224,24 +289,43 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
               const worldY = (pointer.y - viewport.y) / viewport.scale
 
               // Create shape based on tool
-              const shapeData = {
-                type:
-                  selectedTool === 'rectangle'
-                    ? 'rect'
-                    : (selectedTool as 'rect' | 'circle' | 'text'),
-                x: Math.min(drawingStart.x, worldX),
-                y: Math.min(drawingStart.y, worldY),
-                ...(selectedTool === 'rectangle' && {
+              let shapeData: Omit<
+                Shape,
+                'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'
+              >
+
+              if (selectedTool === 'rectangle') {
+                shapeData = {
+                  type: 'rect',
+                  x: Math.min(drawingStart.x, worldX),
+                  y: Math.min(drawingStart.y, worldY),
                   width: Math.abs(worldX - drawingStart.x),
                   height: Math.abs(worldY - drawingStart.y)
-                }),
-                ...(selectedTool === 'circle' && {
+                }
+              } else if (selectedTool === 'circle') {
+                shapeData = {
+                  type: 'circle',
+                  x: (drawingStart.x + worldX) / 2,
+                  y: (drawingStart.y + worldY) / 2,
                   radius: Math.abs(worldX - drawingStart.x) / 2
-                }),
-                ...(selectedTool === 'text' && {
+                }
+              } else if (selectedTool === 'text') {
+                shapeData = {
+                  type: 'text',
+                  x: Math.min(drawingStart.x, worldX),
+                  y: Math.min(drawingStart.y, worldY),
                   text: 'Text',
                   fontSize: 16
-                })
+                }
+              } else {
+                // Fallback for select tool (shouldn't happen)
+                shapeData = {
+                  type: 'rect',
+                  x: 0,
+                  y: 0,
+                  width: 0,
+                  height: 0
+                }
               }
 
               onShapeCreate(shapeData)
@@ -249,6 +333,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
           }
           setIsDrawing(false)
           setDrawingStart(null)
+          setPreviewShape(null)
         } else if (selectedTool === 'select') {
           handlePanMouseUp(e)
         }
@@ -481,6 +566,51 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                   return null
               }
             })}
+
+            {/* Preview shape during drawing */}
+            {previewShape && (
+              <>
+                {previewShape.type === 'rect' && (
+                  <Rect
+                    x={previewShape.x}
+                    y={previewShape.y}
+                    width={previewShape.width || 0}
+                    height={previewShape.height || 0}
+                    fill="rgba(59, 130, 246, 0.3)"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dash={[5, 5]}
+                    listening={false}
+                  />
+                )}
+                {previewShape.type === 'circle' && (
+                  <Circle
+                    x={previewShape.x}
+                    y={previewShape.y}
+                    radius={previewShape.radius || 0}
+                    fill="rgba(16, 185, 129, 0.3)"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    dash={[5, 5]}
+                    listening={false}
+                  />
+                )}
+                {previewShape.type === 'text' && (
+                  <Text
+                    x={previewShape.x}
+                    y={previewShape.y}
+                    text={previewShape.text || 'Text'}
+                    fontSize={previewShape.fontSize || 16}
+                    fill="rgba(55, 65, 81, 0.3)"
+                    stroke="#374151"
+                    strokeWidth={1}
+                    dash={[3, 3]}
+                    listening={false}
+                    fontFamily="Inter, system-ui, sans-serif"
+                  />
+                )}
+              </>
+            )}
 
             {/* Transformer for selected shapes */}
             <Transformer
