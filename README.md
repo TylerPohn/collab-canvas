@@ -1,3 +1,6 @@
+# DEPLOYED LINK
+https://collab-canvas-chi.vercel.app/canvas 
+
 # Collab Canvas
 
 A real-time collaborative canvas application built with React, TypeScript, and Firebase.

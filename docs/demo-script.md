@@ -2,44 +2,32 @@
 
 ## Opening (15 seconds)
 
-"I'm Tyler Pohn and this is my CollabCanvas built with React, Konva.js, and Firebase.
+"I'm Tyler Pohn and this is my CollabCanvas built with React, Konva.js, and Firebase. Deployed to vercel.
 
 ## Authentication & Setup (20 seconds)
 
-"First, let me show you the authentication flow. Users sign in with Google OAuth, and their display names and avatars are immediately visible to other collaborators. The presence system tracks who's online in real-time, which we'll see in a minute."
+"We use Google OAuth, and once you log in display name and avatar is immediately visible to other collaborators.
 
 _[Show login page, then switch to canvas]_
 
 ## Core Canvas Features (45 seconds)
 
-"Here's our main canvas interface. We have a large, infinite workspace with smooth pan and zoom capabilities. The toolbar provides four essential tools: select, rectangle, circle, and text.
+"Here's our main canvas interface. We have a large, infinite workspace with smooth pan and zoom.
 
-Let me demonstrate the shape creation workflow:
-
-- Select the rectangle tool and click-drag to create shapes
-- Switch to circle tool for circular elements
-- Use the text tool to add labels
-- The select tool allows you to move, resize, and rotate any object
-
-Notice the real-time visual feedback - every action is smooth and responsive, maintaining 60 FPS even with multiple objects."
+\*demo each tool
 
 _[Create several shapes, demonstrate transformations]_
 
-## Real-Time Collaboration (60 seconds)
+## Real-Time Collaboration (45 seconds)
 
-"This is where CollabCanvas truly shines. Let me open this same canvas on another device to show you the multiplayer experience.
+The presence system shows live cursors with user names.
 
-_[Switch to second browser/device]_
+-Demo log in with moblin and creating shape on other device
 
-Watch what happens when I create a shape on the other device... _[create shape]_ ...it appears instantly on this screen. Now let me move this circle... _[move shape]_ ...and you can see the movement is synchronized in real-time.
+We debounce cursor location updates until the cursor stops moving. It even tracks slow moving cursors, but I blew up my free tier with more aggeressive tracking, so it'll remain like this for now.
 
-The presence system shows live cursors with user names. See how my cursor appears on both screens as I move around? This gives collaborators immediate awareness of who's working where.
-
-The firebase updates to a cursor's coordinates are debounced in the UI such that it won't update until the cursor stops moving. I blew up my free tier tracking moving cursors, so it'll remain like this for now. 
-
-Let me demonstrate simultaneous editing - I'll resize a shape on both devices at the same time... _[create shapes simultaneously]_ ...and watch how the system handles concurrent updates without conflicts. 
-
-The 'last write wins' conflict resolution ensures data consistency while maintaining the collaborative experience."
+We use a 'last write wins' conflict resolution for simultaneous edits
+\*demo simultaneous edit
 
 _[Show presence list, cursor movement, simultaneous editing]_
 
@@ -52,42 +40,18 @@ _[Show presence list, cursor movement, simultaneous editing]_
 - Double-click text to edit inline
 - Persistent state - if I refresh the page, all my work is preserved
 
-The system uses React Query for optimistic updates and Firebase Firestore for real-time synchronization, ensuring durability."
-
 _[Demonstrate keyboard shortcuts, text editing, refresh to show persistence]_
 
-## Architecture & Performance (20 seconds)
+## Architecture & Performance (30 seconds)
 
-"Under the hood, CollabCanvas is built for scale:
+"Under the hood, CollabCanvas uses a sophisticated architecture:
 
-- Konva.js provides high-performance 2D rendering
-- Firebase handles real-time sync with sub-100ms latency
-- React Query manages local state
-- The system supports 500+ objects and 5+ concurrent users without performance degradation
+- React 19 + TypeScript with Konva.js for high-performance 2D rendering
+- React Query provides optimistic updates and intelligent caching
+- Custom ObjectSyncService bridges React Query with Firebase Firestore
+- Debounced updates give us smooth interactions without overwhelming the database
+- PresenceService manages real-time cursors with 50ms throttling
+- Last-write-wins conflict resolution with automatic rollback
+- Memoized components and WebGL acceleration ensure 60fps performance
 
-This solid foundation is ready for the next phase: AI-powered canvas manipulation through natural language commands."
-
----
-
-## Demo Flow Checklist:
-
-- [ ] Open app in two different browsers/devices
-- [ ] Show authentication flow
-- [ ] Demonstrate shape creation (rectangle, circle, text)
-- [ ] Show transformations (move, resize, rotate)
-- [ ] Demonstrate real-time sync between devices
-- [ ] Show presence awareness and live cursors
-- [ ] Test simultaneous editing
-- [ ] Demonstrate keyboard shortcuts
-- [ ] Show text editing capability
-- [ ] Test persistence (refresh page)
-- [ ] Mention AI future vision
-
-## Technical Notes for Demo:
-
-- Ensure both devices are logged in with different Google accounts
-- Have shapes pre-created for faster demo flow
-- Test network connection stability
-- Have backup plan if real-time sync has issues
-- Keep demo focused on core collaborative features
-- Emphasize the technical achievement of real-time multiplayer canvas
+The system supports 500+ objects and 5+ concurrent users. This solid foundation is ready for AI-powered canvas manipulation through natural language commands."
