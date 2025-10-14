@@ -158,8 +158,11 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
           if (selectedTool !== 'select') {
             const pointer = stage.getPointerPosition()
             if (pointer) {
+              // Transform to world coordinates
+              const worldX = (pointer.x - viewport.x) / viewport.scale
+              const worldY = (pointer.y - viewport.y) / viewport.scale
               setIsDrawing(true)
-              setDrawingStart(pointer)
+              setDrawingStart({ x: worldX, y: worldY })
             }
           } else {
             // Handle pan/zoom for select tool
@@ -167,7 +170,14 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
           }
         }
       },
-      [selectedTool, clearSelection, handlePanMouseDown]
+      [
+        selectedTool,
+        clearSelection,
+        handlePanMouseDown,
+        viewport.x,
+        viewport.y,
+        viewport.scale
+      ]
     )
 
     const handleStageMouseMove = useCallback(
@@ -195,7 +205,9 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         drawingStart,
         selectedTool,
         handlePanMouseMove,
-        viewport,
+        viewport.x,
+        viewport.y,
+        viewport.scale,
         onCursorMove
       ]
     )
@@ -207,20 +219,24 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
           if (stage) {
             const pointer = stage.getPointerPosition()
             if (pointer) {
+              // Transform to world coordinates
+              const worldX = (pointer.x - viewport.x) / viewport.scale
+              const worldY = (pointer.y - viewport.y) / viewport.scale
+
               // Create shape based on tool
               const shapeData = {
                 type:
                   selectedTool === 'rectangle'
                     ? 'rect'
                     : (selectedTool as 'rect' | 'circle' | 'text'),
-                x: Math.min(drawingStart.x, pointer.x),
-                y: Math.min(drawingStart.y, pointer.y),
+                x: Math.min(drawingStart.x, worldX),
+                y: Math.min(drawingStart.y, worldY),
                 ...(selectedTool === 'rectangle' && {
-                  width: Math.abs(pointer.x - drawingStart.x),
-                  height: Math.abs(pointer.y - drawingStart.y)
+                  width: Math.abs(worldX - drawingStart.x),
+                  height: Math.abs(worldY - drawingStart.y)
                 }),
                 ...(selectedTool === 'circle' && {
-                  radius: Math.abs(pointer.x - drawingStart.x) / 2
+                  radius: Math.abs(worldX - drawingStart.x) / 2
                 }),
                 ...(selectedTool === 'text' && {
                   text: 'Text',
@@ -237,7 +253,16 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
           handlePanMouseUp(e)
         }
       },
-      [isDrawing, drawingStart, selectedTool, onShapeCreate, handlePanMouseUp]
+      [
+        isDrawing,
+        drawingStart,
+        selectedTool,
+        onShapeCreate,
+        handlePanMouseUp,
+        viewport.x,
+        viewport.y,
+        viewport.scale
+      ]
     )
 
     // Handle shape selection
