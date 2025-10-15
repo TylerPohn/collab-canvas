@@ -14,11 +14,16 @@ const firebaseConfig = {
 
 // Debug logging for production
 console.log('Firebase Environment Variables:', {
-  VITE_FIREBASE_API_KEY: import.meta.env.VITE_FIREBASE_API_KEY ? 'SET' : 'MISSING',
+  VITE_FIREBASE_API_KEY: import.meta.env.VITE_FIREBASE_API_KEY
+    ? 'SET'
+    : 'MISSING',
   VITE_FIREBASE_AUTH_DOMAIN: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   VITE_FIREBASE_PROJECT_ID: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   VITE_FIREBASE_STORAGE_BUCKET: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  VITE_FIREBASE_MESSAGING_SENDER_ID: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ? 'SET' : 'MISSING',
+  VITE_FIREBASE_MESSAGING_SENDER_ID: import.meta.env
+    .VITE_FIREBASE_MESSAGING_SENDER_ID
+    ? 'SET'
+    : 'MISSING',
   VITE_FIREBASE_APP_ID: import.meta.env.VITE_FIREBASE_APP_ID ? 'SET' : 'MISSING'
 })
 

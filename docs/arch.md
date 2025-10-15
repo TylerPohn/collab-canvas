@@ -10,43 +10,45 @@ A5[lib - types ts and schema ts - sync objects - sync presence - firebase client
 A6[styles - globals css - Tailwind CSS]
 end
 
-%% ========= TESTING TOOLING =========
+%% ========= DEVELOPMENT TOOLING =========
 subgraph Tooling
 direction TB
-T1[Vitest and RTL unit component - tests unit]
-T2[Playwright e2e - tests e2e]
-T3[Firebase Emulators - Auth - Firestore]
-T4[GitHub Actions CI - dot github workflows ci yml]
+T1[ESLint - Code linting and formatting]
+T2[Prettier - Code formatting]
+T3[TypeScript - Type checking]
+T4[Vite - Build tool and dev server]
 end
 
 %% ========= BACKEND =========
 subgraph Backend
 direction TB
 F1[Auth - Google OAuth - currentUser - displayName]
-F2[Firestore synced state - canvases id - objects objectId - metadata viewport]
-F3[Firestore presence - heartbeat documents - cursor positions]
+F2[Firestore Canvas Documents - canvases/{id} with meta and objects subcollections]
+F3[Firestore Objects - canvases/{id}/objects/{objectId} - shapes with metadata]
+F4[Firestore Presence - canvases/{id}/presence/{userId} - heartbeat and cursors]
 end
 
 %% ========= HOSTING DELIVERY =========
 subgraph Hosting
 direction TB
-H1[Vercel Vite hosting]
-H2[Firebase Hosting optional]
-H3[NPM scripts build - pnpm dev build preview test]
+H1[Vercel - Deployed and publicly accessible]
+H2[NPM scripts - dev build preview lint format typecheck]
+H3[Environment Variables - Firebase config via VITE_*]
 end
 
 %% ========= DATA FLOWS =========
 A2 -->|Render and Input| A3
 A3 -->|mutations and queries| A5
 A5 -->|subscribe onSnapshot| F2
-A5 -->|write deltas create move resize rotate delete| F2
-A3 -->|cursor and presence updates throttled| F2
-F2 -->|presence feed and other cursors| A2
+A5 -->|write deltas create move resize rotate delete| F3
+A3 -->|cursor and presence updates throttled| F4
+F4 -->|presence feed and other cursors| A2
+F3 -->|object updates real-time| A2
 
 A2 -->|Auth state and guards| F1
 F1 -->|currentUser| A2
 
-%% Hosting and CI relations
+%% Hosting and deployment relations
 A1 --> H1
 A2 --> H1
 A3 --> H1
@@ -58,12 +60,9 @@ T1 --> A5
 T2 --> A1
 T3 --> F1
 T3 --> F2
-T4 -->|run unit then emulators then e2e| T1
-T4 --> T2
-T4 --> T3
+T3 --> F3
+T3 --> F4
 
 %% Developer loop
 Dev[Developer or Coding Agent] -->|PRs| Repo[(GitHub Repo)]
-Repo -->|CI| T4
-T4 -->|status checks| Repo
 Repo -->|deploy| H1

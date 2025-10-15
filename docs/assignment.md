@@ -21,14 +21,14 @@ Final: Sunday (7 days)
 You’ll build in two phases: first the core collaborative canvas with real-time sync, then an AI agent that manipulates the canvas through natural language.
 MVP Requirements (24 Hours)
 This is a hard gate. To pass the MVP checkpoint, you must have:
- Basic canvas with pan/zoom
- At least one shape type (rectangle, circle, or text)
- Ability to create and move objects
- Real-time sync between 2+ users
- Multiplayer cursors with name labels
- Presence awareness (who’s online)
- User authentication (users have accounts/names)
- Deployed and publicly accessible
+Basic canvas with pan/zoom
+At least one shape type (rectangle, circle, or text)
+Ability to create and move objects
+Real-time sync between 2+ users
+Multiplayer cursors with name labels
+Presence awareness (who’s online)
+User authentication (users have accounts/names)
+Deployed and publicly accessible
 The focus is on collaborative infrastructure.
 The MVP isn’t about features — it’s about proving your foundation is solid. A simple canvas with bulletproof multiplayer is worth more than a feature-rich canvas with broken sync.
 Example Architecture
@@ -42,7 +42,7 @@ Canvas Features
 Your canvas needs a large workspace with a smooth pan and zoom. It doesn’t need to be truly infinite, but should feel spacious. Support basic shapes — rectangles, circles, and lines with solid colors. Add text layers with basic formatting.
 
 Users should be able to transform objects (move, resize, rotate). Include selection for single and multiple objects (shift-click or drag-to-select). Add layer management and basic operations like delete and duplicate.
-Real-Time Collaboration 
+Real-Time Collaboration
 Every user should see multiplayer cursors with names moving in real time. When someone creates or modifies an object, it appears instantly for everyone. Show clear presence awareness of who’s currently editing.
 
 Handle conflict resolution when multiple users edit simultaneously. (A “last write wins” approach is acceptable, but document your choice.)
@@ -156,13 +156,10 @@ Deployed Application – publicly accessible, supporting 5+ users with authentic
 We recommend deploying on Vercel, Firebase Hosting, or Render for simplicity.
 Final Note
 
-This project mirrors what the best AI startups are doing right now — combining real-time collaboration with intelligent AI creation. 
+This project mirrors what the best AI startups are doing right now — combining real-time collaboration with intelligent AI creation.
 
 The closer you get to that experience, the more you’ll understand what it takes to build the next Figma.
 
-
 A simple, solid, multiplayer canvas with a working AI agent beats any feature-rich app with broken collaboration.
 
-
 Let’s build something real.
-

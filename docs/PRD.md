@@ -63,26 +63,32 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 
 ### **Deployment**
 
-- Fully **deployed and publicly accessible** environment (e.g., Vercel + Firebase).
+- **Deployed and publicly accessible** on Vercel with Firebase backend.
+- Environment variables configured for production Firebase project.
 
 ---
 
-## **4. Tech Stack (Proposed)**
+## **4. Tech Stack (Implemented)**
 
 ### **Frontend**
 
 - **React + TypeScript** for predictable UI development.
 - **Konva.js** for canvas manipulation and shape rendering (chosen for performance with multiple concurrent users).
-- **React Query** for local state and data synchronization.
+- **React Query** for local state and data synchronization with optimistic updates.
+- **Tailwind CSS** for styling and responsive design.
 
 ### **Backend**
 
-- **Firebase** (preferred for MVP speed):
-  - **Firestore** or **Realtime Database** for syncing canvas state.
+- **Firebase** (implemented):
+  - **Firestore** for syncing canvas state with subcollections structure.
   - **Firebase Auth** for Google OAuth authentication.
   - Built-in **WebSocket-like** sync eliminates manual socket management.
 
-- Alternatively: **Supabase** or **custom Node.js WebSocket server** using Socket.IO if more control is required.
+### **Data Model**
+
+- **Canvas Documents:** `canvases/{id}` containing metadata and viewport state.
+- **Objects Subcollection:** `canvases/{id}/objects/{objectId}` for individual shapes.
+- **Presence Subcollection:** `canvases/{id}/presence/{userId}` for user presence and cursors.
 
 ### **AI Integration (Post-MVP)**
 
@@ -90,38 +96,51 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 
 ### **Hosting & Deployment**
 
-- **Frontend:** Vercel, Netlify, or Firebase Hosting (Vite builds to static files).
-- **Backend:** Firebase (single environment for MVP).
+- **Frontend:** Vercel (deployed and publicly accessible).
+- **Backend:** Firebase (production environment configured).
 
 ---
 
-## **5. Technical Pitfalls and Considerations**
+## **5. Technical Implementation and Considerations**
 
-| Category                | Potential Pitfall                                                 | Mitigation                                                                     |
-| ----------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| **Sync Architecture**   | Firestore sync latency or race conditions between multiple users. | Use `onSnapshot` listeners and batch updates; test with throttled connections. |
-| **Performance**         | Rendering hundreds of shapes could drop FPS.                      | Virtualize rendering and debounce update events; maintain under 60 FPS.        |
-| **Conflict Resolution** | Concurrent updates to same object can overwrite data.             | Use “last write wins” with timestamps; later enhance with CRDTs.               |
-| **Persistence**         | Session disconnects causing lost state.                           | Persist full canvas snapshot every few seconds or on `onDisconnect`.           |
-| **Authentication UX**   | Delays in auth initialization on Firebase.                        | Use preloading spinner and store user in local state once loaded.              |
-| **Scalability**         | Firestore costs or performance at scale.                          | Consider migration to custom WebSocket server once MVP stabilizes.             |
+| Category                | Implementation Status                        | Current Mitigation                                                          |
+| ----------------------- | -------------------------------------------- | --------------------------------------------------------------------------- |
+| **Sync Architecture**   | ✅ Implemented with Firestore subcollections | `onSnapshot` listeners with React Query for optimistic updates              |
+| **Performance**         | ✅ Optimized with debouncing and batching    | Debounced updates (100ms), cursor throttling (50ms), batch operations       |
+| **Conflict Resolution** | ✅ Implemented with last-write-wins          | Timestamp-based conflict resolution with `updatedAt` and `updatedBy` fields |
+| **Persistence**         | ✅ Canvas metadata and viewport persistence  | Canvas metadata stored in Firestore, viewport state persisted on changes    |
+| **Authentication UX**   | ✅ Smooth auth flow with loading states      | Loading spinners, auth state management, automatic redirects                |
+| **Real-time Features**  | ✅ Full presence and cursor tracking         | Heartbeat system (30s), cursor throttling, presence cleanup on disconnect   |
 
 ---
 
-## **6. Performance Targets (from Gauntlet AI Spec)**
+## **6. Performance Implementation Status**
 
-- **Canvas FPS:** Maintain 60 FPS for pan, zoom, and object manipulation.
+- **Canvas FPS:** ✅ Optimized rendering with Konva.js and React Query caching.
 - **Sync Speed:**
-  - Object changes < 100ms latency
-  - Cursor positions < 50ms latency
+  - ✅ Object changes: Debounced to 100ms for smooth interaction
+  - ✅ Cursor positions: Throttled to 50ms for real-time feel
 
-- **Load:** Handle 500+ simple objects per canvas and 5+ concurrent users without degradation.
+- **Load:** ⚠️ Theoretical capacity for 500+ objects and 5+ users (not load tested).
+- **Optimizations Implemented:**
+  - Batch operations for multiple object updates
+  - Debounced viewport persistence (500ms)
+  - Smart conflict resolution with timestamps
+  - Efficient Firestore subcollection structure
 
 ---
 
-## **7. Next Steps**
+## **7. Current Status and Next Steps**
 
-1. **Phase 1:** Set up Firebase project, user auth, and basic real-time connection.
-2. **Phase 2:** Implement real-time cursor and object sync.
-3. **Phase 3:** Add transformations, persistence, and deploy MVP.
+### **✅ Completed (MVP)**
+
+1. **Phase 1:** ✅ Firebase project, user auth, and real-time connection implemented.
+2. **Phase 2:** ✅ Real-time cursor and object sync with React Query.
+3. **Phase 3:** ✅ Transformations, persistence, and deployed MVP on Vercel.
+
+### **🚧 Future Enhancements**
+
 4. **Phase 4 (Post-MVP):** Begin AI agent integration and higher-order commands.
+5. **Testing Infrastructure:** Add unit tests, e2e tests, and CI/CD pipeline.
+6. **Performance Testing:** Load test with 500+ objects and 5+ concurrent users.
+7. **Advanced Features:** Layer management, undo/redo, export functionality.
