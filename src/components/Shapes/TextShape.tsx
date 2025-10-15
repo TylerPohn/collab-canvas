@@ -18,7 +18,7 @@ interface TextShapeProps {
 const TextShape: React.FC<TextShapeProps> = memo(
   ({
     shape,
-    isSelected: _isSelected,
+    isSelected,
     onSelect,
     onDragStart,
     onDragMove,
@@ -40,8 +40,8 @@ const TextShape: React.FC<TextShapeProps> = memo(
         text={shape.text}
         fontSize={shape.fontSize || 16}
         fill={shape.fill || '#374151'}
-        stroke={shape.stroke || 'transparent'}
-        strokeWidth={shape.strokeWidth || 0}
+        stroke={isSelected ? '#374151' : shape.stroke || 'transparent'}
+        strokeWidth={isSelected ? 1 : shape.strokeWidth || 0}
         rotation={shape.rotation || 0}
         draggable
         onClick={onSelect}

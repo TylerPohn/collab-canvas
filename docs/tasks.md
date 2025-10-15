@@ -910,10 +910,11 @@ Each step is designed to be:
 
 **Steps to Achieve Excellent:**
 
-- [ ] **Step 14.1**: Add shift-click for multi-select (drag-to-select marquee already implemented).
+- [x] **Step 14.1**: Add shift-click for multi-select (drag-to-select marquee already implemented).
   - Files: `src/components/CanvasStage.tsx`, `src/store/selection.ts`
   - Implement shift-click functionality for adding objects to selection
   - Ensure shift-click works with existing drag-to-select marquee
+  - Multi select works with duplicate 
   - **Test**: Select multiple objects with shift-click and verify it works with marquee selection
 
 - [ ] **Step 14.2**: Add visual layer position indicators to design palette.

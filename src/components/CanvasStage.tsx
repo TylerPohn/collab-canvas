@@ -126,21 +126,33 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
 
     // Update transformer when selection changes
     useEffect(() => {
-      if (transformerRef.current && selectedIds.length === 1) {
-        const selectedNode = stageRef.current?.findOne(`#${selectedIds[0]}`)
-        if (selectedNode) {
-          transformerRef.current.nodes([selectedNode])
+      if (transformerRef.current && selectedIds.length > 0) {
+        const selectedNodes = selectedIds
+          .map(id => stageRef.current?.findOne(`#${id}`))
+          .filter(Boolean) as Konva.Node[]
+
+        if (selectedNodes.length > 0) {
+          transformerRef.current.nodes(selectedNodes)
+          transformerRef.current.getLayer()?.batchDraw()
+        } else {
+          // If no valid nodes found (e.g., after deletion), clear transformer
+          transformerRef.current.nodes([])
           transformerRef.current.getLayer()?.batchDraw()
         }
       } else if (transformerRef.current) {
         transformerRef.current.nodes([])
         transformerRef.current.getLayer()?.batchDraw()
       }
-    }, [selectedIds])
+    }, [selectedIds, shapes])
 
     // Keyboard shortcuts
     const handleDelete = useCallback(() => {
       if (selectedIds.length > 0) {
+        // Clear transformer immediately to prevent showing handles for deleted shapes
+        if (transformerRef.current) {
+          transformerRef.current.nodes([])
+          transformerRef.current.getLayer()?.batchDraw()
+        }
         onShapeDelete(selectedIds)
         clearSelection()
       }
@@ -538,6 +550,18 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
               .getState()
               .selectMultiple([...currentSelection, id])
           }
+        } else if (e.evt.shiftKey) {
+          // Multi-select with Shift
+          const currentSelection = useSelectionStore.getState().selectedIds
+          if (currentSelection.includes(id)) {
+            // If already selected, remove from selection
+            useSelectionStore.getState().toggleSelection(id)
+          } else {
+            // Add to selection
+            useSelectionStore
+              .getState()
+              .selectMultiple([...currentSelection, id])
+          }
         } else {
           // Single select
           selectShape(id)
@@ -761,6 +785,73 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
       },
       [shapes, onShapeUpdate]
     )
+
+    // Handle multi-select transform end
+    const handleMultiTransformEnd = useCallback(() => {
+      if (selectedIds.length <= 1) return
+
+      const transformer = transformerRef.current
+      if (!transformer) return
+
+      const nodes = transformer.nodes()
+
+      // Create batch updates for all transformed shapes
+      const batchUpdates = nodes
+        .map(node => {
+          const id = node.id()
+          const shape = shapes.find(s => s.id === id)
+          if (!shape) return null
+
+          const scaleX = node.scaleX()
+          const scaleY = node.scaleY()
+
+          // Reset scale and apply to dimensions
+          node.scaleX(1)
+          node.scaleY(1)
+
+          let updates: Partial<Shape> = {
+            x: node.x(),
+            y: node.y(),
+            rotation: node.rotation()
+          }
+
+          if (shape.type === 'rect') {
+            updates = {
+              ...updates,
+              width: Math.max(5, node.width() * scaleX),
+              height: Math.max(5, node.height() * scaleY)
+            }
+          } else if (shape.type === 'circle') {
+            updates = {
+              ...updates,
+              radius: Math.max(
+                5,
+                (node as Konva.Circle).radius() * Math.max(scaleX, scaleY)
+              )
+            }
+          } else if (shape.type === 'text') {
+            const currentFontSize = shape.fontSize || 16
+            const newFontSize = Math.max(
+              8,
+              currentFontSize * Math.max(scaleX, scaleY)
+            )
+            updates = {
+              ...updates,
+              fontSize: newFontSize
+            }
+          }
+
+          return {
+            objectId: id,
+            updates
+          }
+        })
+        .filter(Boolean) as Array<{ objectId: string; updates: Partial<Shape> }>
+
+      if (batchUpdates.length > 0) {
+        onShapeBatchUpdateDebounced(batchUpdates)
+      }
+    }, [selectedIds, shapes, onShapeBatchUpdateDebounced])
 
     // Handle text double-click for editing
     const handleTextDoubleClick = useCallback(
@@ -1022,6 +1113,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 }
                 return newBox
               }}
+              onTransformEnd={handleMultiTransformEnd}
             />
           </Layer>
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import type Konva from 'konva'
 import React, { memo } from 'react'
 import { Circle } from 'react-konva'
@@ -17,7 +16,7 @@ interface CircleShapeProps {
 const CircleShape: React.FC<CircleShapeProps> = memo(
   ({
     shape,
-    isSelected: _isSelected,
+    isSelected,
     onSelect,
     onDragStart,
     onDragMove,
@@ -31,8 +30,8 @@ const CircleShape: React.FC<CircleShapeProps> = memo(
         y={shape.y}
         radius={shape.radius}
         fill={shape.fill || '#10b981'}
-        stroke={shape.stroke || 'transparent'}
-        strokeWidth={shape.strokeWidth || 0}
+        stroke={isSelected ? '#10b981' : shape.stroke || 'transparent'}
+        strokeWidth={isSelected ? 2 : shape.strokeWidth || 0}
         rotation={shape.rotation || 0}
         draggable
         onClick={onSelect}
