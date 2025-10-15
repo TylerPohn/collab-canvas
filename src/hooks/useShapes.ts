@@ -86,7 +86,7 @@ export function useShapeMutations(canvasId: string, userId: string) {
   // Delete shape mutation
   const deleteShapeMutation = useMutation({
     mutationFn: (objectId: string) =>
-      objectSync.deleteObject(canvasId, objectId),
+      objectSync.deleteObject(canvasId, objectId, userId),
     onError: error => {
       console.error('Failed to delete shape:', error)
     }

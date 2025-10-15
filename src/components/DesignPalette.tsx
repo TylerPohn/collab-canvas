@@ -25,6 +25,7 @@ interface DesignPaletteProps {
   onToggle: () => void
   shapes: Shape[]
   onShapeUpdate: (id: string, updates: Partial<Shape>) => void
+  onShapeUpdateDebounced: (id: string, updates: Partial<Shape>) => void
   currentUser: User | null
   presence: UserPresence[]
 }
@@ -34,6 +35,7 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
   onToggle,
   shapes,
   onShapeUpdate,
+  onShapeUpdateDebounced,
   currentUser,
   presence
 }) => {
@@ -111,14 +113,14 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
     setTextDecoration
   ])
 
-  // Helper function to update selected shapes
+  // Helper function to update selected shapes with immediate preview
   const updateSelectedShapes = useCallback(
     (updates: Partial<Shape>) => {
       selectedShapes.forEach(shape => {
-        onShapeUpdate(shape.id, updates)
+        onShapeUpdateDebounced(shape.id, updates)
       })
     },
-    [selectedShapes, onShapeUpdate]
+    [selectedShapes, onShapeUpdateDebounced]
   )
 
   // Handle fill color change
@@ -133,21 +135,11 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
     updateSelectedShapes({ stroke: color })
   }
 
-  // Debounced stroke width change
-  const strokeWidthTimeoutRef = useRef<number | undefined>(undefined)
+  // Handle stroke width change with immediate preview
   const handleStrokeWidthChange = useCallback(
     (newStrokeWidth: number) => {
       setStrokeWidth(newStrokeWidth)
-
-      // Clear existing timeout
-      if (strokeWidthTimeoutRef.current) {
-        clearTimeout(strokeWidthTimeoutRef.current)
-      }
-
-      // Debounce the shape update
-      strokeWidthTimeoutRef.current = window.setTimeout(() => {
-        updateSelectedShapes({ strokeWidth: newStrokeWidth })
-      }, 100)
+      updateSelectedShapes({ strokeWidth: newStrokeWidth })
     },
     [setStrokeWidth, updateSelectedShapes]
   )
@@ -177,21 +169,11 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
     [setFontSize, updateSelectedShapes]
   )
 
-  // Debounced corner radius change
-  const cornerRadiusTimeoutRef = useRef<number | undefined>(undefined)
+  // Handle corner radius change with immediate preview
   const handleCornerRadiusChange = useCallback(
     (newCornerRadius: number) => {
       setCornerRadius(newCornerRadius)
-
-      // Clear existing timeout
-      if (cornerRadiusTimeoutRef.current) {
-        clearTimeout(cornerRadiusTimeoutRef.current)
-      }
-
-      // Debounce the shape update
-      cornerRadiusTimeoutRef.current = window.setTimeout(() => {
-        updateSelectedShapes({ cornerRadius: newCornerRadius })
-      }, 100)
+      updateSelectedShapes({ cornerRadius: newCornerRadius })
     },
     [setCornerRadius, updateSelectedShapes]
   )
@@ -199,14 +181,8 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
   // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
-      if (strokeWidthTimeoutRef.current) {
-        clearTimeout(strokeWidthTimeoutRef.current)
-      }
       if (fontSizeTimeoutRef.current) {
         clearTimeout(fontSizeTimeoutRef.current)
-      }
-      if (cornerRadiusTimeoutRef.current) {
-        clearTimeout(cornerRadiusTimeoutRef.current)
       }
     }
   }, [])

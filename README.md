@@ -17,6 +17,7 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 - 🎪 **Live cursor tracking** with 50ms throttling
 - 💾 **Persistent canvas state** across sessions
 - 🎨 **Design palette** with shape styling and object information
+- 📶 **Offline editing** with operation queuing and automatic sync
 - 🚀 **Deployed and publicly accessible** on Vercel
 
 ## 🛠️ Tech Stack

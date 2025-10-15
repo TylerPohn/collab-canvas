@@ -15,6 +15,8 @@ import type { Shape } from '../types'
 // Performance optimization constants
 const DRAG_DEBOUNCE_MS = 50
 const MAX_BATCH_SIZE = 10
+const MAX_RETRY_ATTEMPTS = 3
+const RETRY_DELAY_MS = 1000
 
 // Query keys for React Query
 export const objectKeys = {
@@ -55,8 +57,181 @@ export class ObjectSyncService {
     }
   > = new Map()
 
+  // PR #13.9.5: Operation queuing for offline scenarios
+  private operationQueue: Array<{
+    id: string
+    type: 'create' | 'update' | 'delete' | 'batchUpdate'
+    canvasId: string
+    data: any
+    userId: string
+    retryCount: number
+    timestamp: number
+  }> = []
+  private isOnline: boolean = navigator.onLine
+  private isProcessingQueue: boolean = false
+
   constructor(queryClient: QueryClient) {
     this.queryClient = queryClient
+    this.setupNetworkMonitoring()
+  }
+
+  // PR #13.9.5: Setup network monitoring for offline/online detection
+  private setupNetworkMonitoring() {
+    const handleOnline = () => {
+      this.isOnline = true
+      console.log('[ObjectSync] Network online - processing queued operations')
+      this.processOperationQueue()
+    }
+
+    const handleOffline = () => {
+      this.isOnline = false
+      console.log('[ObjectSync] Network offline - queuing operations')
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }
+
+  // PR #13.9.5: Add operation to queue
+  private addToQueue(
+    type: 'create' | 'update' | 'delete' | 'batchUpdate',
+    canvasId: string,
+    data: any,
+    userId: string
+  ): string {
+    const operationId = `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+    this.operationQueue.push({
+      id: operationId,
+      type,
+      canvasId,
+      data,
+      userId,
+      retryCount: 0,
+      timestamp: Date.now()
+    })
+
+    console.log(`[ObjectSync] Queued operation: ${type} (${operationId})`)
+    return operationId
+  }
+
+  // PR #13.9.5: Process queued operations when back online
+  private async processOperationQueue() {
+    if (
+      this.isProcessingQueue ||
+      !this.isOnline ||
+      this.operationQueue.length === 0
+    ) {
+      return
+    }
+
+    this.isProcessingQueue = true
+    console.log(
+      `[ObjectSync] Processing ${this.operationQueue.length} queued operations`
+    )
+
+    const operationsToProcess = [...this.operationQueue]
+    this.operationQueue = []
+
+    for (const operation of operationsToProcess) {
+      try {
+        await this.executeQueuedOperation(operation)
+        console.log(
+          `[ObjectSync] Successfully processed queued operation: ${operation.id}`
+        )
+      } catch (error) {
+        console.error(
+          `[ObjectSync] Failed to process queued operation: ${operation.id}`,
+          error
+        )
+
+        // Retry if we haven't exceeded max attempts
+        if (operation.retryCount < MAX_RETRY_ATTEMPTS) {
+          operation.retryCount++
+          this.operationQueue.push(operation)
+          console.log(
+            `[ObjectSync] Retrying operation ${operation.id} (attempt ${operation.retryCount})`
+          )
+        } else {
+          console.error(
+            `[ObjectSync] Max retries exceeded for operation: ${operation.id}`
+          )
+          // TODO: Could emit an event here for UI to show failed operations
+        }
+      }
+    }
+
+    this.isProcessingQueue = false
+
+    // If there are still operations in the queue (retries), process them after a delay
+    if (this.operationQueue.length > 0) {
+      setTimeout(() => this.processOperationQueue(), RETRY_DELAY_MS)
+    }
+  }
+
+  // PR #13.9.5: Execute a queued operation
+  private async executeQueuedOperation(operation: any) {
+    switch (operation.type) {
+      case 'create':
+        await createObject(
+          operation.canvasId,
+          operation.data.object,
+          operation.userId
+        )
+        break
+      case 'update':
+        await updateObject(
+          operation.canvasId,
+          operation.data.objectId,
+          operation.data.updates,
+          operation.userId
+        )
+        break
+      case 'delete':
+        await deleteObject(operation.canvasId, operation.data.objectId)
+        break
+      case 'batchUpdate':
+        await this.smartBatchUpdateObjects(
+          operation.canvasId,
+          operation.data.updates,
+          operation.userId
+        )
+        break
+      default:
+        throw new Error(`Unknown operation type: ${operation.type}`)
+    }
+  }
+
+  // PR #13.9.5: Check if error is network-related
+  private isNetworkError(error: any): boolean {
+    if (!error) return false
+
+    // Check for common network error patterns
+    const errorMessage = error.message?.toLowerCase() || ''
+    const networkErrorPatterns = [
+      'network error',
+      'connection failed',
+      'timeout',
+      'offline',
+      'unreachable',
+      'fetch failed',
+      'connection refused',
+      'no internet',
+      'network request failed'
+    ]
+
+    return (
+      networkErrorPatterns.some(pattern => errorMessage.includes(pattern)) ||
+      error.code === 'unavailable' ||
+      error.code === 'deadline-exceeded' ||
+      (error.status >= 500 && error.status < 600)
+    )
   }
 
   // Subscribe to objects for a canvas
@@ -131,6 +306,12 @@ export class ObjectSyncService {
       return newShapes
     })
 
+    // PR #13.9.5: If offline, queue the operation instead of failing
+    if (!this.isOnline) {
+      this.addToQueue('create', canvasId, { object: optimisticObject }, userId)
+      return optimisticObject
+    }
+
     try {
       // Create in Firestore
       await createObject(canvasId, optimisticObject, userId)
@@ -139,7 +320,19 @@ export class ObjectSyncService {
       return optimisticObject
     } catch (error) {
       console.error(`[ObjectSync] Failed to write to Firestore:`, error)
-      // Rollback optimistic update
+
+      // PR #13.9.5: If network error, queue the operation instead of rolling back
+      if (this.isNetworkError(error)) {
+        this.addToQueue(
+          'create',
+          canvasId,
+          { object: optimisticObject },
+          userId
+        )
+        return optimisticObject
+      }
+
+      // Rollback optimistic update for non-network errors
       this.queryClient.setQueryData(queryKey, (old: Shape[] = []) => {
         const rolledBack = old.filter(obj => obj.id !== id)
         return rolledBack
@@ -171,11 +364,23 @@ export class ObjectSyncService {
       )
     )
 
+    // PR #13.9.5: If offline, queue the operation instead of failing
+    if (!this.isOnline) {
+      this.addToQueue('update', canvasId, { objectId, updates }, userId)
+      return
+    }
+
     try {
       // Update in Firestore
       await updateObject(canvasId, objectId, updates, userId)
     } catch (error) {
-      // Rollback optimistic update - refetch from server
+      // PR #13.9.5: If network error, queue the operation instead of rolling back
+      if (this.isNetworkError(error)) {
+        this.addToQueue('update', canvasId, { objectId, updates }, userId)
+        return
+      }
+
+      // Rollback optimistic update for non-network errors
       this.queryClient.invalidateQueries({ queryKey })
       throw error
     }
@@ -220,12 +425,20 @@ export class ObjectSyncService {
       const pendingUpdate = this.pendingUpdates.get(updateKey)
       if (pendingUpdate) {
         try {
-          await updateObject(canvasId, objectId, pendingUpdate.updates, userId)
+          // PR #13.9.5: Use the main updateObject method which handles offline queuing
+          await this.updateObject(
+            canvasId,
+            objectId,
+            pendingUpdate.updates,
+            userId
+          )
           this.pendingUpdates.delete(updateKey)
         } catch (error) {
           console.error('Debounced update failed:', error)
-          // Rollback optimistic update
-          this.queryClient.invalidateQueries({ queryKey })
+          // Only rollback for non-network errors
+          if (!this.isNetworkError(error)) {
+            this.queryClient.invalidateQueries({ queryKey })
+          }
         }
       }
       this.debouncedUpdates.delete(updateKey)
@@ -294,7 +507,11 @@ export class ObjectSyncService {
     this.debouncedBatchUpdates.set(batchKey, timeout)
   }
 
-  async deleteObject(canvasId: string, objectId: string): Promise<void> {
+  async deleteObject(
+    canvasId: string,
+    objectId: string,
+    userId?: string
+  ): Promise<void> {
     const queryKey = objectKeys.list(canvasId)
 
     // Store original object for rollback
@@ -307,11 +524,23 @@ export class ObjectSyncService {
       old.filter(obj => obj.id !== objectId)
     )
 
+    // PR #13.9.5: If offline, queue the operation instead of failing
+    if (!this.isOnline && userId) {
+      this.addToQueue('delete', canvasId, { objectId }, userId)
+      return
+    }
+
     try {
       // Delete in Firestore
       await deleteObject(canvasId, objectId)
     } catch (error) {
-      // Rollback optimistic update
+      // PR #13.9.5: If network error, queue the operation instead of rolling back
+      if (this.isNetworkError(error) && userId) {
+        this.addToQueue('delete', canvasId, { objectId }, userId)
+        return
+      }
+
+      // Rollback optimistic update for non-network errors
       if (originalObject) {
         this.queryClient.setQueryData(queryKey, (old: Shape[] = []) => [
           ...old,

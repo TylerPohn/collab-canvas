@@ -842,7 +842,7 @@ Each step is designed to be:
   - **COMPLETED**: Added Object Info section to design palette showing last edited information
   - **COMPLETED**: Integrated with existing user presence system for accurate user attribution
   - **Test**: Select objects and verify last edited information displays correctly
- - [x] **Step 13.8.5**: Handle case where last editing user is offline, say say their name, not "unknown user"
+- [ ] **Step 13.8.5**: Handle case where last editing user is offline, say say their name, not "unknown user"
 
 ### Persistence & Reconnection (9 points) - Target: Excellent (8-9 points)
 
@@ -850,19 +850,39 @@ Each step is designed to be:
 
 **Steps to Achieve Excellent:**
 
-- [ ] **Step 13.9**: Implement operation queuing during disconnect.
+- [x] **Step 13.9**: Replace "Healthy" text in top navbar type component with "Connected" + Green circle OR "Offline" + Red circle to show if user is connected to server or not.
+  - Files: `src/hooks/useConnectionStatus.ts`, `src/components/ConnectionStatus.tsx`, `src/App.tsx`
+  - **COMPLETED**: Implemented comprehensive connection status tracking with Firebase connection testing
+  - **COMPLETED**: Created reusable ConnectionStatus component with visual indicators
+  - **COMPLETED**: Integrated with existing presence system for accurate connection status
+  - **COMPLETED**: Added network connectivity monitoring and automatic reconnection
+  - **Test**: Verify connection status shows "Connected" (green) when online and "Offline" (red) when disconnected
+
+- [x] **Step 13.9.5**: Implement operation queuing during disconnect.
   - Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`
-  - Queue operations when offline and sync on reconnect
-  - Implement retry logic for failed operations
+  - **COMPLETED**: Implemented comprehensive operation queuing system for offline scenarios
+  - **COMPLETED**: Added network monitoring with automatic online/offline detection
+  - **COMPLETED**: Operations are queued when offline and automatically synced when back online
+  - **COMPLETED**: Implemented retry logic with exponential backoff (max 3 attempts)
+  - **COMPLETED**: Fixed UI preview issues - optimistic updates now persist during offline periods
+  - **COMPLETED**: Enhanced error handling to distinguish network errors from other errors
+  - **COMPLETED**: Fixed design palette preview - all changes now show immediate visual feedback
+  - **COMPLETED**: Fixed new shape creation - all new shapes inherit current design palette settings
   - **Test**: Disconnect network, make edits, reconnect - verify all operations sync
 
-- [ ] **Step 13.10**: Add comprehensive connection status indicators.
+- [ ] **Step 13.9.6**: Enhance offline preview for newly created objects.
+  - Files: `src/components/CanvasStage.tsx`, `src/lib/sync/objects.ts`
+  - Add visual indicators for objects created while offline (e.g., subtle border or icon)
+  - Show "pending sync" status for queued operations in the UI
+  - Implement better visual feedback for offline-created objects until they sync
+  - **Test**: Create objects while offline, verify visual indicators, then go online to see sync
+
+- [x] **Step 13.10**: Add comprehensive connection status indicators.
   - Files: `src/components/CanvasStage.tsx`, `src/hooks/usePresence.ts`
   - Show connection status in UI (connected/disconnected/reconnecting)
   - Add visual indicators for sync status
   - **Test**: Network throttling to verify status indicators work
 
-- [ ] **Step 13.11**: Implement robust reconnection with complete state restoration.
   - Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`
   - Ensure 100% state preservation on refresh
   - Implement incremental sync for large canvases

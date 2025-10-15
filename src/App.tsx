@@ -1,11 +1,11 @@
 import { Globe, Heart, Palette, Shield, Users, Zap } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import {
   Navigate,
   Route,
   BrowserRouter as Router,
   Routes
 } from 'react-router-dom'
+import ConnectionStatus from './components/ConnectionStatus'
 import ProfileMenu from './components/ProfileMenu'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthProvider } from './components/providers/AuthProvider'
@@ -13,7 +13,6 @@ import { Button } from './components/ui/button'
 import { Card, CardContent } from './components/ui/card'
 import { ToastProvider } from './contexts/ToastContext'
 import { useAuth } from './hooks/useAuth'
-import { getHealthCheck } from './lib/health'
 import CanvasPage from './pages/CanvasPage'
 import LoginPage from './pages/LoginPage'
 
@@ -184,15 +183,6 @@ const LandingPage: React.FC = () => {
 }
 
 function App() {
-  const [healthStatus, setHealthStatus] = useState<string>('checking...')
-
-  useEffect(() => {
-    // Check health status on app load
-    getHealthCheck()
-      .then(status => setHealthStatus(status.status))
-      .catch(() => setHealthStatus('error'))
-  }, [])
-
   return (
     <ToastProvider>
       <AuthProvider>
@@ -208,20 +198,7 @@ function App() {
                     </h1>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div
-                        className={`w-2 h-2 rounded-full ${
-                          healthStatus === 'healthy'
-                            ? 'bg-green-500'
-                            : healthStatus === 'degraded'
-                              ? 'bg-yellow-500'
-                              : 'bg-red-500'
-                        }`}
-                      />
-                      <span className="text-sm text-muted-foreground capitalize">
-                        {healthStatus}
-                      </span>
-                    </div>
+                    <ConnectionStatus />
                     <ProfileMenu />
                   </div>
                 </div>

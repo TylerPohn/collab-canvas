@@ -417,20 +417,31 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
               const newZIndex = maxZIndex + 1
 
               if (selectedTool === 'rectangle') {
+                const shapeDefaults = getDefaultShapeProperties()
                 shapeData = {
                   type: 'rect',
                   x: Math.min(drawingStart.x, worldX),
                   y: Math.min(drawingStart.y, worldY),
                   width: Math.abs(worldX - drawingStart.x),
                   height: Math.abs(worldY - drawingStart.y),
+                  fill: shapeDefaults.fill,
+                  stroke: shapeDefaults.stroke,
+                  strokeWidth: shapeDefaults.strokeWidth,
+                  rotation: shapeDefaults.rotation,
+                  cornerRadius: shapeDefaults.cornerRadius,
                   zIndex: newZIndex
                 }
               } else if (selectedTool === 'circle') {
+                const shapeDefaults = getDefaultShapeProperties()
                 shapeData = {
                   type: 'circle',
                   x: (drawingStart.x + worldX) / 2,
                   y: (drawingStart.y + worldY) / 2,
                   radius: Math.abs(worldX - drawingStart.x) / 2,
+                  fill: shapeDefaults.fill,
+                  stroke: shapeDefaults.stroke,
+                  strokeWidth: shapeDefaults.strokeWidth,
+                  rotation: shapeDefaults.rotation,
                   zIndex: newZIndex
                 }
               } else if (selectedTool === 'text') {
@@ -454,12 +465,18 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 }
               } else {
                 // Fallback for select tool (shouldn't happen)
+                const shapeDefaults = getDefaultShapeProperties()
                 shapeData = {
                   type: 'rect',
                   x: 0,
                   y: 0,
                   width: 0,
                   height: 0,
+                  fill: shapeDefaults.fill,
+                  stroke: shapeDefaults.stroke,
+                  strokeWidth: shapeDefaults.strokeWidth,
+                  rotation: shapeDefaults.rotation,
+                  cornerRadius: shapeDefaults.cornerRadius,
                   zIndex: newZIndex
                 }
               }
