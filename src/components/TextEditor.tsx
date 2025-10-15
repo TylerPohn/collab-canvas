@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { sanitizeText } from '../lib/security'
 import type { TextShape } from '../lib/types'
 import { useDesignPaletteStore } from '../store/designPalette'
 
@@ -46,7 +47,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      onSave(text)
+      onSave(sanitizeText(text))
     } else if (e.key === 'Escape') {
       e.preventDefault()
       onCancel()
@@ -54,7 +55,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
   }
 
   const handleBlur = () => {
-    onSave(text)
+    onSave(sanitizeText(text))
   }
 
   if (!isVisible) return null

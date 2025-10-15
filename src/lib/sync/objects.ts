@@ -10,6 +10,7 @@ import {
   subscribeToObjects,
   updateObject
 } from '../firebase/firestore'
+import { securityLogger, shapeRateLimiter } from '../security'
 import type { Shape } from '../types'
 
 // Performance optimization constants
@@ -284,6 +285,19 @@ export class ObjectSyncService {
     >,
     userId: string
   ): Promise<Shape> {
+    // Rate limiting check
+    if (!shapeRateLimiter.isAllowed(userId)) {
+      securityLogger.log({
+        type: 'rate_limit_exceeded',
+        userId,
+        details: `Shape creation rate limit exceeded for user ${userId}`,
+        severity: 'medium'
+      })
+      throw new Error(
+        'Rate limit exceeded. Please slow down your shape creation.'
+      )
+    }
+
     const queryKey = objectKeys.list(canvasId)
     const now = Date.now()
 

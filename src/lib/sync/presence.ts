@@ -3,6 +3,7 @@ import {
   subscribeToPresence,
   updatePresence
 } from '../firebase/firestore'
+import { presenceRateLimiter, securityLogger } from '../security'
 import type { UserPresence } from '../types'
 
 // Heartbeat interval in milliseconds (30 seconds)
@@ -102,6 +103,17 @@ class PresenceServiceImpl implements PresenceService {
     userId: string,
     cursor: { x: number; y: number }
   ): void {
+    // Rate limiting check for cursor updates
+    if (!presenceRateLimiter.isAllowed(userId)) {
+      securityLogger.log({
+        type: 'rate_limit_exceeded',
+        userId,
+        details: `Cursor update rate limit exceeded for user ${userId}`,
+        severity: 'low'
+      })
+      return // Silently drop cursor updates if rate limited
+    }
+
     const throttleKey = `${canvasId}-${userId}`
 
     // Clear existing throttle timeout

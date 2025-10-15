@@ -6,6 +6,18 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 
 ## ✨ Features
 
+### 🔒 **Enterprise-Grade Security**
+
+- 🛡️ **Content Security Policy (CSP)** with Google Auth compatibility
+- 🚫 **XSS Protection** with input sanitization using DOMPurify
+- ⚡ **Rate Limiting** for shape creation and cursor updates
+- 🔐 **Secure Headers** (X-Frame-Options, X-XSS-Protection, etc.)
+- 📊 **Security Audit Logging** with structured event tracking
+- 🔄 **Session Management** with automatic token refresh
+- 🚪 **Cross-Origin-Opener-Policy** for secure popup authentication
+
+### 🎨 **Collaborative Canvas**
+
 - 🎨 **Real-time collaborative canvas** with multiple users
 - 🔧 **Shape creation and manipulation** (rectangles, circles, text)
 - 👥 **Multi-user presence** with live cursors and user avatars

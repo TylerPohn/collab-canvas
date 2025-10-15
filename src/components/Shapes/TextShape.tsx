@@ -1,6 +1,7 @@
 import type Konva from 'konva'
 import React, { memo } from 'react'
 import { Text } from 'react-konva'
+import { sanitizeText } from '../../lib/security'
 import type { TextShape as TextShapeType } from '../../lib/types'
 
 interface TextShapeProps {
@@ -37,7 +38,7 @@ const TextShape: React.FC<TextShapeProps> = memo(
         id={shape.id}
         x={shape.x}
         y={shape.y}
-        text={shape.text}
+        text={sanitizeText(shape.text)}
         fontSize={shape.fontSize || 16}
         fill={shape.fill || '#374151'}
         stroke={isSelected ? '#374151' : shape.stroke || 'transparent'}

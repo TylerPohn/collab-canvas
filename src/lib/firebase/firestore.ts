@@ -260,7 +260,10 @@ export function subscribeToObjects(
       const shape = { id: doc.id, ...data } as Shape
       return shape
     })
-
+      console.log(
+        `[Firestore] Received ${objects.length} objects update (${snapshot.docChanges().length} changes)`
+      )
+    
     callback(objects)
   })
 }

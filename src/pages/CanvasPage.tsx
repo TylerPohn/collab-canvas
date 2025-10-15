@@ -20,7 +20,7 @@ import { useSelectionStore } from '../store/selection'
 const CanvasPage: React.FC = () => {
   const [selectedTool, setSelectedTool] = useState<ToolType>('select')
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
-  const [isDesignPaletteOpen, setIsDesignPaletteOpen] = useState(false)
+  const [isDesignPaletteOpen, setIsDesignPaletteOpen] = useState(true)
 
   const { selectedIds, hasSelection } = useSelectionStore()
   const { user } = useAuth()
