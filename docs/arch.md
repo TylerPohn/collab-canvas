@@ -3,11 +3,11 @@ flowchart LR
 subgraph Client
 direction TB
 A1[src - main tsx - App tsx - pages - auth login - canvas page]
-A2[components - CanvasStage Konva - Shapes - CursorLayer - PresenceList - Toolbar - AuthProvider]
+A2[components - CanvasStage Konva - Shapes - CursorLayer - PresenceList - Toolbar shadcn/ui - DesignPalette - AuthProvider]
 A3[hooks - usePanZoom - useShapes React Query - usePresence React Query - useCanvasShortcuts]
-A4[store - selection ts UI only]
+A4[store - selection ts - designPalette ts UI state]
 A5[lib - types ts and schema ts - sync objects - sync presence - firebase client - firebase firestore - react query client]
-A6[styles - globals css - Tailwind CSS]
+A6[styles - globals css - Tailwind CSS - shadcn/ui components]
 end
 
 %% ========= DEVELOPMENT TOOLING =========

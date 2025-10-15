@@ -76,6 +76,8 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 - **Konva.js** for canvas manipulation and shape rendering (chosen for performance with multiple concurrent users).
 - **React Query** for local state and data synchronization with optimistic updates.
 - **Tailwind CSS** for styling and responsive design.
+- **shadcn/ui** (Radix + Tailwind) for accessible UI components 🚧 _Planned_.
+- **lucide-react** for consistent iconography 🚧 _Planned_.
 
 ### **Backend**
 
@@ -140,7 +142,6 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 
 ### **🚧 Future Enhancements**
 
-4. **Phase 4 (Post-MVP):** Begin AI agent integration and higher-order commands.
-5. **Testing Infrastructure:** Add unit tests, e2e tests, and CI/CD pipeline.
-6. **Performance Testing:** Load test with 500+ objects and 5+ concurrent users.
-7. **Advanced Features:** Layer management, undo/redo, export functionality.
+4. **Phase 4 (Immediate):** Complete UI overhaul with shadcn/ui, including homepage, login page, and Figma-like toolbar.
+5. **Phase 5 (Short-term):** Design palette panel, testing infrastructure, performance testing, mobile optimization.
+6. **Phase 6 (Long-term):** AI agent integration, advanced features, enterprise capabilities.

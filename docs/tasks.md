@@ -410,6 +410,311 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 
 ---
 
+## PR #11 — Modern UI with shadcn/ui (Complete UI Overhaul) 🚧 PLANNED
+
+**Goal:** Implement shadcn/ui components with Radix + Tailwind and lucide-react icons for a professional, modern UI across the entire application.
+
+### Phase 1: Setup and Foundation
+
+- [ ] **Step 1.1**: Install and configure shadcn/ui with Radix primitives and Tailwind CSS.
+  - Files: `package.json`, `components.json`, `tailwind.config.ts`
+  - Run: `npx shadcn-ui@latest init`
+
+- [ ] **Step 1.2**: Install lucide-react for consistent iconography.
+  - Files: `package.json`
+  - Run: `npm install lucide-react`
+
+- [ ] **Step 1.3**: Install core shadcn/ui components needed for the overhaul.
+  - Files: `src/components/ui/` (auto-generated)
+  - Run: `npx shadcn-ui@latest add button card input label separator tooltip`
+
+### Phase 2: Homepage Redesign
+
+- [ ] **Step 2.1**: Create modern hero section with shadcn/ui Card component.
+  - Files: `src/App.tsx` (LandingPage component)
+  - Replace basic div with Card, CardHeader, CardContent
+
+- [ ] **Step 2.2**: Add feature showcase with icon grid using lucide-react.
+  - Files: `src/App.tsx` (LandingPage component)
+  - Use icons: Users, Zap, Palette, Shield, Globe, Heart
+
+- [ ] **Step 2.3**: Implement call-to-action buttons with proper styling.
+  - Files: `src/App.tsx` (LandingPage component)
+  - Use Button component with variants (default, outline, ghost)
+
+- [ ] **Step 2.4**: Add responsive layout with proper spacing and typography.
+  - Files: `src/App.tsx` (LandingPage component)
+  - Use Tailwind responsive classes (sm:, md:, lg:)
+
+### Phase 3: Login Page Redesign
+
+- [ ] **Step 3.1**: Create centered login card with shadcn/ui Card component.
+  - Files: `src/pages/LoginPage.tsx`
+  - Replace basic form with Card, CardHeader, CardContent, CardFooter
+
+- [ ] **Step 3.2**: Add Google OAuth button with proper styling and Google icon.
+  - Files: `src/pages/LoginPage.tsx`
+  - Use Button component with Google branding colors
+
+- [ ] **Step 3.3**: Implement loading states with shadcn/ui components.
+  - Files: `src/pages/LoginPage.tsx`
+  - Add loading spinner and disabled states
+
+- [ ] **Step 3.4**: Add error handling with proper visual feedback.
+  - Files: `src/pages/LoginPage.tsx`
+  - Use Alert component for error messages
+
+### Phase 4: Toolbar Redesign
+
+- [ ] **Step 4.1**: Create modern toolbar component with shadcn/ui components.
+  - Files: `src/components/Toolbar.tsx` (refactor existing)
+  - Use Button components with proper variants
+
+- [ ] **Step 4.2**: Implement tool selection with proper visual states and hover effects.
+  - Files: `src/components/Toolbar.tsx`, `src/components/ui/button.tsx`
+  - Add active states and hover effects
+
+- [ ] **Step 4.3**: Add tool groups and separators for better organization.
+  - Files: `src/components/Toolbar.tsx`, `src/components/ui/separator.tsx`
+  - Group related tools with visual separators
+
+- [ ] **Step 4.4**: Implement keyboard shortcuts display and tooltips.
+  - Files: `src/components/Toolbar.tsx`, `src/components/ui/tooltip.tsx`
+  - Add tooltips showing keyboard shortcuts
+
+### Phase 5: Component Updates
+
+- [ ] **Step 5.1**: Update ProfileMenu with shadcn/ui components.
+  - Files: `src/components/ProfileMenu.tsx`
+  - Use DropdownMenu, Avatar, Button components
+
+- [ ] **Step 5.2**: Update PresenceList with modern styling.
+  - Files: `src/components/PresenceList.tsx`
+  - Use Badge, Avatar, Card components
+
+- [ ] **Step 5.3**: Add responsive design for mobile and tablet views.
+  - Files: `src/components/Toolbar.tsx`, `src/pages/LoginPage.tsx`, `src/App.tsx`
+  - Implement mobile-first responsive design
+
+- [ ] **Step 5.4**: Add dark mode support (optional enhancement).
+  - Files: `tailwind.config.ts`, `src/components/` (various)
+  - Implement dark mode toggle and theme switching
+
+**PR #11 Implementation Plan:**
+
+- **Complete UI Overhaul**: Modernize entire application with shadcn/ui
+- **Homepage Redesign**: Professional landing page with hero section and features
+- **Login Page Redesign**: Modern authentication experience with proper styling
+- **Toolbar Redesign**: Figma-like toolbar with proper tool grouping
+- **Component Library**: Build reusable UI components using Radix primitives
+- **Responsive Design**: Mobile-first design for all screen sizes
+- **Accessibility**: Implement proper ARIA labels and keyboard navigation
+- **Visual Polish**: Consistent design system with hover states and animations
+
+**Key Features to Deliver:**
+
+- **Homepage**: Professional hero section, feature showcase, call-to-action
+- **Login Page**: Modern card-based design, Google OAuth styling, error handling
+- **Toolbar**: Figma-like design with tool grouping, shortcuts, and tooltips
+- **Components**: Consistent iconography with lucide-react
+- **Responsive**: Mobile-first design for all devices
+- **Accessibility**: Enhanced keyboard navigation and ARIA support
+- **Design System**: Unified visual language across the application
+
+**Junior Developer Guidance:**
+
+Each step is designed to be:
+
+- **Small and focused**: One component or feature at a time
+- **Well-documented**: Clear file paths and specific instructions
+- **Testable**: Each step can be tested independently
+- **Incremental**: Build upon previous steps without breaking existing functionality
+- **Educational**: Learn shadcn/ui, Radix, and modern React patterns
+
+---
+
+## PR #12 — Design Palette Panel (Right Sidebar) 🚧 PLANNED
+
+**Goal:** Implement a comprehensive design palette panel on the right side of the canvas for shape styling, layer management, and design controls.
+
+### Phase 1: Panel Structure and Layout
+
+- [ ] **Step 1.1**: Create DesignPalette component with shadcn/ui Card layout.
+  - Files: `src/components/DesignPalette.tsx` (new file)
+  - Use Card, CardHeader, CardContent, CardTitle components
+  - Position as fixed right sidebar (width: 320px)
+
+- [ ] **Step 1.2**: Add panel toggle functionality and responsive behavior.
+  - Files: `src/components/DesignPalette.tsx`, `src/pages/CanvasPage.tsx`
+  - Add toggle button in toolbar, hide on mobile (< 1024px)
+  - Use shadcn/ui Button with PanelLeft icon from lucide-react
+
+- [ ] **Step 1.3**: Create collapsible sections for different design categories.
+  - Files: `src/components/DesignPalette.tsx`
+  - Use Collapsible component with sections: "Fill & Stroke", "Effects", "Layer", "Text"
+  - Each section has ChevronDown icon and proper spacing
+
+### Phase 2: Fill and Stroke Controls
+
+- [ ] **Step 2.1**: Implement color picker for fill color with preset swatches.
+  - Files: `src/components/DesignPalette.tsx`
+  - Use shadcn/ui ColorPicker or custom color input
+  - Add preset color swatches (8-12 common colors)
+  - Show current fill color with visual preview
+
+- [ ] **Step 2.2**: Add stroke color and width controls.
+  - Files: `src/components/DesignPalette.tsx`
+  - Color picker for stroke color
+  - Number input for stroke width (0-10px)
+  - Toggle for stroke on/off
+
+- [ ] **Step 2.3**: Implement opacity slider for fill and stroke.
+  - Files: `src/components/DesignPalette.tsx`
+  - Use Slider component (0-100%)
+  - Separate controls for fill opacity and stroke opacity
+  - Show percentage value next to slider
+
+### Phase 3: Shape Effects and Transformations
+
+- [ ] **Step 3.1**: Add rotation control with visual indicator.
+  - Files: `src/components/DesignPalette.tsx`
+  - Number input for rotation angle (-360° to 360°)
+  - Visual rotation indicator with arrow
+  - Reset to 0° button
+
+- [ ] **Step 3.2**: Implement corner radius control for rectangles.
+  - Files: `src/components/DesignPalette.tsx`
+  - Slider for corner radius (0-50px)
+  - Only show for rectangle shapes
+  - Visual preview of rounded corners
+
+- [ ] **Step 3.3**: Add shadow and blur effects controls.
+  - Files: `src/components/DesignPalette.tsx`
+  - Toggle for drop shadow on/off
+  - Controls for shadow offset, blur, and color
+  - Toggle for blur effect with intensity slider
+
+### Phase 4: Layer Management
+
+- [ ] **Step 4.1**: Implement bring forward/backward controls.
+  - Files: `src/components/DesignPalette.tsx`
+  - Use Button components with ArrowUp, ArrowDown icons
+  - "Bring to Front", "Send to Back", "Bring Forward", "Send Backward"
+  - Disable when no shapes selected
+
+- [ ] **Step 4.2**: Add layer list with drag-and-drop reordering.
+  - Files: `src/components/DesignPalette.tsx`
+  - List all shapes in current canvas with thumbnails
+  - Drag-and-drop to reorder layers
+  - Show selected shapes highlighted
+  - Click to select shape from layer list
+
+- [ ] **Step 4.3**: Implement layer visibility and lock controls.
+  - Files: `src/components/DesignPalette.tsx`
+  - Eye icon toggle for visibility
+  - Lock icon toggle for editing protection
+  - Show layer names and types
+
+### Phase 5: Text Styling (for Text Shapes)
+
+- [ ] **Step 5.1**: Add font family selector with common fonts.
+  - Files: `src/components/DesignPalette.tsx`
+  - Dropdown with web-safe fonts: Arial, Helvetica, Times, Georgia, etc.
+  - Only show for text shapes
+  - Preview font in dropdown
+
+- [ ] **Step 5.2**: Implement font size, weight, and style controls.
+  - Files: `src/components/DesignPalette.tsx`
+  - Number input for font size (8-72px)
+  - Toggle buttons for Bold, Italic, Underline
+  - Use lucide-react icons: Bold, Italic, Underline
+
+- [ ] **Step 5.3**: Add text alignment and spacing controls.
+  - Files: `src/components/DesignPalette.tsx`
+  - Button group for text alignment (Left, Center, Right)
+  - Number inputs for line height and letter spacing
+  - Use AlignLeft, AlignCenter, AlignRight icons
+
+### Phase 6: State Management and Integration
+
+- [ ] **Step 6.1**: Create design palette state management with Zustand.
+  - Files: `src/store/designPalette.ts` (new file)
+  - Store current design settings (fill, stroke, effects, etc.)
+  - Store default settings for new shapes
+  - Store selected shape IDs and their properties
+
+- [ ] **Step 6.2**: Integrate palette with shape selection and updates.
+  - Files: `src/components/DesignPalette.tsx`, `src/components/CanvasStage.tsx`
+  - Update palette when shapes are selected
+  - Apply palette changes to selected shapes
+  - Update shape properties in real-time
+
+- [ ] **Step 6.3**: Implement default settings for new shapes.
+  - Files: `src/store/designPalette.ts`, `src/components/CanvasStage.tsx`
+  - Apply current palette settings to newly created shapes
+  - Reset palette to defaults when no shapes selected
+  - Persist default settings across sessions
+
+### Phase 7: Advanced Features and Polish
+
+- [ ] **Step 7.1**: Add preset style templates and quick styles.
+  - Files: `src/components/DesignPalette.tsx`
+  - Predefined style combinations (Modern, Classic, Bold, etc.)
+  - Quick style buttons for common combinations
+  - Save custom style presets
+
+- [ ] **Step 7.2**: Implement copy/paste styles between shapes.
+  - Files: `src/components/DesignPalette.tsx`
+  - "Copy Style" and "Paste Style" buttons
+  - Use Copy, Clipboard icons from lucide-react
+  - Store copied styles in clipboard state
+
+- [ ] **Step 7.3**: Add keyboard shortcuts for common palette actions.
+  - Files: `src/hooks/useCanvasShortcuts.ts`
+  - Ctrl/Cmd+C for copy style, Ctrl/Cmd+V for paste style
+  - Arrow keys for bring forward/backward
+  - Number keys for quick color selection
+
+- [ ] **Step 7.4**: Add responsive design and mobile optimization.
+  - Files: `src/components/DesignPalette.tsx`
+  - Collapsible on mobile with slide-out animation
+  - Touch-friendly controls and larger touch targets
+  - Optimize layout for tablet portrait mode
+
+**PR #12 Implementation Plan:**
+
+- **Design Palette Panel**: Comprehensive right sidebar for shape styling
+- **Fill & Stroke Controls**: Color pickers, opacity, stroke width
+- **Layer Management**: Bring forward/backward, layer list, visibility controls
+- **Text Styling**: Font controls, alignment, spacing (for text shapes)
+- **State Management**: Zustand store for palette state and defaults
+- **Advanced Features**: Style presets, copy/paste, keyboard shortcuts
+- **Responsive Design**: Mobile-optimized with collapsible behavior
+
+**Key Features to Deliver:**
+
+- **Right Sidebar Panel**: Fixed 320px width with toggle functionality
+- **Fill & Stroke**: Color pickers, opacity sliders, stroke controls
+- **Layer Controls**: Bring forward/backward, layer list with drag-and-drop
+- **Text Styling**: Font family, size, weight, alignment controls
+- **Default Settings**: Apply palette settings to new shapes
+- **Style Presets**: Quick style templates and custom presets
+- **Copy/Paste Styles**: Transfer styles between shapes
+- **Keyboard Shortcuts**: Common actions with keyboard shortcuts
+- **Responsive Design**: Mobile-friendly with collapsible behavior
+
+**Junior Developer Guidance:**
+
+Each step is designed to be:
+
+- **Component-focused**: One UI section or feature at a time
+- **State-driven**: Clear separation between UI and state management
+- **Incremental**: Build upon existing shape system without breaking functionality
+- **Testable**: Each control can be tested independently
+- **Educational**: Learn advanced React patterns, state management, and UI design
+
+---
+
 ## Optional (Post-MVP) — AI Agent Foundations (Stub Only)
 
 **Goal:** Prepare minimal API for future AI function-calling (no AI yet).
@@ -516,3 +821,25 @@ setupTests.ts   // RTL + JSDOM setup
 - Deployment automation
 
 **Note:** All testing infrastructure is currently planned but not implemented. The application is fully functional and deployed without automated tests.
+
+---
+
+## Next Development Priorities
+
+### Immediate (PR #11)
+
+- **Modern UI Implementation**: shadcn/ui with Figma-like toolbar
+- **Icon System**: lucide-react for consistent iconography
+- **Component Library**: Radix primitives for accessibility
+
+### Short-term (Post-PR #11)
+
+- **Testing Infrastructure**: Unit tests, e2e tests, CI/CD pipeline
+- **Performance Testing**: Load testing with 500+ shapes and 5+ users
+- **Mobile Optimization**: Touch gestures and responsive design
+
+### Long-term (Future PRs)
+
+- **AI Integration**: Natural language commands and shape suggestions
+- **Advanced Features**: Export, animations, offline mode
+- **Enterprise Features**: Comments, version history, team management

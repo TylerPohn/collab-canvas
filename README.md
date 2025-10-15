@@ -22,6 +22,8 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 
 - **Frontend**: React 19, TypeScript, Vite
 - **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui (Radix + Tailwind) 🚧 _Planned_
+- **Icons**: lucide-react 🚧 _Planned_
 - **Canvas**: Konva.js with React-Konva
 - **State Management**: React Query (TanStack Query) + Zustand
 - **Authentication**: Firebase Auth (Google OAuth)
@@ -452,12 +454,27 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Future Enhancements
 
+#### Immediate (Next PR)
+
+- [ ] **Complete UI Overhaul with shadcn/ui**: Modern design system across entire app
+- [ ] **Homepage Redesign**: Professional landing page with hero section and features
+- [ ] **Login Page Redesign**: Modern authentication experience with card-based design
+- [ ] **Toolbar Redesign**: Figma-like toolbar with proper tool grouping and shortcuts
+- [ ] **Icon System**: lucide-react for consistent iconography throughout the app
+- [ ] **Component Library**: Accessible UI components with proper ARIA support
+
+#### Short-term
+
+- [ ] **Design Palette Panel**: Right sidebar for shape styling, layer management, and effects
 - [ ] **Testing Infrastructure**: Unit tests, e2e tests, CI/CD pipeline
+- [ ] **Mobile optimization**: Touch gestures and responsive design
+- [ ] **Performance testing**: Load testing with 500+ shapes and 5+ users
+
+#### Long-term
+
 - [ ] **AI-powered features**: Shape suggestions and natural language commands
 - [ ] **Advanced drawing tools**: Pen, brush, freehand drawing
 - [ ] **Shape animations**: Transitions and animations
 - [ ] **Export functionality**: PNG, SVG, PDF export
-- [ ] **Mobile optimization**: Touch gestures and mobile UI
 - [ ] **Offline mode**: Local storage with sync when online
 - [ ] **Advanced collaboration**: Comments, version history
-- [ ] **Performance testing**: Load testing with 500+ shapes and 5+ users
