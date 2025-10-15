@@ -16,7 +16,7 @@ interface CircleShapeProps {
 const CircleShape: React.FC<CircleShapeProps> = memo(
   ({
     shape,
-    isSelected,
+    isSelected: _isSelected,
     onSelect,
     onDragStart,
     onDragMove,

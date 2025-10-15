@@ -16,7 +16,7 @@ interface RectangleShapeProps {
 const RectangleShape: React.FC<RectangleShapeProps> = memo(
   ({
     shape,
-    isSelected, // eslint-disable-line @typescript-eslint/no-unused-vars
+    isSelected: _isSelected,
     onSelect,
     onDragStart,
     onDragMove,

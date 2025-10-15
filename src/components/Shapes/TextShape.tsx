@@ -18,7 +18,7 @@ interface TextShapeProps {
 const TextShape: React.FC<TextShapeProps> = memo(
   ({
     shape,
-    isSelected,
+    isSelected: _isSelected,
     onSelect,
     onDragStart,
     onDragMove,
