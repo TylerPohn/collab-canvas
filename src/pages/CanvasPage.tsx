@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import CanvasStage from '../components/CanvasStage'
+import DesignPalette from '../components/DesignPalette'
 import EmptyCanvasState from '../components/EmptyCanvasState'
 import PresenceList from '../components/PresenceList'
 import Toolbar, { type ToolType } from '../components/Toolbar'
@@ -18,6 +19,7 @@ import { useSelectionStore } from '../store/selection'
 const CanvasPage: React.FC = () => {
   const [selectedTool, setSelectedTool] = useState<ToolType>('select')
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
+  const [isDesignPaletteOpen, setIsDesignPaletteOpen] = useState(false)
 
   const { selectedIds, hasSelection } = useSelectionStore()
   const { user } = useAuth()
@@ -134,6 +136,10 @@ const CanvasPage: React.FC = () => {
     setSelectedTool(tool)
   }
 
+  const handleToggleDesignPalette = () => {
+    setIsDesignPaletteOpen(!isDesignPaletteOpen)
+  }
+
   // PR #7: Handle shape creation with React Query
   const handleShapeCreate = useCallback(
     async (
@@ -202,10 +208,18 @@ const CanvasPage: React.FC = () => {
 
       const shapesToDuplicate = shapes.filter(shape => ids.includes(shape.id))
 
+      // Calculate zIndex for duplicated shapes (highest existing zIndex + 1)
+      const maxZIndex = shapes.reduce(
+        (max, shape) => Math.max(max, shape.zIndex || 0),
+        0
+      )
+      const newZIndex = maxZIndex + 1
+
       const duplicatedShapes = shapesToDuplicate.map(shape => ({
         ...shape,
         x: shape.x + 20, // Offset duplicated shapes
-        y: shape.y + 20
+        y: shape.y + 20,
+        zIndex: newZIndex // Ensure duplicated shapes appear on top
       }))
 
       try {
@@ -243,6 +257,8 @@ const CanvasPage: React.FC = () => {
         onDuplicate={handleDuplicate}
         canDelete={hasSelection()}
         canDuplicate={hasSelection()}
+        onToggleDesignPalette={handleToggleDesignPalette}
+        isDesignPaletteOpen={isDesignPaletteOpen}
       />
 
       <div className="flex-1 relative">
@@ -312,6 +328,14 @@ const CanvasPage: React.FC = () => {
             )}
           </div>
         )}
+
+        {/* Design Palette */}
+        <DesignPalette
+          isOpen={isDesignPaletteOpen}
+          onToggle={handleToggleDesignPalette}
+          shapes={shapes}
+          onShapeUpdate={handleShapeUpdate}
+        />
       </div>
     </div>
   )

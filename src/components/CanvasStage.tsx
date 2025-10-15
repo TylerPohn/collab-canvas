@@ -389,20 +389,29 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'
               >
 
+              // Calculate zIndex for new shape (highest existing zIndex + 1)
+              const maxZIndex = shapes.reduce(
+                (max, shape) => Math.max(max, shape.zIndex || 0),
+                0
+              )
+              const newZIndex = maxZIndex + 1
+
               if (selectedTool === 'rectangle') {
                 shapeData = {
                   type: 'rect',
                   x: Math.min(drawingStart.x, worldX),
                   y: Math.min(drawingStart.y, worldY),
                   width: Math.abs(worldX - drawingStart.x),
-                  height: Math.abs(worldY - drawingStart.y)
+                  height: Math.abs(worldY - drawingStart.y),
+                  zIndex: newZIndex
                 }
               } else if (selectedTool === 'circle') {
                 shapeData = {
                   type: 'circle',
                   x: (drawingStart.x + worldX) / 2,
                   y: (drawingStart.y + worldY) / 2,
-                  radius: Math.abs(worldX - drawingStart.x) / 2
+                  radius: Math.abs(worldX - drawingStart.x) / 2,
+                  zIndex: newZIndex
                 }
               } else if (selectedTool === 'text') {
                 shapeData = {
@@ -410,7 +419,12 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                   x: Math.min(drawingStart.x, worldX),
                   y: Math.min(drawingStart.y, worldY),
                   text: 'Text',
-                  fontSize: 16
+                  fontSize: 16,
+                  fontFamily: 'Arial',
+                  fontWeight: 'normal',
+                  fontStyle: 'normal',
+                  textDecoration: 'none',
+                  zIndex: newZIndex
                 }
               } else {
                 // Fallback for select tool (shouldn't happen)
@@ -419,7 +433,8 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                   x: 0,
                   y: 0,
                   width: 0,
-                  height: 0
+                  height: 0,
+                  zIndex: newZIndex
                 }
               }
 
@@ -710,52 +725,54 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
           }}
         >
           <Layer>
-            {/* Render shapes */}
-            {shapes.map(shape => {
-              const commonProps = {
-                key: shape.id,
-                shape,
-                isSelected: isSelected(shape.id),
-                onSelect: (e: Konva.KonvaEventObject<MouseEvent>) =>
-                  handleShapeSelect(shape.id, e),
-                onDragStart: () => handleShapeDragStart(shape.id),
-                onDragMove: handleShapeDragMove,
-                onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) =>
-                  handleShapeDragEnd(shape.id, e),
-                onTransformEnd: (e: Konva.KonvaEventObject<Event>) =>
-                  handleShapeTransformEnd(shape.id, e)
-              }
+            {/* Render shapes sorted by zIndex */}
+            {shapes
+              .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
+              .map(shape => {
+                const commonProps = {
+                  key: shape.id,
+                  shape,
+                  isSelected: isSelected(shape.id),
+                  onSelect: (e: Konva.KonvaEventObject<MouseEvent>) =>
+                    handleShapeSelect(shape.id, e),
+                  onDragStart: () => handleShapeDragStart(shape.id),
+                  onDragMove: handleShapeDragMove,
+                  onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) =>
+                    handleShapeDragEnd(shape.id, e),
+                  onTransformEnd: (e: Konva.KonvaEventObject<Event>) =>
+                    handleShapeTransformEnd(shape.id, e)
+                }
 
-              switch (shape.type) {
-                case 'rect':
-                  return (
-                    <RectangleShape
-                      {...commonProps}
-                      shape={shape as RectangleShapeType}
-                    />
-                  )
-                case 'circle':
-                  return (
-                    <CircleShape
-                      {...commonProps}
-                      shape={shape as CircleShapeType}
-                    />
-                  )
-                case 'text':
-                  return (
-                    <TextShape
-                      {...commonProps}
-                      shape={shape as TextShapeType}
-                      onDoubleClick={(e: Konva.KonvaEventObject<MouseEvent>) =>
-                        handleTextDoubleClick(shape.id, e)
-                      }
-                      isEditing={editingTextId === shape.id}
-                    />
-                  )
-                default:
-                  return null
-              }
-            })}
+                switch (shape.type) {
+                  case 'rect':
+                    return (
+                      <RectangleShape
+                        {...commonProps}
+                        shape={shape as RectangleShapeType}
+                      />
+                    )
+                  case 'circle':
+                    return (
+                      <CircleShape
+                        {...commonProps}
+                        shape={shape as CircleShapeType}
+                      />
+                    )
+                  case 'text':
+                    return (
+                      <TextShape
+                        {...commonProps}
+                        shape={shape as TextShapeType}
+                        onDoubleClick={(
+                          e: Konva.KonvaEventObject<MouseEvent>
+                        ) => handleTextDoubleClick(shape.id, e)}
+                        isEditing={editingTextId === shape.id}
+                      />
+                    )
+                  default:
+                    return null
+                }
+              })}
 
             {/* Preview shape during drawing */}
             {previewShape && (

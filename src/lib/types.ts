@@ -11,8 +11,16 @@ export interface ShapeBase {
   radius?: number
   rotation?: number
   fill?: string
+  stroke?: string
+  strokeWidth?: number
   text?: string
   fontSize?: number
+  fontFamily?: string
+  fontWeight?: string
+  fontStyle?: string
+  textDecoration?: string
+  cornerRadius?: number
+  zIndex?: number
   createdAt: number
   createdBy: string
   updatedAt: number

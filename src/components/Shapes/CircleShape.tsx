@@ -30,8 +30,8 @@ const CircleShape: React.FC<CircleShapeProps> = memo(
         y={shape.y}
         radius={shape.radius}
         fill={shape.fill || '#10b981'}
-        stroke={isSelected ? '#059669' : 'transparent'}
-        strokeWidth={isSelected ? 2 : 0}
+        stroke={shape.stroke || 'transparent'}
+        strokeWidth={shape.strokeWidth || 0}
         rotation={shape.rotation || 0}
         draggable
         onClick={onSelect}

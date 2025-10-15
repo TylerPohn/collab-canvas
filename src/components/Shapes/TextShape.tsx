@@ -40,8 +40,8 @@ const TextShape: React.FC<TextShapeProps> = memo(
         text={shape.text}
         fontSize={shape.fontSize || 16}
         fill={shape.fill || '#374151'}
-        stroke={isSelected ? '#1f2937' : 'transparent'}
-        strokeWidth={isSelected ? 1 : 0}
+        stroke={shape.stroke || 'transparent'}
+        strokeWidth={shape.strokeWidth || 0}
         rotation={shape.rotation || 0}
         draggable
         onClick={onSelect}
@@ -56,8 +56,10 @@ const TextShape: React.FC<TextShapeProps> = memo(
         shadowBlur={2}
         shadowOffset={{ x: 1, y: 1 }}
         shadowOpacity={0.2}
-        fontFamily="Inter, system-ui, sans-serif"
-        fontStyle="normal"
+        fontFamily={shape.fontFamily || 'Inter, system-ui, sans-serif'}
+        fontStyle={shape.fontStyle || 'normal'}
+        fontWeight={shape.fontWeight || 'normal'}
+        textDecoration={shape.textDecoration || 'none'}
       />
     )
   }

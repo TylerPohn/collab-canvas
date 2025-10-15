@@ -16,7 +16,7 @@ interface RectangleShapeProps {
 const RectangleShape: React.FC<RectangleShapeProps> = memo(
   ({
     shape,
-    isSelected,
+    isSelected, // eslint-disable-line @typescript-eslint/no-unused-vars
     onSelect,
     onDragStart,
     onDragMove,
@@ -31,9 +31,10 @@ const RectangleShape: React.FC<RectangleShapeProps> = memo(
         width={shape.width}
         height={shape.height}
         fill={shape.fill || '#3b82f6'}
-        stroke={isSelected ? '#1d4ed8' : 'transparent'}
-        strokeWidth={isSelected ? 2 : 0}
+        stroke={shape.stroke || 'transparent'}
+        strokeWidth={shape.strokeWidth || 0}
         rotation={shape.rotation || 0}
+        cornerRadius={shape.cornerRadius || 0}
         draggable
         onClick={onSelect}
         onTap={onSelect}

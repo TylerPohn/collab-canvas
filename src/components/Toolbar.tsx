@@ -4,6 +4,7 @@ import {
   Hand,
   Info,
   MousePointer2,
+  PanelLeft,
   Square,
   Trash2,
   Type
@@ -27,6 +28,8 @@ interface ToolbarProps {
   onDuplicate: () => void
   canDelete: boolean
   canDuplicate: boolean
+  onToggleDesignPalette?: () => void
+  isDesignPaletteOpen?: boolean
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -35,7 +38,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onDelete,
   onDuplicate,
   canDelete,
-  canDuplicate
+  canDuplicate,
+  onToggleDesignPalette,
+  isDesignPaletteOpen = false
 }) => {
   const tools: {
     type: ToolType
@@ -160,6 +165,28 @@ const Toolbar: React.FC<ToolbarProps> = ({
               </TooltipContent>
             </Tooltip>
           </div>
+
+          {/* Design Palette Toggle */}
+          {onToggleDesignPalette && (
+            <>
+              <Separator orientation="vertical" className="h-6" />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={isDesignPaletteOpen ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={onToggleDesignPalette}
+                    className="h-9 w-9 p-0"
+                  >
+                    <PanelLeft className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Design Palette</p>
+                </TooltipContent>
+              </Tooltip>
+            </>
+          )}
 
           {/* Tool Info */}
           <div className="ml-auto hidden xl:block">
