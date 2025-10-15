@@ -57,8 +57,15 @@ const TextShape: React.FC<TextShapeProps> = memo(
         shadowOffset={{ x: 1, y: 1 }}
         shadowOpacity={0.2}
         fontFamily={shape.fontFamily || 'Inter, system-ui, sans-serif'}
-        fontStyle={shape.fontStyle || 'normal'}
-        fontWeight={shape.fontWeight || 'normal'}
+        fontStyle={
+          shape.fontStyle === 'italic' && shape.fontWeight === 'bold'
+            ? 'bold italic'
+            : shape.fontStyle === 'italic'
+              ? 'italic'
+              : shape.fontWeight === 'bold'
+                ? 'bold'
+                : 'normal'
+        }
         textDecoration={shape.textDecoration || 'none'}
       />
     )

@@ -76,8 +76,8 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 - **Konva.js** for canvas manipulation and shape rendering (chosen for performance with multiple concurrent users).
 - **React Query** for local state and data synchronization with optimistic updates.
 - **Tailwind CSS** for styling and responsive design.
-- **shadcn/ui** (Radix + Tailwind) for accessible UI components 🚧 _Planned_.
-- **lucide-react** for consistent iconography 🚧 _Planned_.
+- **shadcn/ui** (Radix + Tailwind) for accessible UI components ✅ _Implemented_.
+- **lucide-react** for consistent iconography ✅ _Implemented_.
 
 ### **Backend**
 
@@ -129,19 +129,44 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
   - Debounced viewport persistence (500ms)
   - Smart conflict resolution with timestamps
   - Efficient Firestore subcollection structure
+  - Debounced slider updates (100ms) for smooth interaction
+  - Robust value handling with nullish coalescing operators
 
 ---
 
-## **7. Current Status and Next Steps**
+## **8. Recent Enhancements (Post-MVP)**
+
+### **Design Palette System ✅ COMPLETED**
+
+- **Comprehensive Right Sidebar**: 320px fixed-width panel with modern shadcn/ui components
+- **Advanced Shape Styling**: Fill/stroke color pickers, stroke width sliders (0-10px), corner radius controls (0-100px)
+- **Text Styling Controls**: Font family, size, weight, style, and decoration options
+- **Layer Management**: Bring forward/backward controls with z-index management
+- **State Management**: Zustand-based design palette store for persistent settings
+- **Default Properties**: New shapes automatically inherit current design palette settings
+- **Real-Time Editing**: Inline text editor shows current styling as you type
+- **Performance Optimizations**: Debounced slider updates and robust zero-value handling
+
+### **UI/UX Improvements ✅ COMPLETED**
+
+- **Modern Design System**: Complete shadcn/ui integration with consistent styling
+- **Enhanced Sliders**: Larger thumbs (40px) and thicker tracks (16px) for better usability
+- **Professional Toolbar**: Icon-based design with comprehensive tooltips and keyboard shortcuts
+- **Responsive Design**: Mobile-optimized with touch-friendly controls
+- **Accessibility**: Proper ARIA labels, semantic HTML, and keyboard navigation
+
+---
+
+## **9. Current Status and Next Steps**
 
 ### **✅ Completed (MVP)**
 
 1. **Phase 1:** ✅ Firebase project, user auth, and real-time connection implemented.
 2. **Phase 2:** ✅ Real-time cursor and object sync with React Query.
 3. **Phase 3:** ✅ Transformations, persistence, and deployed MVP on Vercel.
+4. **Phase 4:** ✅ Complete UI overhaul with shadcn/ui, including homepage, login page, and Figma-like toolbar.
+5. **Phase 5:** ✅ Design palette panel, testing infrastructure, performance testing, mobile optimization.
 
 ### **🚧 Future Enhancements**
 
-4. **Phase 4 (Immediate):** Complete UI overhaul with shadcn/ui, including homepage, login page, and Figma-like toolbar.
-5. **Phase 5 (Short-term):** Design palette panel, testing infrastructure, performance testing, mobile optimization.
 6. **Phase 6 (Long-term):** AI agent integration, advanced features, enterprise capabilities.

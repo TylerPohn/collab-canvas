@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import type { TextShape } from '../lib/types'
+import { useDesignPaletteStore } from '../store/designPalette'
 
 interface TextEditorProps {
   shape: TextShape
@@ -20,6 +21,16 @@ const TextEditor: React.FC<TextEditorProps> = ({
 }) => {
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const [text, setText] = useState(shape.text)
+
+  // Get current design palette settings
+  const {
+    fontSize,
+    fontFamily,
+    fontWeight,
+    fontStyle,
+    textDecoration,
+    selectedFillColor
+  } = useDesignPaletteStore()
 
   useEffect(() => {
     if (isVisible && inputRef.current) {
@@ -70,11 +81,14 @@ const TextEditor: React.FC<TextEditorProps> = ({
         onChange={e => setText(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        className="bg-transparent border-none outline-none resize-none font-inter text-gray-700"
+        className="bg-transparent border-none outline-none resize-none"
         style={{
-          fontSize: shape.fontSize || 16,
-          fontFamily: 'Inter, system-ui, sans-serif',
-          color: shape.fill || '#374151',
+          fontSize: fontSize,
+          fontFamily: fontFamily,
+          fontWeight: fontWeight === 'bold' ? 700 : 400,
+          fontStyle: fontStyle,
+          textDecoration: textDecoration,
+          color: selectedFillColor,
           minWidth: '100px',
           minHeight: '20px',
           lineHeight: 1.2,

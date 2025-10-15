@@ -9,13 +9,15 @@ import {
   Type,
   Underline
 } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import type { Shape } from '../lib/types'
+import { useDesignPaletteStore } from '../store/designPalette'
 import { useSelectionStore } from '../store/selection'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Separator } from './ui/separator'
+import { Slider } from './ui/slider'
 
 interface DesignPaletteProps {
   isOpen: boolean
@@ -39,55 +41,80 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
   // Get properties from first selected shape (for single selection)
   const firstSelectedShape = selectedShapes[0]
 
-  const [selectedFillColor, setSelectedFillColor] = useState(
-    firstSelectedShape?.fill || '#3B82F6'
-  )
-  const [selectedStrokeColor, setSelectedStrokeColor] = useState(
-    firstSelectedShape?.stroke || '#1F2937'
-  )
-  const [strokeWidth, setStrokeWidth] = useState(
-    firstSelectedShape?.strokeWidth || 2
-  )
-  const [rotation, setRotation] = useState(firstSelectedShape?.rotation || 0)
-  const [cornerRadius, setCornerRadius] = useState(
-    firstSelectedShape?.cornerRadius || 0
-  )
-  const [fontSize, setFontSize] = useState(firstSelectedShape?.fontSize || 16)
-  const [fontFamily, setFontFamily] = useState(
-    firstSelectedShape?.fontFamily || 'Arial'
-  )
-  const [isBold, setIsBold] = useState(
-    firstSelectedShape?.fontWeight === 'bold'
-  )
-  const [isItalic, setIsItalic] = useState(
-    firstSelectedShape?.fontStyle === 'italic'
-  )
-  const [isUnderline, setIsUnderline] = useState(
-    firstSelectedShape?.textDecoration === 'underline'
-  )
+  // Design palette store
+  const {
+    selectedFillColor,
+    selectedStrokeColor,
+    strokeWidth,
+    rotation,
+    cornerRadius,
+    fontSize,
+    fontFamily,
+    fontWeight,
+    fontStyle,
+    textDecoration,
+    setSelectedFillColor,
+    setSelectedStrokeColor,
+    setStrokeWidth,
+    setRotation,
+    setCornerRadius,
+    setFontSize,
+    setFontFamily,
+    setFontWeight,
+    setFontStyle,
+    setTextDecoration
+  } = useDesignPaletteStore()
+  // Local state for UI toggles
+  const [isBold, setIsBold] = useState(fontWeight === 'bold')
+  const [isItalic, setIsItalic] = useState(fontStyle === 'italic')
+  const [isUnderline, setIsUnderline] = useState(textDecoration === 'underline')
 
-  // Update local state when selection changes
+  // Update store state when selection changes
   React.useEffect(() => {
     if (firstSelectedShape) {
       setSelectedFillColor(firstSelectedShape.fill || '#3B82F6')
       setSelectedStrokeColor(firstSelectedShape.stroke || '#1F2937')
-      setStrokeWidth(firstSelectedShape.strokeWidth || 2)
-      setRotation(firstSelectedShape.rotation || 0)
-      setCornerRadius(firstSelectedShape.cornerRadius || 0)
-      setFontSize(firstSelectedShape.fontSize || 16)
+      setStrokeWidth(firstSelectedShape.strokeWidth ?? 2)
+      setRotation(firstSelectedShape.rotation ?? 0)
+      setCornerRadius(firstSelectedShape.cornerRadius ?? 0)
+      setFontSize(firstSelectedShape.fontSize ?? 16)
       setFontFamily(firstSelectedShape.fontFamily || 'Arial')
+      setFontWeight(
+        (firstSelectedShape.fontWeight as 'normal' | 'bold') || 'normal'
+      )
+      setFontStyle(
+        (firstSelectedShape.fontStyle as 'normal' | 'italic') || 'normal'
+      )
+      setTextDecoration(
+        (firstSelectedShape.textDecoration as 'none' | 'underline') || 'none'
+      )
       setIsBold(firstSelectedShape.fontWeight === 'bold')
       setIsItalic(firstSelectedShape.fontStyle === 'italic')
       setIsUnderline(firstSelectedShape.textDecoration === 'underline')
     }
-  }, [firstSelectedShape])
+  }, [
+    firstSelectedShape,
+    setSelectedFillColor,
+    setSelectedStrokeColor,
+    setStrokeWidth,
+    setRotation,
+    setCornerRadius,
+    setFontSize,
+    setFontFamily,
+    setFontWeight,
+    setFontStyle,
+    setTextDecoration
+  ])
 
   // Helper function to update selected shapes
-  const updateSelectedShapes = (updates: Partial<Shape>) => {
-    selectedShapes.forEach(shape => {
-      onShapeUpdate(shape.id, updates)
-    })
-  }
+  const updateSelectedShapes = useCallback(
+    (updates: Partial<Shape>) => {
+      selectedShapes.forEach(shape => {
+        onShapeUpdate(shape.id, updates)
+      })
+    },
+    [selectedShapes, onShapeUpdate]
+  )
 
   // Handle fill color change
   const handleFillColorChange = (color: string) => {
@@ -101,11 +128,24 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
     updateSelectedShapes({ stroke: color })
   }
 
-  // Handle stroke width change
-  const handleStrokeWidthChange = (newStrokeWidth: number) => {
-    setStrokeWidth(newStrokeWidth)
-    updateSelectedShapes({ strokeWidth: newStrokeWidth })
-  }
+  // Debounced stroke width change
+  const strokeWidthTimeoutRef = useRef<number | undefined>(undefined)
+  const handleStrokeWidthChange = useCallback(
+    (newStrokeWidth: number) => {
+      setStrokeWidth(newStrokeWidth)
+
+      // Clear existing timeout
+      if (strokeWidthTimeoutRef.current) {
+        clearTimeout(strokeWidthTimeoutRef.current)
+      }
+
+      // Debounce the shape update
+      strokeWidthTimeoutRef.current = window.setTimeout(() => {
+        updateSelectedShapes({ strokeWidth: newStrokeWidth })
+      }, 100)
+    },
+    [setStrokeWidth, updateSelectedShapes, selectedShapes, onShapeUpdate]
+  )
 
   // Handle rotation change
   const handleRotationChange = (newRotation: number) => {
@@ -113,17 +153,58 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
     updateSelectedShapes({ rotation: newRotation })
   }
 
-  // Handle font size change
-  const handleFontSizeChange = (newFontSize: number) => {
-    setFontSize(newFontSize)
-    updateSelectedShapes({ fontSize: newFontSize })
-  }
+  // Debounced font size change
+  const fontSizeTimeoutRef = useRef<number | undefined>(undefined)
+  const handleFontSizeChange = useCallback(
+    (newFontSize: number) => {
+      setFontSize(newFontSize)
 
-  // Handle corner radius change
-  const handleCornerRadiusChange = (newCornerRadius: number) => {
-    setCornerRadius(newCornerRadius)
-    updateSelectedShapes({ cornerRadius: newCornerRadius })
-  }
+      // Clear existing timeout
+      if (fontSizeTimeoutRef.current) {
+        clearTimeout(fontSizeTimeoutRef.current)
+      }
+
+      // Debounce the shape update
+      fontSizeTimeoutRef.current = window.setTimeout(() => {
+        updateSelectedShapes({ fontSize: newFontSize })
+      }, 100)
+    },
+    [setFontSize, updateSelectedShapes, selectedShapes, onShapeUpdate]
+  )
+
+  // Debounced corner radius change
+  const cornerRadiusTimeoutRef = useRef<number | undefined>(undefined)
+  const handleCornerRadiusChange = useCallback(
+    (newCornerRadius: number) => {
+      setCornerRadius(newCornerRadius)
+
+      // Clear existing timeout
+      if (cornerRadiusTimeoutRef.current) {
+        clearTimeout(cornerRadiusTimeoutRef.current)
+      }
+
+      // Debounce the shape update
+      cornerRadiusTimeoutRef.current = window.setTimeout(() => {
+        updateSelectedShapes({ cornerRadius: newCornerRadius })
+      }, 100)
+    },
+    [setCornerRadius, updateSelectedShapes, selectedShapes, onShapeUpdate]
+  )
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (strokeWidthTimeoutRef.current) {
+        clearTimeout(strokeWidthTimeoutRef.current)
+      }
+      if (fontSizeTimeoutRef.current) {
+        clearTimeout(fontSizeTimeoutRef.current)
+      }
+      if (cornerRadiusTimeoutRef.current) {
+        clearTimeout(cornerRadiusTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Handle font family change
   const handleFontFamilyChange = (newFontFamily: string) => {
@@ -134,22 +215,26 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
   // Handle text style changes
   const handleBoldToggle = () => {
     const newBold = !isBold
+    const newWeight = newBold ? 'bold' : 'normal'
     setIsBold(newBold)
-    updateSelectedShapes({ fontWeight: newBold ? 'bold' : 'normal' })
+    setFontWeight(newWeight)
+    updateSelectedShapes({ fontWeight: newWeight })
   }
 
   const handleItalicToggle = () => {
     const newItalic = !isItalic
+    const newStyle = newItalic ? 'italic' : 'normal'
     setIsItalic(newItalic)
-    updateSelectedShapes({ fontStyle: newItalic ? 'italic' : 'normal' })
+    setFontStyle(newStyle)
+    updateSelectedShapes({ fontStyle: newStyle })
   }
 
   const handleUnderlineToggle = () => {
     const newUnderline = !isUnderline
+    const newDecoration = newUnderline ? 'underline' : 'none'
     setIsUnderline(newUnderline)
-    updateSelectedShapes({
-      textDecoration: newUnderline ? 'underline' : 'none'
-    })
+    setTextDecoration(newDecoration)
+    updateSelectedShapes({ textDecoration: newDecoration })
   }
 
   // Handle layer ordering
@@ -379,34 +464,14 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
                   <label className="text-xs font-medium text-muted-foreground mb-2 block">
                     Stroke Width: {strokeWidth}px
                   </label>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-muted rounded-full">
-                      <div
-                        className="h-2 bg-primary rounded-full transition-all"
-                        style={{ width: `${(strokeWidth / 10) * 100}%` }}
-                      />
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        handleStrokeWidthChange(Math.max(0, strokeWidth - 1))
-                      }
-                      className="h-6 w-6 p-0"
-                    >
-                      -
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        handleStrokeWidthChange(Math.min(10, strokeWidth + 1))
-                      }
-                      className="h-6 w-6 p-0"
-                    >
-                      +
-                    </Button>
-                  </div>
+                  <Slider
+                    value={[strokeWidth]}
+                    onValueChange={value => handleStrokeWidthChange(value[0])}
+                    max={10}
+                    min={0}
+                    step={1}
+                    className="w-full"
+                  />
                 </div>
               </div>
             </div>
@@ -481,47 +546,29 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
                   </div>
                 </div>
 
-                {/* Only show corner radius for rectangle shapes */}
-                {hasSelection &&
-                  selectedShapes.some(shape => shape.type === 'rect') && (
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                        Corner Radius: {cornerRadius}px
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-muted rounded-full">
-                          <div
-                            className="h-2 bg-primary rounded-full transition-all"
-                            style={{ width: `${(cornerRadius / 50) * 100}%` }}
-                          />
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            handleCornerRadiusChange(
-                              Math.max(0, cornerRadius - 2)
-                            )
-                          }
-                          className="h-6 w-6 p-0"
-                        >
-                          -
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            handleCornerRadiusChange(
-                              Math.min(50, cornerRadius + 2)
-                            )
-                          }
-                          className="h-6 w-6 p-0"
-                        >
-                          +
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                {/* Corner radius control - always visible */}
+                {hasSelection && (
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                      Corner Radius: {cornerRadius}px
+                      {!selectedShapes.some(shape => shape.type === 'rect') && (
+                        <span className="text-xs text-muted-foreground ml-1">
+                          (rectangles only)
+                        </span>
+                      )}
+                    </label>
+                    <Slider
+                      value={[cornerRadius]}
+                      onValueChange={value =>
+                        handleCornerRadiusChange(value[0])
+                      }
+                      max={100}
+                      min={0}
+                      step={2}
+                      className="w-full"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

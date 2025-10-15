@@ -12,6 +12,7 @@ import type {
   UserPresence,
   ViewportState
 } from '../lib/types'
+import { useDesignPaletteStore } from '../store/designPalette'
 import { useSelectionStore } from '../store/selection'
 import CursorLayer from './CursorLayer'
 import CircleShape from './Shapes/CircleShape'
@@ -105,6 +106,9 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
 
     const { selectedIds, selectShape, clearSelection, isSelected } =
       useSelectionStore()
+
+    const { getDefaultTextProperties, getDefaultShapeProperties } =
+      useDesignPaletteStore()
 
     // Update transformer when selection changes
     useEffect(() => {
@@ -291,12 +295,13 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                   radius: Math.abs(worldX - drawingStart.x) / 2
                 }
               } else if (selectedTool === 'text') {
+                const textDefaults = getDefaultTextProperties()
                 previewData = {
                   type: 'text',
                   x: Math.min(drawingStart.x, worldX),
                   y: Math.min(drawingStart.y, worldY),
                   text: 'Text',
-                  fontSize: 16
+                  fontSize: textDefaults.fontSize
                 }
               } else {
                 // Fallback for select tool (shouldn't happen)
@@ -414,16 +419,22 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                   zIndex: newZIndex
                 }
               } else if (selectedTool === 'text') {
+                const textDefaults = getDefaultTextProperties()
+                const shapeDefaults = getDefaultShapeProperties()
                 shapeData = {
                   type: 'text',
                   x: Math.min(drawingStart.x, worldX),
                   y: Math.min(drawingStart.y, worldY),
                   text: 'Text',
-                  fontSize: 16,
-                  fontFamily: 'Arial',
-                  fontWeight: 'normal',
-                  fontStyle: 'normal',
-                  textDecoration: 'none',
+                  fontSize: textDefaults.fontSize,
+                  fontFamily: textDefaults.fontFamily,
+                  fontWeight: textDefaults.fontWeight,
+                  fontStyle: textDefaults.fontStyle,
+                  textDecoration: textDefaults.textDecoration,
+                  fill: shapeDefaults.fill,
+                  stroke: shapeDefaults.stroke,
+                  strokeWidth: shapeDefaults.strokeWidth,
+                  rotation: shapeDefaults.rotation,
                   zIndex: newZIndex
                 }
               } else {
