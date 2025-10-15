@@ -249,7 +249,14 @@ const CanvasPage: React.FC = () => {
         {/* Presence list overlay */}
         {user && (
           <div className="absolute top-4 right-4 z-10">
-            <PresenceList presence={presence} currentUserId={user.uid} />
+            <PresenceList
+              presence={presence}
+              currentUserId={user.uid}
+              currentUser={{
+                displayName: user.displayName,
+                photoURL: user.photoURL
+              }}
+            />
           </div>
         )}
 
