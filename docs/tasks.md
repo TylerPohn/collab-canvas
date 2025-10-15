@@ -831,24 +831,6 @@ Each step is designed to be:
 
 **Steps to Achieve Excellent:**
 
-- [ ] **Step 13.4**: Implement object lock mechanism for conflict resolution.
-  - Files: `src/lib/types.ts`, `src/lib/sync/locks.ts` (new file), `src/store/selection.ts`
-  - Add ObjectLock interface with lockedBy, lockedByDisplayName, lockedAt, expiresAt fields
-  - Create LockService class with methods: acquireLock, releaseLock, isLocked, getLockInfo
-  - Store locks in Firestore subcollection: `canvases/{canvasId}/locks/{objectId}`
-  - Update selection store to track locked objects and prevent selection of locked objects
-  - Implement lock expiration (5 minutes) and automatic cleanup
-  - **Test**: Two users try to select same object - one gets lock, other sees lock indicator
-
-- [ ] **Step 13.5**: Add visual lock indicators and user feedback.
-  - Files: `src/components/CanvasStage.tsx`, `src/components/Shapes/*.tsx`, `src/components/LockIndicator.tsx` (new file)
-  - Create LockIndicator component showing lock icon and user name
-  - Show lock indicator overlay on locked objects with user avatar and name
-  - Disable editing for locked objects (except for lock owner) - disable transform handles
-  - Add visual feedback when trying to edit locked object (toast notification)
-  - Implement lock status in shape components (RectangleShape, CircleShape, TextShape)
-  - **Test**: Verify lock indicators appear and editing is properly restricted
-
 - [ ] **Step 13.6**: Implement comprehensive conflict resolution testing.
   - Files: `src/lib/sync/objects.ts`, `src/lib/types.ts`
   - Add conflict resolution logging and metrics
@@ -877,131 +859,29 @@ Each step is designed to be:
   - Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`
   - Queue operations when offline and sync on reconnect
   - Implement retry logic for failed operations
-  - Handle lock expiration during disconnect
   - **Test**: Disconnect network, make edits, reconnect - verify all operations sync
 
 - [ ] **Step 13.10**: Add comprehensive connection status indicators.
   - Files: `src/components/CanvasStage.tsx`, `src/hooks/usePresence.ts`
   - Show connection status in UI (connected/disconnected/reconnecting)
-  - Add visual indicators for sync status and lock status
+  - Add visual indicators for sync status
   - **Test**: Network throttling to verify status indicators work
 
 - [ ] **Step 13.11**: Implement robust reconnection with complete state restoration.
   - Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`
   - Ensure 100% state preservation on refresh
   - Implement incremental sync for large canvases
-  - Handle lock restoration and cleanup on reconnect
   - **Test**: Refresh mid-edit, total disconnect scenarios, network simulation
 
 **Testing Scenarios for PR #13:**
 
-1. **Object Lock Acquisition**: User A selects object, User B tries to select same object - User B sees lock indicator
-2. **Race Condition Test**: User A and User B click same object simultaneously - only one gets lock, other sees immediate feedback
-3. **Lock Expiration**: User A locks object, goes offline, lock expires, User B can now edit
-4. **Simultaneous Move**: Two users drag same rectangle simultaneously (with lock mechanism)
-5. **Rapid Edit Storm**: User A resizes while User B changes color while User C moves (with locks)
-6. **Delete vs Edit**: User A deletes object while User B is editing it (lock prevents deletion)
-7. **Create Collision**: Two users create objects at nearly identical timestamps
-8. **Mid-Operation Refresh**: User drags object, refreshes browser mid-drag
-9. **Total Disconnect**: All users close browsers, wait 2 minutes, return
-10. **Network Simulation**: Throttle network to 0 for 30 seconds, restore
-11. **Lock Visual Feedback**: Verify lock indicators show user name and prevent editing
-
-**Object Lock Mechanism Implementation Details:**
-
-The object lock system will prevent conflicts by ensuring only one user can edit an object at a time:
-
-1. **Lock Acquisition**: When a user selects an object, attempt to acquire a lock
-2. **Lock Storage**: Store locks in Firestore as `canvases/{canvasId}/locks/{objectId}`
-3. **Lock Expiration**: Locks expire after 5 minutes to prevent permanent locks
-4. **Visual Feedback**: Show lock indicator with user name and avatar on locked objects
-5. **Edit Prevention**: Disable transform handles and editing for locked objects (except owner)
-6. **Lock Release**: Automatically release locks when user deselects or leaves canvas
-7. **Conflict Resolution**: If lock acquisition fails, show toast notification and prevent selection
-
-**Race Condition Handling (Multiple Users Locking Simultaneously):**
-
-When multiple users attempt to lock the same object at nearly the same time:
-
-1. **Atomic Lock Operations**: Use Firestore transactions to ensure atomic lock acquisition
-2. **First-Write-Wins**: The first user to successfully write the lock document wins
-3. **Immediate Feedback**: Failed lock attempts receive immediate feedback (toast notification)
-4. **Optimistic UI**: Show temporary "acquiring lock" state while lock request is in flight
-5. **Lock Status Subscription**: All users subscribe to lock changes and update UI immediately
-6. **Graceful Degradation**: If lock acquisition fails, user can still view the object but cannot edit
-
-**Lock Acquisition Flow:**
-
-```
-User A clicks object → Optimistic UI shows "acquiring lock" → Firestore transaction attempts lock
-User B clicks same object → Optimistic UI shows "acquiring lock" → Firestore transaction attempts lock
-
-Result: Only one transaction succeeds (first-write-wins)
-- Winner: Gets lock, UI shows "locked by you"
-- Loser: Gets failure response, UI shows "locked by [User A]" with lock indicator
-```
-
-**Lock Service API:**
-
-```typescript
-interface LockService {
-  acquireLock(
-    canvasId: string,
-    objectId: string,
-    userId: string
-  ): Promise<LockResult>
-  releaseLock(canvasId: string, objectId: string, userId: string): Promise<void>
-  isLocked(canvasId: string, objectId: string): Promise<boolean>
-  getLockInfo(canvasId: string, objectId: string): Promise<ObjectLock | null>
-  subscribeToLocks(
-    canvasId: string,
-    callback: (locks: ObjectLock[]) => void
-  ): () => void
-}
-
-interface LockResult {
-  success: boolean
-  lock?: ObjectLock
-  error?: 'ALREADY_LOCKED' | 'TRANSACTION_FAILED' | 'NETWORK_ERROR'
-  lockedBy?: string
-}
-```
-
-**Firestore Transaction Implementation:**
-
-```typescript
-async acquireLock(canvasId: string, objectId: string, userId: string): Promise<LockResult> {
-  const lockRef = doc(db, 'canvases', canvasId, 'locks', objectId)
-
-  return await runTransaction(db, async (transaction) => {
-    const lockDoc = await transaction.get(lockRef)
-
-    if (lockDoc.exists()) {
-      const existingLock = lockDoc.data() as ObjectLock
-      // Check if lock is expired
-      if (existingLock.expiresAt > Date.now()) {
-        return {
-          success: false,
-          error: 'ALREADY_LOCKED',
-          lockedBy: existingLock.lockedByDisplayName
-        }
-      }
-    }
-
-    // Create new lock
-    const newLock: ObjectLock = {
-      objectId,
-      lockedBy: userId,
-      lockedByDisplayName: getCurrentUser().displayName,
-      lockedAt: Date.now(),
-      expiresAt: Date.now() + (5 * 60 * 1000) // 5 minutes
-    }
-
-    transaction.set(lockRef, newLock)
-    return { success: true, lock: newLock }
-  })
-}
-```
+1. **Simultaneous Move**: Two users drag same rectangle simultaneously
+2. **Rapid Edit Storm**: User A resizes while User B changes color while User C moves
+3. **Delete vs Edit**: User A deletes object while User B is editing it
+4. **Create Collision**: Two users create objects at nearly identical timestamps
+5. **Mid-Operation Refresh**: User drags object, refreshes browser mid-drag
+6. **Total Disconnect**: All users close browsers, wait 2 minutes, return
+7. **Network Simulation**: Throttle network to 0 for 30 seconds, restore
 
 ---
 

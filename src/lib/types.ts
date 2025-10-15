@@ -88,20 +88,10 @@ export interface ApiResponse<T = unknown> {
   error?: string
 }
 
-// Object lock for conflict resolution
-export interface ObjectLock {
-  objectId: string
-  lockedBy: string
-  lockedByDisplayName: string
-  lockedAt: number
-  expiresAt: number
-}
-
 // Selection state (UI-only, not synced)
 export interface SelectionState {
   selectedIds: string[]
   isMultiSelect: boolean
-  lockedObjects: Record<string, ObjectLock>
 }
 
 // Tool types for the toolbar
