@@ -144,7 +144,7 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
         updateSelectedShapes({ strokeWidth: newStrokeWidth })
       }, 100)
     },
-    [setStrokeWidth, updateSelectedShapes, selectedShapes, onShapeUpdate]
+    [setStrokeWidth, updateSelectedShapes]
   )
 
   // Handle rotation change
@@ -169,7 +169,7 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
         updateSelectedShapes({ fontSize: newFontSize })
       }, 100)
     },
-    [setFontSize, updateSelectedShapes, selectedShapes, onShapeUpdate]
+    [setFontSize, updateSelectedShapes]
   )
 
   // Debounced corner radius change
@@ -188,7 +188,7 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
         updateSelectedShapes({ cornerRadius: newCornerRadius })
       }, 100)
     },
-    [setCornerRadius, updateSelectedShapes, selectedShapes, onShapeUpdate]
+    [setCornerRadius, updateSelectedShapes]
   )
 
   // Cleanup timeouts on unmount

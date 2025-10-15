@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type Konva from 'konva'
 import React, { memo } from 'react'
 import { Circle } from 'react-konva'

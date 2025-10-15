@@ -329,7 +329,8 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         viewport.x,
         viewport.y,
         viewport.scale,
-        onCursorMove
+        onCursorMove,
+        getDefaultTextProperties
       ]
     )
 
@@ -485,7 +486,9 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         viewport.x,
         viewport.y,
         viewport.scale,
-        clearSelection
+        clearSelection,
+        getDefaultShapeProperties,
+        getDefaultTextProperties
       ]
     )
 
