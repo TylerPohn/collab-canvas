@@ -917,7 +917,7 @@ Each step is designed to be:
   - Multi select works with duplicate 
   - **Test**: Select multiple objects with shift-click and verify it works with marquee selection
 
-- [ ] **Step 14.2**: Add visual layer position indicators to design palette.
+- [x] **Step 14.2**: Add visual layer position indicators to design palette.
   - Files: `src/components/DesignPalette.tsx`, `src/store/designPalette.ts`
   - Add layer position display showing "Layer X of Y" when objects are selected
   - Show visual indicators for bring forward/backward button states (enabled/disabled)
@@ -925,11 +925,14 @@ Each step is designed to be:
   - Implement real-time updates when layer order changes
   - **Test**: Select objects and verify layer position indicators appear in palette
 
-- [ ] **Step 14.3**: Enhance text formatting capabilities.
+- [x] **Step 14.3**: Enhance text formatting capabilities.
   - Files: `src/components/Shapes/TextShape.tsx`, `src/components/DesignPalette.tsx`
   - Add text alignment options (left, center, right)
-  - Implement text wrapping and line height controls
+  - Implement line height controls
   - **Test**: Format text with various alignment and spacing options
+
+
+- [ ] **Step 14.3.5**Implement text wrapping controls
 
 ### Performance & Scalability (12 points) - Target: Excellent (11-12 points)
 

@@ -16,6 +16,8 @@ interface DesignPaletteState {
   fontWeight: 'normal' | 'bold'
   fontStyle: 'normal' | 'italic'
   textDecoration: 'none' | 'underline'
+  textAlign: 'left' | 'center' | 'right'
+  lineHeight: number
 
   // Actions
   setSelectedFillColor: (color: string) => void
@@ -28,6 +30,8 @@ interface DesignPaletteState {
   setFontWeight: (weight: 'normal' | 'bold') => void
   setFontStyle: (style: 'normal' | 'italic') => void
   setTextDecoration: (decoration: 'none' | 'underline') => void
+  setTextAlign: (align: 'left' | 'center' | 'right') => void
+  setLineHeight: (height: number) => void
 
   // Get default properties for new shapes
   getDefaultTextProperties: () => {
@@ -36,6 +40,8 @@ interface DesignPaletteState {
     fontWeight: 'normal' | 'bold'
     fontStyle: 'normal' | 'italic'
     textDecoration: 'none' | 'underline'
+    textAlign: 'left' | 'center' | 'right'
+    lineHeight: number
   }
 
   getDefaultShapeProperties: () => {
@@ -59,6 +65,8 @@ export const useDesignPaletteStore = create<DesignPaletteState>((set, get) => ({
   fontWeight: 'normal',
   fontStyle: 'normal',
   textDecoration: 'none',
+  textAlign: 'left',
+  lineHeight: 1.2,
 
   // Actions
   setSelectedFillColor: color => set({ selectedFillColor: color }),
@@ -71,6 +79,8 @@ export const useDesignPaletteStore = create<DesignPaletteState>((set, get) => ({
   setFontWeight: weight => set({ fontWeight: weight }),
   setFontStyle: style => set({ fontStyle: style }),
   setTextDecoration: decoration => set({ textDecoration: decoration }),
+  setTextAlign: align => set({ textAlign: align }),
+  setLineHeight: height => set({ lineHeight: height }),
 
   // Helper functions
   getDefaultTextProperties: () => {
@@ -80,7 +90,9 @@ export const useDesignPaletteStore = create<DesignPaletteState>((set, get) => ({
       fontFamily: state.fontFamily,
       fontWeight: state.fontWeight,
       fontStyle: state.fontStyle,
-      textDecoration: state.textDecoration
+      textDecoration: state.textDecoration,
+      textAlign: state.textAlign,
+      lineHeight: state.lineHeight
     }
   },
 

@@ -67,6 +67,8 @@ const TextShape: React.FC<TextShapeProps> = memo(
                 : 'normal'
         }
         textDecoration={shape.textDecoration || 'none'}
+        align={shape.textAlign || 'left'}
+        lineHeight={shape.lineHeight || 1.2}
       />
     )
   }

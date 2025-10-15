@@ -19,6 +19,8 @@ export interface ShapeBase {
   fontWeight?: string
   fontStyle?: string
   textDecoration?: string
+  textAlign?: 'left' | 'center' | 'right'
+  lineHeight?: number
   cornerRadius?: number
   zIndex?: number
   createdAt: number

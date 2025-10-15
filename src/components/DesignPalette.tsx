@@ -60,6 +60,8 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
     fontWeight,
     fontStyle,
     textDecoration,
+    textAlign,
+    lineHeight,
     setSelectedFillColor,
     setSelectedStrokeColor,
     setStrokeWidth,
@@ -69,7 +71,9 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
     setFontFamily,
     setFontWeight,
     setFontStyle,
-    setTextDecoration
+    setTextDecoration,
+    setTextAlign,
+    setLineHeight
   } = useDesignPaletteStore()
   // Local state for UI toggles
   const [isBold, setIsBold] = useState(fontWeight === 'bold')
@@ -95,6 +99,10 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
       setTextDecoration(
         (firstSelectedShape.textDecoration as 'none' | 'underline') || 'none'
       )
+      setTextAlign(
+        (firstSelectedShape.textAlign as 'left' | 'center' | 'right') || 'left'
+      )
+      setLineHeight(firstSelectedShape.lineHeight ?? 1.2)
       setIsBold(firstSelectedShape.fontWeight === 'bold')
       setIsItalic(firstSelectedShape.fontStyle === 'italic')
       setIsUnderline(firstSelectedShape.textDecoration === 'underline')
@@ -110,7 +118,9 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
     setFontFamily,
     setFontWeight,
     setFontStyle,
-    setTextDecoration
+    setTextDecoration,
+    setTextAlign,
+    setLineHeight
   ])
 
   // Helper function to update selected shapes with immediate preview
@@ -217,6 +227,45 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
     setTextDecoration(newDecoration)
     updateSelectedShapes({ textDecoration: newDecoration })
   }
+
+  // Handle text alignment change
+  const handleTextAlignChange = (newAlign: 'left' | 'center' | 'right') => {
+    setTextAlign(newAlign)
+    updateSelectedShapes({ textAlign: newAlign })
+  }
+
+  // Handle line height change
+  const handleLineHeightChange = (newLineHeight: number) => {
+    setLineHeight(newLineHeight)
+    updateSelectedShapes({ lineHeight: newLineHeight })
+  }
+
+  // Calculate layer information for selected shapes
+  const getLayerInfo = () => {
+    if (!hasSelection) return null
+
+    // Get all shapes sorted by zIndex (ascending)
+    const sortedShapes = [...shapes].sort(
+      (a, b) => (a.zIndex || 0) - (b.zIndex || 0)
+    )
+
+    const layerInfo = selectedShapes.map(selectedShape => {
+      const currentIndex = sortedShapes.findIndex(
+        s => s.id === selectedShape.id
+      )
+      return {
+        shape: selectedShape,
+        position: currentIndex + 1,
+        totalLayers: sortedShapes.length,
+        canBringForward: currentIndex < sortedShapes.length - 1,
+        canSendBackward: currentIndex > 0
+      }
+    })
+
+    return layerInfo
+  }
+
+  const layerInfo = getLayerInfo()
 
   // Handle layer ordering
   const handleBringForward = () => {
@@ -585,13 +634,47 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
               </div>
 
               <div className="space-y-2">
+                {/* Layer Position Information */}
+                {layerInfo && layerInfo.length > 0 && (
+                  <div className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+                    <div className="font-medium text-foreground mb-1">
+                      Layer Position
+                    </div>
+                    {layerInfo.map((info, index) => (
+                      <div
+                        key={info.shape.id}
+                        className="flex items-center justify-between"
+                      >
+                        <span>
+                          {info.shape.type === 'rect'
+                            ? 'Rectangle'
+                            : info.shape.type === 'circle'
+                              ? 'Circle'
+                              : info.shape.type === 'text'
+                                ? 'Text'
+                                : 'Shape'}{' '}
+                          {index + 1}
+                        </span>
+                        <span className="font-medium">
+                          Layer {info.position} of {info.totalLayers}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     className="h-8 text-xs"
                     onClick={handleBringForward}
-                    disabled={!hasSelection}
+                    disabled={
+                      !hasSelection ||
+                      (layerInfo
+                        ? !layerInfo.some(info => info.canBringForward)
+                        : true)
+                    }
                   >
                     Bring Forward
                   </Button>
@@ -600,7 +683,12 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
                     size="sm"
                     className="h-8 text-xs"
                     onClick={handleSendBackward}
-                    disabled={!hasSelection}
+                    disabled={
+                      !hasSelection ||
+                      (layerInfo
+                        ? !layerInfo.some(info => info.canSendBackward)
+                        : true)
+                    }
                   >
                     Send Backward
                   </Button>
@@ -738,6 +826,52 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
                       <Underline className="h-3 w-3" />
                     </Button>
                   </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                    Text Alignment
+                  </label>
+                  <div className="flex gap-1">
+                    <Button
+                      variant={textAlign === 'left' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleTextAlignChange('left')}
+                      className="h-8 px-2 text-xs"
+                    >
+                      Left
+                    </Button>
+                    <Button
+                      variant={textAlign === 'center' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleTextAlignChange('center')}
+                      className="h-8 px-2 text-xs"
+                    >
+                      Center
+                    </Button>
+                    <Button
+                      variant={textAlign === 'right' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleTextAlignChange('right')}
+                      className="h-8 px-2 text-xs"
+                    >
+                      Right
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                    Line Height: {lineHeight.toFixed(1)}
+                  </label>
+                  <Slider
+                    value={[lineHeight]}
+                    onValueChange={value => handleLineHeightChange(value[0])}
+                    max={3}
+                    min={0.5}
+                    step={0.1}
+                    className="w-full"
+                  />
                 </div>
               </div>
             </div>
