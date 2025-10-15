@@ -13,7 +13,7 @@ import {
 import type { Shape } from '../types'
 
 // Performance optimization constants
-const DRAG_DEBOUNCE_MS = 100
+const DRAG_DEBOUNCE_MS = 50
 const MAX_BATCH_SIZE = 10
 
 // Query keys for React Query
@@ -37,6 +37,20 @@ export class ObjectSyncService {
     {
       objectId: string
       updates: Partial<Omit<Shape, 'id' | 'createdAt' | 'createdBy'>>
+      userId: string
+    }
+  > = new Map()
+
+  // PR #15.3: Batch update system for multi-object movement
+  private debouncedBatchUpdates: Map<string, ReturnType<typeof setTimeout>> =
+    new Map()
+  private pendingBatchUpdates: Map<
+    string,
+    {
+      updates: Array<{
+        objectId: string
+        updates: Partial<Omit<Shape, 'id' | 'createdAt' | 'createdBy'>>
+      }>
       userId: string
     }
   > = new Map()
@@ -79,6 +93,11 @@ export class ObjectSyncService {
     this.debouncedUpdates.forEach(timeout => clearTimeout(timeout))
     this.debouncedUpdates.clear()
     this.pendingUpdates.clear()
+
+    // Clean up debounced batch updates
+    this.debouncedBatchUpdates.forEach(timeout => clearTimeout(timeout))
+    this.debouncedBatchUpdates.clear()
+    this.pendingBatchUpdates.clear()
   }
 
   // PR #7: Optimistic updates with conflict resolution
@@ -213,6 +232,66 @@ export class ObjectSyncService {
     }, DRAG_DEBOUNCE_MS)
 
     this.debouncedUpdates.set(updateKey, timeout)
+  }
+
+  // PR #15.3: Debounced batch update for multi-object movement
+  debouncedBatchUpdateObjects(
+    canvasId: string,
+    updates: Array<{
+      objectId: string
+      updates: Partial<Omit<Shape, 'id' | 'createdAt' | 'createdBy'>>
+    }>,
+    userId: string
+  ): void {
+    const queryKey = objectKeys.list(canvasId)
+    const now = Date.now()
+    const batchKey = `${canvasId}-batch`
+
+    // Always apply optimistic updates immediately for smooth UI
+    this.queryClient.setQueryData(queryKey, (old: Shape[] = []) =>
+      old.map(obj => {
+        const update = updates.find(u => u.objectId === obj.id)
+        return update
+          ? {
+              ...obj,
+              ...update.updates,
+              updatedAt: now,
+              updatedBy: userId
+            }
+          : obj
+      })
+    )
+
+    // Store pending batch update
+    this.pendingBatchUpdates.set(batchKey, { updates, userId })
+
+    // Clear existing debounce timeout
+    const existingTimeout = this.debouncedBatchUpdates.get(batchKey)
+    if (existingTimeout) {
+      clearTimeout(existingTimeout)
+    }
+
+    // Set new debounce timeout
+    const timeout = setTimeout(async () => {
+      const pendingBatch = this.pendingBatchUpdates.get(batchKey)
+      if (pendingBatch) {
+        try {
+          await this.smartBatchUpdateObjects(
+            canvasId,
+            pendingBatch.updates,
+            userId
+          )
+          this.pendingBatchUpdates.delete(batchKey)
+        } catch (error) {
+          console.error('Debounced batch update failed:', error)
+          // Rollback optimistic updates
+          this.queryClient.invalidateQueries({ queryKey })
+        }
+      }
+      this.debouncedBatchUpdates.delete(batchKey)
+    }, DRAG_DEBOUNCE_MS)
+
+    this.debouncedBatchUpdates.set(batchKey, timeout)
   }
 
   async deleteObject(canvasId: string, objectId: string): Promise<void> {

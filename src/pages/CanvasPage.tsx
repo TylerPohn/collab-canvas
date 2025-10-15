@@ -9,6 +9,7 @@ import { usePresence } from '../hooks/usePresence'
 import {
   useCanvasMeta,
   useShapeMutations,
+  useShapeOperations,
   useShapes,
   useViewportPersistence
 } from '../hooks/useShapes'
@@ -55,6 +56,12 @@ const CanvasPage: React.FC = () => {
     batchCreateShapes,
     batchDeleteShapes
   } = useShapeMutations(canvasId, user?.uid || '')
+
+  // Get debounced update for real-time drag updates
+  const { debouncedUpdate, debouncedBatchUpdate } = useShapeOperations(
+    canvasId,
+    user?.uid || ''
+  )
 
   // Presence functionality
   const {
@@ -178,6 +185,24 @@ const CanvasPage: React.FC = () => {
       }
     },
     [updateShape, user?.uid, showError]
+  )
+
+  // PR #13.1: Handle debounced shape updates for real-time drag
+  const handleShapeUpdateDebounced = useCallback(
+    (id: string, updates: Partial<Shape>) => {
+      if (!user?.uid) return
+      debouncedUpdate(id, updates)
+    },
+    [debouncedUpdate, user?.uid]
+  )
+
+  // PR #15.3: Handle debounced batch updates for multi-object movement
+  const handleShapeBatchUpdateDebounced = useCallback(
+    (updates: Array<{ objectId: string; updates: Partial<Shape> }>) => {
+      if (!user?.uid) return
+      debouncedBatchUpdate(updates)
+    },
+    [debouncedBatchUpdate, user?.uid]
   )
 
   // PR #7: Handle shape deletion with React Query
@@ -312,6 +337,8 @@ const CanvasPage: React.FC = () => {
               currentUserId={user?.uid || ''}
               onShapeCreate={handleShapeCreate}
               onShapeUpdate={handleShapeUpdate}
+              onShapeUpdateDebounced={handleShapeUpdateDebounced}
+              onShapeBatchUpdateDebounced={handleShapeBatchUpdateDebounced}
               onShapeDelete={handleShapeDelete}
               onShapeDuplicate={handleShapeDuplicate}
               onCursorMove={updateCursor}

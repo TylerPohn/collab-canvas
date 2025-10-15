@@ -1,5 +1,12 @@
 import type Konva from 'konva'
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react'
+import React, {
+  memo,
+  startTransition,
+  useCallback,
+  useEffect,
+  useRef,
+  useState
+} from 'react'
 import { Circle, Layer, Rect, Stage, Text, Transformer } from 'react-konva'
 import { useCanvasShortcuts } from '../hooks/useCanvasShortcuts'
 import { usePanZoom } from '../hooks/usePanZoom'
@@ -34,6 +41,10 @@ interface CanvasStageProps {
     >
   ) => Promise<Shape>
   onShapeUpdate: (id: string, updates: Partial<Shape>) => void
+  onShapeUpdateDebounced: (id: string, updates: Partial<Shape>) => void
+  onShapeBatchUpdateDebounced: (
+    updates: Array<{ objectId: string; updates: Partial<Shape> }>
+  ) => void
   onShapeDelete: (ids: string[]) => void
   onShapeDuplicate: (ids: string[]) => void
   onCursorMove: (cursor: { x: number; y: number }) => void
@@ -51,6 +62,8 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
     currentUserId,
     onShapeCreate,
     onShapeUpdate,
+    onShapeUpdateDebounced,
+    onShapeBatchUpdateDebounced,
     onShapeDelete,
     onShapeDuplicate,
     onCursorMove,
@@ -93,6 +106,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
       x: number
       y: number
     } | null>(null)
+    const [lastBatchUpdateTime, setLastBatchUpdateTime] = useState<number>(0)
 
     const {
       viewport,
@@ -547,8 +561,17 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
           }
         }
 
-        // If we're dragging a shape that's part of a multi-selection, calculate drag offset
-        const draggedShapeId = e.target.id()
+        // Only process shape updates if we're actually dragging (not just hovering)
+        if (!e.target.isDragging()) {
+          return
+        }
+
+        const node = e.target
+        const draggedShapeId = node.id()
+        const currentX = node.x()
+        const currentY = node.y()
+
+        // PR #15.3: Use batch updates for multi-object movement
         if (
           selectedIds.length > 1 &&
           selectedIds.includes(draggedShapeId) &&
@@ -556,13 +579,45 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         ) {
           const initialPos = initialShapePositions.get(draggedShapeId)
           if (initialPos) {
-            const node = e.target
-            const currentX = node.x()
-            const currentY = node.y()
             const offsetX = currentX - initialPos.x
             const offsetY = currentY - initialPos.y
             setDragOffset({ x: offsetX, y: offsetY })
+
+            // Create batch update for all selected shapes
+            const batchUpdates = selectedIds
+              .map(selectedId => {
+                const initialPos = initialShapePositions.get(selectedId)
+                if (initialPos) {
+                  return {
+                    objectId: selectedId,
+                    updates: {
+                      x: initialPos.x + offsetX,
+                      y: initialPos.y + offsetY
+                    }
+                  }
+                }
+                return null
+              })
+              .filter(Boolean) as Array<{
+              objectId: string
+              updates: Partial<Shape>
+            }>
+
+            // Throttle batch updates to prevent flashing (16ms = ~60fps)
+            const now = Date.now()
+            if (now - lastBatchUpdateTime > 16) {
+              startTransition(() => {
+                onShapeBatchUpdateDebounced(batchUpdates)
+              })
+              setLastBatchUpdateTime(now)
+            }
           }
+        } else {
+          // PR #13.1: Update position in real-time during drag for single object
+          onShapeUpdateDebounced(draggedShapeId, {
+            x: currentX,
+            y: currentY
+          })
         }
       },
       [
@@ -570,8 +625,11 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         viewport.y,
         viewport.scale,
         onCursorMove,
+        onShapeUpdateDebounced,
+        onShapeBatchUpdateDebounced,
         selectedIds,
-        initialShapePositions
+        initialShapePositions,
+        lastBatchUpdateTime
       ]
     )
 
@@ -590,20 +648,35 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
             const deltaX = newX - initialPos.x
             const deltaY = newY - initialPos.y
 
-            // Apply the same offset to all selected shapes
-            selectedIds.forEach(selectedId => {
-              const initialPos = initialShapePositions.get(selectedId)
-              if (initialPos) {
-                onShapeUpdate(selectedId, {
-                  x: initialPos.x + deltaX,
-                  y: initialPos.y + deltaY
-                })
-              }
+            // Apply the same offset to all selected shapes using batch update
+            const finalBatchUpdates = selectedIds
+              .map(selectedId => {
+                const initialPos = initialShapePositions.get(selectedId)
+                if (initialPos) {
+                  return {
+                    objectId: selectedId,
+                    updates: {
+                      x: initialPos.x + deltaX,
+                      y: initialPos.y + deltaY
+                    }
+                  }
+                }
+                return null
+              })
+              .filter(Boolean) as Array<{
+              objectId: string
+              updates: Partial<Shape>
+            }>
+
+            // Send final batch update
+            startTransition(() => {
+              onShapeBatchUpdateDebounced(finalBatchUpdates)
             })
 
             // Clear the initial positions and drag offset
             setInitialShapePositions(new Map())
             setDragOffset(null)
+            setLastBatchUpdateTime(0)
           }
         } else {
           // Single shape drag
@@ -613,7 +686,12 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
           })
         }
       },
-      [selectedIds, initialShapePositions, onShapeUpdate]
+      [
+        selectedIds,
+        initialShapePositions,
+        onShapeUpdate,
+        onShapeBatchUpdateDebounced
+      ]
     )
 
     // Handle shape transform end

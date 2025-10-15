@@ -8,8 +8,8 @@ import type { UserPresence } from '../types'
 // Heartbeat interval in milliseconds (30 seconds)
 const HEARTBEAT_INTERVAL = 30 * 1000
 
-// PR #9: Optimized cursor update throttling (50ms for smoother experience)
-const CURSOR_THROTTLE_INTERVAL = 50
+// PR #9: Optimized cursor update throttling (25ms for smoother experience)
+const CURSOR_THROTTLE_INTERVAL = 25
 
 // Presence timeout (60 seconds - user considered offline if no heartbeat)
 const PRESENCE_TIMEOUT = 60 * 1000

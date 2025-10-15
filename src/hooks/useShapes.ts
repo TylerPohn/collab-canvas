@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import {
   createCanvas,
   getCanvas,
@@ -264,6 +264,19 @@ export function useShapeOperations(canvasId: string, userId: string) {
     [objectSync, canvasId, userId]
   )
 
+  // PR #15.3: Debounced batch update for multi-object movement
+  const debouncedBatchUpdate = useCallback(
+    (
+      updates: Array<{
+        objectId: string
+        updates: Partial<Omit<Shape, 'id' | 'createdAt' | 'createdBy'>>
+      }>
+    ) => {
+      objectSync.debouncedBatchUpdateObjects(canvasId, updates, userId)
+    },
+    [objectSync, canvasId, userId]
+  )
+
   // PR #9: Use smart batch update for large operations
   const smartBatchUpdate = useCallback(
     async (
@@ -293,6 +306,7 @@ export function useShapeOperations(canvasId: string, userId: string) {
   return {
     updateShape,
     debouncedUpdate,
+    debouncedBatchUpdate,
     batchUpdate,
     smartBatchUpdate
   }
@@ -377,7 +391,7 @@ export function useCanvasMeta(canvasId: string, userId: string) {
         })
       }
     }
-  }, [canvasMeta, isLoading, createCanvasMutation.mutateAsync, canvasId])
+  }, [canvasMeta, isLoading, createCanvasMutation, canvasId])
 
   return {
     canvasMeta,
@@ -398,12 +412,19 @@ export function useViewportPersistence(canvasId: string, userId: string) {
   const { canvasMeta, updateCanvasMeta } = useCanvasMeta(canvasId, userId)
 
   // Create debounced function once and reuse it
-  const debouncedUpdateCanvasMeta = useCallback(
-    debounce((viewport: ViewportState) => {
-      updateCanvasMeta({ viewport })
-    }, 500),
-    [updateCanvasMeta]
-  )
+  const debouncedUpdateCanvasMeta = useMemo(() => {
+    let timeout: ReturnType<typeof setTimeout> | null = null
+
+    return (viewport: ViewportState) => {
+      if (timeout) {
+        clearTimeout(timeout)
+      }
+
+      timeout = setTimeout(() => {
+        updateCanvasMeta({ viewport })
+      }, 500)
+    }
+  }, [updateCanvasMeta])
 
   // Save viewport state with debouncing
   const saveViewport = useCallback(
@@ -422,23 +443,5 @@ export function useViewportPersistence(canvasId: string, userId: string) {
     saveViewport,
     restoreViewport,
     savedViewport: canvasMeta?.viewport
-  }
-}
-
-// Simple debounce utility
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: ReturnType<typeof setTimeout> | null = null
-
-  return (...args: Parameters<T>) => {
-    if (timeout) {
-      clearTimeout(timeout)
-    }
-
-    timeout = setTimeout(() => {
-      func(...args)
-    }, wait)
   }
 }

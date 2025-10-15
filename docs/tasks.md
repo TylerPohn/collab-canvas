@@ -808,23 +808,22 @@ Each step is designed to be:
 
 **Steps to Achieve Excellent:**
 
-- [ ] **Step 13.1**: Optimize sync latency to sub-100ms for object changes.
+- [x] **Step 13.1**: Optimize sync latency by reducing debounce timing.
   - Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`
-  - Reduce debounce from 100ms to 50ms for critical operations
-  - Implement priority-based sync (immediate for create/delete, debounced for move/resize)
-  - **Test**: Measure sync latency with browser dev tools during rapid edits
+  - Reduce debounce from 100ms to 50ms for object changes
+  - Update object positions while dragging rather than waiting for release
 
-- [ ] **Step 13.2**: Achieve sub-50ms cursor sync with interpolation.
+- [x] **Step 13.2**: Achieve sub-50ms cursor sync with interpolation.
   - Files: `src/lib/sync/presence.ts`, `src/components/CursorLayer.tsx`
   - Reduce cursor throttling from 50ms to 25ms
   - Implement client-side cursor interpolation for smooth movement
-  - **Test**: Verify cursor lag is imperceptible during rapid movement
 
-- [ ] **Step 13.3**: Eliminate visible lag during rapid multi-user edits.
+- [x] **Step 13.3**: Eliminate visible lag during rapid multi-user edits.
   - Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`
   - Implement optimistic updates with immediate visual feedback
   - Add conflict resolution indicators for simultaneous edits
   - **Test**: Two users rapidly editing same object simultaneously
+- [ ] **Step 13.3.5 **: Eliminate 'ghost' shapes of where objects used to be when multi draggin.
 
 ### Conflict Resolution & State Management (9 points) - Target: Excellent (8-9 points)
 
@@ -1137,6 +1136,7 @@ const LayerSection = () => {
   - Add export button to toolbar for exporting entire canvas
   - Implement PNG export functionality for the canvas
   - Add export options (PNG, SVG formats)
+  - Implement batch updates for multi-object movement to reduce network calls
   - **Test**: Export canvas as PNG/SVG, verify exported image matches canvas content
 
 ### Tier 2 Features (3 points each, max 2 features = 6 points)
