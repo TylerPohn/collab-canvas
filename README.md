@@ -16,6 +16,7 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 - 🔄 **Real-time synchronization** with debounced updates (100ms)
 - 🎪 **Live cursor tracking** with 50ms throttling
 - 💾 **Persistent canvas state** across sessions
+- 🎨 **Design palette** with shape styling and object information
 - 🚀 **Deployed and publicly accessible** on Vercel
 
 ## 🛠️ Tech Stack
@@ -107,6 +108,7 @@ src/
 ├── components/          # React components
 │   ├── CanvasStage.tsx  # Main canvas component with Konva
 │   ├── Toolbar.tsx      # Drawing tools and controls
+│   ├── DesignPalette.tsx # Right sidebar for shape styling and object info
 │   ├── CursorLayer.tsx  # Multi-user cursor rendering
 │   ├── PresenceList.tsx # User presence display
 │   ├── EmptyCanvasState.tsx # Empty state component
@@ -230,6 +232,17 @@ The application includes a health check system that monitors:
 
 Health status is displayed in the app header and can be accessed programmatically via `getHealthCheck()`.
 
+### Design Palette Features
+
+The right sidebar design palette provides comprehensive shape styling and object information:
+
+- **Object Information**: Shows "Last edited at [timestamp] by [name]" for selected objects
+- **Shape Styling**: Fill/stroke colors, stroke width, corner radius controls
+- **Text Formatting**: Font family, size, weight, style, and decoration options
+- **Layer Management**: Bring forward/backward controls with z-index management
+- **Real-time Updates**: All changes apply immediately to selected shapes
+- **Multi-selection Support**: Styling changes apply to all selected objects
+
 ### Real-time Features
 
 The app implements sophisticated real-time collaboration:
@@ -237,7 +250,7 @@ The app implements sophisticated real-time collaboration:
 - **Object Synchronization**: Shapes sync across users with optimistic updates
 - **Presence Tracking**: Live user presence with heartbeat system (30s intervals)
 - **Cursor Tracking**: Real-time cursor positions with 50ms throttling
-- **Conflict Resolution**: Last-write-wins with timestamp-based resolution
+- **Conflict Resolution**: Last-write-wins with timestamp-based resolution using `updatedAt` and `updatedBy` fields, displayed in design palette
 - **Performance Optimization**: Debounced updates (100ms) and batch operations
 
 ## 🚀 Deployment
@@ -427,7 +440,7 @@ The app includes built-in performance monitoring:
 - **Cursor Interpolation**: ✅ Smooth cursor movement with 60fps interpolation
 - **Memoized Components**: ✅ React components are memoized to prevent re-renders
 - **Smart Batching**: ✅ Large operations are automatically chunked
-- **Conflict Resolution**: ✅ Last-write-wins with timestamp-based resolution
+- **Conflict Resolution**: ✅ Last-write-wins with timestamp-based resolution using `updatedAt` and `updatedBy` fields, displayed in design palette
 
 ## 🤝 Contributing
 
@@ -465,7 +478,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 #### Short-term
 
-- [ ] **Design Palette Panel**: Right sidebar for shape styling, layer management, and effects
+- [x] **Design Palette Panel**: Right sidebar for shape styling, layer management, and effects ✅ COMPLETED
 - [ ] **Testing Infrastructure**: Unit tests, e2e tests, CI/CD pipeline
 - [ ] **Mobile optimization**: Touch gestures and responsive design
 - [ ] **Performance testing**: Load testing with 500+ shapes and 5+ users

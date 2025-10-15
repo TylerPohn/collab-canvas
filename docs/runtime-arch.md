@@ -26,6 +26,7 @@ CL1->>FS_OBJECTS: subscribe canvases/{id}/objects (onSnapshot)
 FS_OBJECTS-->>CL1: current objects snapshot
 CL1->>FS_PRESENCE: set presence (user online), start cursor heartbeats
 FS_PRESENCE-->>CL1: presence/cursor updates from others
+CL1->>CL1: design palette ready to show object info (updatedAt/updatedBy)
 
 Note over CL2,FS_OBJECTS: Initial load & subscriptions
 CL2->>FS_CANVAS: subscribe canvases/{id} (onSnapshot)
@@ -52,6 +53,8 @@ Note over CL1,CL2: Conflict policy (last-write-wins)
 CL2->>FS_OBJECTS: move same object (near-same time)
 FS_OBJECTS-->>CL1: snapshot (last-write-wins by updatedAt)
 FS_OBJECTS-->>CL2: snapshot (winner reconciled everywhere)
+CL1->>CL1: display "Last edited by [name] at [time]" in design palette
+CL2->>CL2: display "Last edited by [name] at [time]" in design palette
 
 Note over CL1,FS_OBJECTS: Refresh / reconnect
 U1->>CL1: Refresh page

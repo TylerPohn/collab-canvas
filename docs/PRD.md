@@ -52,7 +52,7 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 - **React Query** for local state synchronization and optimistic updates.
 - **Multiplayer cursors** showing live position and user names.
 - **Presence awareness** (online user list) via Firestore heartbeat documents.
-- **Conflict resolution:** "Last write wins" approach documented.
+- **Conflict resolution:** "Last write wins" approach documented with visual feedback in design palette.
 - **Persistent state:** canvas state saved and restored on reconnects.
 
 ### **Authentication**
@@ -105,14 +105,14 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 
 ## **5. Technical Implementation and Considerations**
 
-| Category                | Implementation Status                        | Current Mitigation                                                          |
-| ----------------------- | -------------------------------------------- | --------------------------------------------------------------------------- |
-| **Sync Architecture**   | ✅ Implemented with Firestore subcollections | `onSnapshot` listeners with React Query for optimistic updates              |
-| **Performance**         | ✅ Optimized with debouncing and batching    | Debounced updates (100ms), cursor throttling (50ms), batch operations       |
-| **Conflict Resolution** | ✅ Implemented with last-write-wins          | Timestamp-based conflict resolution with `updatedAt` and `updatedBy` fields |
-| **Persistence**         | ✅ Canvas metadata and viewport persistence  | Canvas metadata stored in Firestore, viewport state persisted on changes    |
-| **Authentication UX**   | ✅ Smooth auth flow with loading states      | Loading spinners, auth state management, automatic redirects                |
-| **Real-time Features**  | ✅ Full presence and cursor tracking         | Heartbeat system (30s), cursor throttling, presence cleanup on disconnect   |
+| Category                | Implementation Status                        | Current Mitigation                                                                                       |
+| ----------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Sync Architecture**   | ✅ Implemented with Firestore subcollections | `onSnapshot` listeners with React Query for optimistic updates                                           |
+| **Performance**         | ✅ Optimized with debouncing and batching    | Debounced updates (100ms), cursor throttling (50ms), batch operations                                    |
+| **Conflict Resolution** | ✅ Implemented with last-write-wins          | Timestamp-based conflict resolution with `updatedAt` and `updatedBy` fields, displayed in design palette |
+| **Persistence**         | ✅ Canvas metadata and viewport persistence  | Canvas metadata stored in Firestore, viewport state persisted on changes                                 |
+| **Authentication UX**   | ✅ Smooth auth flow with loading states      | Loading spinners, auth state management, automatic redirects                                             |
+| **Real-time Features**  | ✅ Full presence and cursor tracking         | Heartbeat system (30s), cursor throttling, presence cleanup on disconnect                                |
 
 ---
 
@@ -139,6 +139,7 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 ### **Design Palette System ✅ COMPLETED**
 
 - **Comprehensive Right Sidebar**: 320px fixed-width panel with modern shadcn/ui components
+- **Object Information Display**: Shows "Last edited at [timestamp] by [name]" at the top of the palette for selected objects
 - **Advanced Shape Styling**: Fill/stroke color pickers, stroke width sliders (0-10px), corner radius controls (0-100px)
 - **Text Styling Controls**: Font family, size, weight, style, and decoration options
 - **Layer Management**: Bring forward/backward controls with z-index management

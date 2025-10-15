@@ -362,6 +362,8 @@ const CanvasPage: React.FC = () => {
           onToggle={handleToggleDesignPalette}
           shapes={shapes}
           onShapeUpdate={handleShapeUpdate}
+          currentUser={user}
+          presence={presence}
         />
       </div>
     </div>

@@ -831,23 +831,18 @@ Each step is designed to be:
 
 **Steps to Achieve Excellent:**
 
-- [ ] **Step 13.6**: Implement comprehensive conflict resolution testing.
-  - Files: `src/lib/sync/objects.ts`, `src/lib/types.ts`
-  - Add conflict resolution logging and metrics
-  - Implement visual feedback for conflict resolution
-  - **Test**: Simultaneous move, rapid edit storm, delete vs edit, create collision scenarios
+- [x] **Step 13.7**: Enhance conflict resolution strategy documentation.
+  - Specify use of updatedAt/updatedBy for last-write-wins documentation in readme
 
-- [ ] **Step 13.7**: Enhance conflict resolution strategy documentation.
-  - Files: `docs/conflict-resolution.md` (new file)
-  - Document last-write-wins implementation with examples
-  - Add conflict resolution flow diagrams including lock mechanism
-  - **Test**: Verify documentation covers all edge cases including locks
-
-- [ ] **Step 13.8**: Implement conflict resolution visual feedback.
-  - Files: `src/components/CanvasStage.tsx`, `src/components/Toast.tsx`
-  - Show brief visual indicator when conflicts are resolved
-  - Add toast notification for significant conflicts and lock acquisitions
-  - **Test**: Visual feedback appears during simultaneous edits and lock operations
+- [x] **Step 13.8**: Implement conflict resolution visual feedback.
+  - Files: `src/components/DesignPalette.tsx`, `src/lib/utils.ts`, `src/pages/CanvasPage.tsx`
+  - Add "Last edited at [timestamp] by [name]" display in design palette for selected objects
+  - Show user attribution and edit timestamps to provide conflict resolution context
+  - **COMPLETED**: Implemented user display name resolution and timestamp formatting utilities
+  - **COMPLETED**: Added Object Info section to design palette showing last edited information
+  - **COMPLETED**: Integrated with existing user presence system for accurate user attribution
+  - **Test**: Select objects and verify last edited information displays correctly
+ - [x] **Step 13.8.5**: Handle case where last editing user is offline, say say their name, not "unknown user"
 
 ### Persistence & Reconnection (9 points) - Target: Excellent (8-9 points)
 

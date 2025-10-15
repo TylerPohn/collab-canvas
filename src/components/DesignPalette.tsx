@@ -10,7 +10,8 @@ import {
   Underline
 } from 'lucide-react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import type { Shape } from '../lib/types'
+import type { Shape, User, UserPresence } from '../lib/types'
+import { formatLastEdited, getUserDisplayName } from '../lib/utils'
 import { useDesignPaletteStore } from '../store/designPalette'
 import { useSelectionStore } from '../store/selection'
 import { Badge } from './ui/badge'
@@ -24,13 +25,17 @@ interface DesignPaletteProps {
   onToggle: () => void
   shapes: Shape[]
   onShapeUpdate: (id: string, updates: Partial<Shape>) => void
+  currentUser: User | null
+  presence: UserPresence[]
 }
 
 const DesignPalette: React.FC<DesignPaletteProps> = ({
   isOpen,
   onToggle,
   shapes,
-  onShapeUpdate
+  onShapeUpdate,
+  currentUser,
+  presence
 }) => {
   const { selectedIds } = useSelectionStore()
 
@@ -364,6 +369,28 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
           </CardHeader>
 
           <CardContent className="space-y-6 overflow-y-auto flex-1 min-h-0">
+            {/* Last Edited Information - only show for single selection */}
+            {selectedShapes.length === 1 && firstSelectedShape && (
+              <div className="space-y-2">
+                <div className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+                  <div className="font-medium text-foreground mb-1">
+                    Object Info
+                  </div>
+                  <div>
+                    Last edited {formatLastEdited(firstSelectedShape.updatedAt)}{' '}
+                    by{' '}
+                    <span className="font-medium">
+                      {getUserDisplayName(
+                        firstSelectedShape.updatedBy,
+                        currentUser,
+                        presence
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Fill & Stroke Section */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
