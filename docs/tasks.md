@@ -798,6 +798,678 @@ Each step is designed to be:
 
 ---
 
+## PR #13 — Section 1: Core Collaborative Infrastructure (30 points)
+
+**Goal:** Enhance real-time synchronization, conflict resolution, and persistence to achieve excellent rubric scores.
+
+### Real-Time Synchronization (12 points) - Target: Excellent (11-12 points)
+
+**Current Status:** Good (9-10 points) - Consistent sync under 150ms, occasional minor delays with heavy load
+
+**Steps to Achieve Excellent:**
+
+- [ ] **Step 13.1**: Optimize sync latency to sub-100ms for object changes.
+  - Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`
+  - Reduce debounce from 100ms to 50ms for critical operations
+  - Implement priority-based sync (immediate for create/delete, debounced for move/resize)
+  - **Test**: Measure sync latency with browser dev tools during rapid edits
+
+- [ ] **Step 13.2**: Achieve sub-50ms cursor sync with interpolation.
+  - Files: `src/lib/sync/presence.ts`, `src/components/CursorLayer.tsx`
+  - Reduce cursor throttling from 50ms to 25ms
+  - Implement client-side cursor interpolation for smooth movement
+  - **Test**: Verify cursor lag is imperceptible during rapid movement
+
+- [ ] **Step 13.3**: Eliminate visible lag during rapid multi-user edits.
+  - Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`
+  - Implement optimistic updates with immediate visual feedback
+  - Add conflict resolution indicators for simultaneous edits
+  - **Test**: Two users rapidly editing same object simultaneously
+
+### Conflict Resolution & State Management (9 points) - Target: Excellent (8-9 points)
+
+**Current Status:** Good (6-7 points) - Simultaneous edits resolve correctly 90%+ of time, strategy documented
+
+**Steps to Achieve Excellent:**
+
+- [ ] **Step 13.4**: Implement object lock mechanism for conflict resolution.
+  - Files: `src/lib/types.ts`, `src/lib/sync/locks.ts` (new file), `src/store/selection.ts`
+  - Add ObjectLock interface with lockedBy, lockedByDisplayName, lockedAt, expiresAt fields
+  - Create LockService class with methods: acquireLock, releaseLock, isLocked, getLockInfo
+  - Store locks in Firestore subcollection: `canvases/{canvasId}/locks/{objectId}`
+  - Update selection store to track locked objects and prevent selection of locked objects
+  - Implement lock expiration (5 minutes) and automatic cleanup
+  - **Test**: Two users try to select same object - one gets lock, other sees lock indicator
+
+- [ ] **Step 13.5**: Add visual lock indicators and user feedback.
+  - Files: `src/components/CanvasStage.tsx`, `src/components/Shapes/*.tsx`, `src/components/LockIndicator.tsx` (new file)
+  - Create LockIndicator component showing lock icon and user name
+  - Show lock indicator overlay on locked objects with user avatar and name
+  - Disable editing for locked objects (except for lock owner) - disable transform handles
+  - Add visual feedback when trying to edit locked object (toast notification)
+  - Implement lock status in shape components (RectangleShape, CircleShape, TextShape)
+  - **Test**: Verify lock indicators appear and editing is properly restricted
+
+- [ ] **Step 13.6**: Implement comprehensive conflict resolution testing.
+  - Files: `src/lib/sync/objects.ts`, `src/lib/types.ts`
+  - Add conflict resolution logging and metrics
+  - Implement visual feedback for conflict resolution
+  - **Test**: Simultaneous move, rapid edit storm, delete vs edit, create collision scenarios
+
+- [ ] **Step 13.7**: Enhance conflict resolution strategy documentation.
+  - Files: `docs/conflict-resolution.md` (new file)
+  - Document last-write-wins implementation with examples
+  - Add conflict resolution flow diagrams including lock mechanism
+  - **Test**: Verify documentation covers all edge cases including locks
+
+- [ ] **Step 13.8**: Implement conflict resolution visual feedback.
+  - Files: `src/components/CanvasStage.tsx`, `src/components/Toast.tsx`
+  - Show brief visual indicator when conflicts are resolved
+  - Add toast notification for significant conflicts and lock acquisitions
+  - **Test**: Visual feedback appears during simultaneous edits and lock operations
+
+### Persistence & Reconnection (9 points) - Target: Excellent (8-9 points)
+
+**Current Status:** Good (6-7 points) - Refresh preserves 95%+ of state, reconnection works but may lose last 1-2 operations
+
+**Steps to Achieve Excellent:**
+
+- [ ] **Step 13.9**: Implement operation queuing during disconnect.
+  - Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`
+  - Queue operations when offline and sync on reconnect
+  - Implement retry logic for failed operations
+  - Handle lock expiration during disconnect
+  - **Test**: Disconnect network, make edits, reconnect - verify all operations sync
+
+- [ ] **Step 13.10**: Add comprehensive connection status indicators.
+  - Files: `src/components/CanvasStage.tsx`, `src/hooks/usePresence.ts`
+  - Show connection status in UI (connected/disconnected/reconnecting)
+  - Add visual indicators for sync status and lock status
+  - **Test**: Network throttling to verify status indicators work
+
+- [ ] **Step 13.11**: Implement robust reconnection with complete state restoration.
+  - Files: `src/lib/sync/objects.ts`, `src/hooks/useShapes.ts`
+  - Ensure 100% state preservation on refresh
+  - Implement incremental sync for large canvases
+  - Handle lock restoration and cleanup on reconnect
+  - **Test**: Refresh mid-edit, total disconnect scenarios, network simulation
+
+**Testing Scenarios for PR #13:**
+
+1. **Object Lock Acquisition**: User A selects object, User B tries to select same object - User B sees lock indicator
+2. **Race Condition Test**: User A and User B click same object simultaneously - only one gets lock, other sees immediate feedback
+3. **Lock Expiration**: User A locks object, goes offline, lock expires, User B can now edit
+4. **Simultaneous Move**: Two users drag same rectangle simultaneously (with lock mechanism)
+5. **Rapid Edit Storm**: User A resizes while User B changes color while User C moves (with locks)
+6. **Delete vs Edit**: User A deletes object while User B is editing it (lock prevents deletion)
+7. **Create Collision**: Two users create objects at nearly identical timestamps
+8. **Mid-Operation Refresh**: User drags object, refreshes browser mid-drag
+9. **Total Disconnect**: All users close browsers, wait 2 minutes, return
+10. **Network Simulation**: Throttle network to 0 for 30 seconds, restore
+11. **Lock Visual Feedback**: Verify lock indicators show user name and prevent editing
+
+**Object Lock Mechanism Implementation Details:**
+
+The object lock system will prevent conflicts by ensuring only one user can edit an object at a time:
+
+1. **Lock Acquisition**: When a user selects an object, attempt to acquire a lock
+2. **Lock Storage**: Store locks in Firestore as `canvases/{canvasId}/locks/{objectId}`
+3. **Lock Expiration**: Locks expire after 5 minutes to prevent permanent locks
+4. **Visual Feedback**: Show lock indicator with user name and avatar on locked objects
+5. **Edit Prevention**: Disable transform handles and editing for locked objects (except owner)
+6. **Lock Release**: Automatically release locks when user deselects or leaves canvas
+7. **Conflict Resolution**: If lock acquisition fails, show toast notification and prevent selection
+
+**Race Condition Handling (Multiple Users Locking Simultaneously):**
+
+When multiple users attempt to lock the same object at nearly the same time:
+
+1. **Atomic Lock Operations**: Use Firestore transactions to ensure atomic lock acquisition
+2. **First-Write-Wins**: The first user to successfully write the lock document wins
+3. **Immediate Feedback**: Failed lock attempts receive immediate feedback (toast notification)
+4. **Optimistic UI**: Show temporary "acquiring lock" state while lock request is in flight
+5. **Lock Status Subscription**: All users subscribe to lock changes and update UI immediately
+6. **Graceful Degradation**: If lock acquisition fails, user can still view the object but cannot edit
+
+**Lock Acquisition Flow:**
+
+```
+User A clicks object → Optimistic UI shows "acquiring lock" → Firestore transaction attempts lock
+User B clicks same object → Optimistic UI shows "acquiring lock" → Firestore transaction attempts lock
+
+Result: Only one transaction succeeds (first-write-wins)
+- Winner: Gets lock, UI shows "locked by you"
+- Loser: Gets failure response, UI shows "locked by [User A]" with lock indicator
+```
+
+**Lock Service API:**
+
+```typescript
+interface LockService {
+  acquireLock(
+    canvasId: string,
+    objectId: string,
+    userId: string
+  ): Promise<LockResult>
+  releaseLock(canvasId: string, objectId: string, userId: string): Promise<void>
+  isLocked(canvasId: string, objectId: string): Promise<boolean>
+  getLockInfo(canvasId: string, objectId: string): Promise<ObjectLock | null>
+  subscribeToLocks(
+    canvasId: string,
+    callback: (locks: ObjectLock[]) => void
+  ): () => void
+}
+
+interface LockResult {
+  success: boolean
+  lock?: ObjectLock
+  error?: 'ALREADY_LOCKED' | 'TRANSACTION_FAILED' | 'NETWORK_ERROR'
+  lockedBy?: string
+}
+```
+
+**Firestore Transaction Implementation:**
+
+```typescript
+async acquireLock(canvasId: string, objectId: string, userId: string): Promise<LockResult> {
+  const lockRef = doc(db, 'canvases', canvasId, 'locks', objectId)
+
+  return await runTransaction(db, async (transaction) => {
+    const lockDoc = await transaction.get(lockRef)
+
+    if (lockDoc.exists()) {
+      const existingLock = lockDoc.data() as ObjectLock
+      // Check if lock is expired
+      if (existingLock.expiresAt > Date.now()) {
+        return {
+          success: false,
+          error: 'ALREADY_LOCKED',
+          lockedBy: existingLock.lockedByDisplayName
+        }
+      }
+    }
+
+    // Create new lock
+    const newLock: ObjectLock = {
+      objectId,
+      lockedBy: userId,
+      lockedByDisplayName: getCurrentUser().displayName,
+      lockedAt: Date.now(),
+      expiresAt: Date.now() + (5 * 60 * 1000) // 5 minutes
+    }
+
+    transaction.set(lockRef, newLock)
+    return { success: true, lock: newLock }
+  })
+}
+```
+
+---
+
+## PR #14 — Section 2: Canvas Features & Performance (20 points)
+
+**Goal:** Enhance canvas functionality and achieve excellent performance scores.
+
+### Canvas Functionality (8 points) - Target: Excellent (7-8 points)
+
+**Current Status:** Good (5-6 points) - All basic requirements met, 2+ shapes, transforms work well
+
+**Steps to Achieve Excellent:**
+
+- [ ] **Step 14.1**: Add shift-click for multi-select (drag-to-select marquee already implemented).
+  - Files: `src/components/CanvasStage.tsx`, `src/store/selection.ts`
+  - Implement shift-click functionality for adding objects to selection
+  - Ensure shift-click works with existing drag-to-select marquee
+  - **Test**: Select multiple objects with shift-click and verify it works with marquee selection
+
+- [ ] **Step 14.2**: Add visual layer position indicators to design palette.
+  - Files: `src/components/DesignPalette.tsx`, `src/store/designPalette.ts`
+  - Add layer position display showing "Layer X of Y" when objects are selected
+  - Show visual indicators for bring forward/backward button states (enabled/disabled)
+  - Add layer depth information in the Layer section of the palette
+  - Implement real-time updates when layer order changes
+  - **Test**: Select objects and verify layer position indicators appear in palette
+
+- [ ] **Step 14.3**: Enhance text formatting capabilities.
+  - Files: `src/components/Shapes/TextShape.tsx`, `src/components/DesignPalette.tsx`
+  - Add text alignment options (left, center, right)
+  - Implement text wrapping and line height controls
+  - **Test**: Format text with various alignment and spacing options
+
+### Performance & Scalability (12 points) - Target: Excellent (11-12 points)
+
+**Current Status:** Good (9-10 points) - Consistent performance with 300+ objects, handles 4-5 users
+
+**Steps to Achieve Excellent:**
+
+- [ ] **Step 14.4**: Optimize for 500+ objects with consistent performance.
+  - Files: `src/components/CanvasStage.tsx`, `src/lib/sync/objects.ts`
+  - Implement object culling for off-screen shapes
+  - Add performance monitoring and metrics
+  - **Test**: Create 500+ shapes and verify 60fps maintained
+
+- [ ] **Step 14.5**: Support 5+ concurrent users without degradation.
+  - Files: `src/lib/sync/presence.ts`, `src/lib/sync/objects.ts`
+  - Optimize presence updates for multiple users
+  - Implement user-specific update batching
+  - **Test**: 5+ users simultaneously editing canvas
+
+- [ ] **Step 14.6**: Implement performance monitoring and optimization.
+  - Files: `src/lib/performance.ts` (new file), `src/components/CanvasStage.tsx`
+  - Add FPS monitoring and performance metrics
+  - Implement automatic performance degradation handling
+  - **Test**: Monitor performance during stress testing
+
+**Layer Position Indicator Implementation Details:**
+
+The layer position indicators will provide clear visual feedback about object layering:
+
+1. **Layer Position Display**: Show "Layer X of Y" where X is current position and Y is total layers
+2. **Button State Indicators**: Visual feedback for bring forward/backward buttons
+   - Disabled state when object is already at front/back
+   - Enabled state when movement is possible
+3. **Real-time Updates**: Position indicators update immediately when layer order changes
+4. **Multi-selection Handling**: Show layer info for multiple selected objects
+
+**Implementation Example:**
+
+```typescript
+// In DesignPalette.tsx
+const LayerSection = () => {
+  const { selectedIds, shapes } = useSelectionStore()
+  const selectedShapes = shapes.filter(shape => selectedIds.includes(shape.id))
+
+  const getLayerInfo = () => {
+    if (selectedShapes.length === 0) return null
+    if (selectedShapes.length === 1) {
+      const shape = selectedShapes[0]
+      const allShapes = Object.values(shapes).sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
+      const position = allShapes.findIndex(s => s.id === shape.id) + 1
+      return `Layer ${position} of ${allShapes.length}`
+    }
+    return `${selectedShapes.length} objects selected`
+  }
+
+  return (
+    <div className="layer-section">
+      <div className="layer-info">{getLayerInfo()}</div>
+      <Button disabled={isAtFront}>Bring Forward</Button>
+      <Button disabled={isAtBack}>Send Backward</Button>
+    </div>
+  )
+}
+```
+
+**Performance Testing for PR #14:**
+
+1. **Object Load Test**: Create 500+ shapes and verify 60fps
+2. **Multi-User Test**: 5+ users simultaneously editing
+3. **Stress Test**: Rapid shape creation, movement, and deletion
+4. **Memory Test**: Monitor memory usage during extended sessions
+
+---
+
+## PR #15 — Section 3: Advanced Figma-Inspired Features (15 points)
+
+**Goal:** Implement advanced features to achieve excellent rubric scores.
+
+### Tier 1 Features (2 points each, max 3 features = 6 points)
+
+**Current Status:** Some features implemented, need to complete and add more
+
+**Steps to Achieve Excellent:**
+
+- [ ] **Step 15.1**: Implement comprehensive undo/redo system.
+  - Files: `src/hooks/useUndoRedo.ts` (new file), `src/hooks/useCanvasShortcuts.ts`
+  - Add keyboard shortcuts (Cmd+Z/Cmd+Shift+Z)
+  - Implement command pattern for undo/redo operations
+  - **Test**: Undo/redo various operations (create, move, resize, delete)
+
+- [ ] **Step 15.2**: Add Command+D keyboard shortcut for duplicate.
+  - Files: `src/hooks/useCanvasShortcuts.ts`, `src/components/CanvasStage.tsx`
+  - Implement Command+D (Mac) / Ctrl+D (Windows) for duplicating selected objects
+  - Add keyboard shortcut to existing shortcuts (Delete, Arrow keys for nudging)
+  - Ensure duplicate works with single and multi-selection
+  - **Test**: Select objects and press Command+D to duplicate, verify keyboard shortcuts work
+
+- [ ] **Step 15.3**: Implement export canvas functionality.
+  - Files: `src/lib/export.ts` (new file), `src/components/Toolbar.tsx`
+  - Add export button to toolbar for exporting entire canvas
+  - Implement PNG export functionality for the canvas
+  - Add export options (PNG, SVG formats)
+  - **Test**: Export canvas as PNG/SVG, verify exported image matches canvas content
+
+### Tier 2 Features (3 points each, max 2 features = 6 points)
+
+**Steps to Achieve Excellent:**
+
+- [ ] **Step 15.4**: Implement comprehensive layers panel.
+  - Files: `src/components/LayersPanel.tsx` (new file), `src/components/DesignPalette.tsx`
+  - Add drag-to-reorder layer hierarchy
+  - Implement layer visibility and lock controls
+  - **Test**: Reorder layers by dragging, toggle visibility and locks
+
+- [ ] **Step 15.5**: Add alignment tools and distribution.
+  - Files: `src/lib/alignment.ts` (new file), `src/components/Toolbar.tsx`
+  - Implement align left/right/center, distribute evenly
+  - Add alignment tools to toolbar
+  - **Test**: Align multiple objects, distribute objects evenly
+
+### Tier 3 Features (3 points each, max 1 feature = 3 points)
+
+**Steps to Achieve Excellent:**
+
+- [ ] **Step 15.6**: Implement collaborative comments system.
+  - Files: `src/lib/sync/comments.ts` (new file), `src/components/CommentsPanel.tsx` (new file), `src/components/CanvasStage.tsx`
+  - Add comments panel for collaborative feedback
+  - Implement comment creation, editing, and replies
+  - Add comment indicators on canvas objects
+  - **Test**: Multiple users create comments, reply to comments, verify real-time sync
+
+**Feature Implementation Priority:**
+
+1. **Tier 1**: Undo/redo, keyboard shortcuts (Command+D), export canvas (6 points)
+2. **Tier 2**: Layers panel, alignment tools (6 points)
+3. **Tier 3**: Collaborative comments (3 points)
+4. **Total**: 15 points (Excellent score)
+
+**Command+D Keyboard Shortcut Implementation:**
+
+The Command+D shortcut will integrate with the existing keyboard shortcut system:
+
+```typescript
+// In useCanvasShortcuts.ts
+const handleKeyDown = (event: KeyboardEvent) => {
+  // Existing shortcuts: Delete, Arrow keys
+  if (event.key === 'Delete' || event.key === 'Backspace') {
+    // Delete selected objects
+  }
+
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+    // Nudge objects
+  }
+
+  // New shortcut: Command+D / Ctrl+D
+  if ((event.metaKey || event.ctrlKey) && event.key === 'd') {
+    event.preventDefault()
+    duplicateSelectedObjects()
+  }
+}
+
+const duplicateSelectedObjects = () => {
+  const { selectedIds } = useSelectionStore.getState()
+  if (selectedIds.length === 0) return
+
+  // Use existing duplicate functionality from useShapes hook
+  selectedIds.forEach(id => {
+    duplicateShape(id)
+  })
+}
+```
+
+**Keyboard Shortcuts Summary:**
+
+- **Delete/Backspace**: Delete selected objects
+- **Arrow Keys**: Nudge objects (5px)
+- **Command+D / Ctrl+D**: Duplicate selected objects
+- **Command+Z / Ctrl+Z**: Undo (planned)
+- **Command+Shift+Z / Ctrl+Shift+Z**: Redo (planned)
+
+**Export Canvas Implementation:**
+
+The export functionality will allow users to save their canvas work:
+
+```typescript
+// In export.ts
+export interface ExportOptions {
+  format: 'png' | 'svg'
+  quality?: number
+  scale?: number
+  backgroundColor?: string
+}
+
+export const exportCanvas = async (
+  canvasRef: React.RefObject<HTMLCanvasElement>,
+  options: ExportOptions
+): Promise<void> => {
+  if (!canvasRef.current) throw new Error('Canvas not found')
+
+  const canvas = canvasRef.current
+  const dataURL = canvas.toDataURL(`image/${options.format}`, options.quality)
+
+  // Create download link
+  const link = document.createElement('a')
+  link.download = `canvas-export.${options.format}`
+  link.href = dataURL
+  link.click()
+}
+
+// In Toolbar.tsx
+const ExportButton = () => {
+  const handleExport = () => {
+    exportCanvas(canvasRef, { format: 'png', quality: 1.0 })
+  }
+
+  return (
+    <Button onClick={handleExport} variant="outline">
+      <Download className="h-4 w-4" />
+      Export
+    </Button>
+  )
+}
+```
+
+**Export Features:**
+
+- **PNG Export**: High-quality raster export of entire canvas
+- **SVG Export**: Vector export for scalable graphics
+- **Quality Options**: Configurable export quality and scale
+- **Background Options**: Include/exclude canvas background
+- **One-click Export**: Simple export button in toolbar
+
+**Collaborative Comments Implementation:**
+
+The comments system will enable real-time collaborative feedback on canvas objects:
+
+```typescript
+// In types.ts
+export interface Comment {
+  id: string
+  objectId: string
+  authorId: string
+  authorName: string
+  content: string
+  position: { x: number; y: number }
+  createdAt: number
+  updatedAt: number
+  replies: Comment[]
+  isResolved: boolean
+}
+
+// In sync/comments.ts
+export class CommentsService {
+  async createComment(
+    canvasId: string,
+    objectId: string,
+    content: string,
+    position: { x: number; y: number }
+  ): Promise<Comment>
+
+  async replyToComment(
+    canvasId: string,
+    commentId: string,
+    content: string
+  ): Promise<Comment>
+
+  async resolveComment(canvasId: string, commentId: string): Promise<void>
+
+  subscribeToComments(
+    canvasId: string,
+    callback: (comments: Comment[]) => void
+  ): () => void
+}
+
+// In CommentsPanel.tsx
+const CommentsPanel = () => {
+  const [comments, setComments] = useState<Comment[]>([])
+  const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null)
+
+  return (
+    <div className="comments-panel">
+      <div className="comments-header">
+        <h3>Comments</h3>
+        <Button onClick={createComment}>Add Comment</Button>
+      </div>
+      <div className="comments-list">
+        {comments.map(comment => (
+          <CommentItem key={comment.id} comment={comment} />
+        ))}
+      </div>
+    </div>
+  )
+}
+```
+
+**Comments Features:**
+
+- **Object-specific Comments**: Comments attached to specific canvas objects
+- **Real-time Sync**: Comments sync across all users in real-time
+- **Threaded Replies**: Support for comment replies and discussions
+- **Visual Indicators**: Comment badges on canvas objects
+- **Resolve Comments**: Mark comments as resolved
+- **User Attribution**: Show comment author with avatar
+- **Position Tracking**: Comments positioned relative to objects
+
+**Firestore Structure:**
+
+```
+canvases/{canvasId}/comments/{commentId}
+- objectId: string
+- authorId: string
+- authorName: string
+- content: string
+- position: { x: number; y: number }
+- createdAt: number
+- updatedAt: number
+- replies: Comment[]
+- isResolved: boolean
+```
+
+---
+
+## PR #16 — Section 5: Technical Implementation (10 points)
+
+**Goal:** Enhance architecture quality and security to achieve excellent scores.
+
+### Architecture Quality (5 points) - Target: Excellent (5 points)
+
+**Current Status:** Good (4 points) - Solid structure, minor organizational issues
+
+**Steps to Achieve Excellent:**
+
+- [ ] **Step 16.1**: Implement comprehensive error handling.
+  - Files: `src/lib/errorHandling.ts` (new file), `src/components/CanvasStage.tsx`
+  - Add global error boundary for canvas operations
+  - Implement graceful degradation for network issues
+  - **Test**: Simulate network errors and verify graceful handling
+
+- [ ] **Step 16.2**: Enhance code organization and modularity.
+  - Files: `src/lib/` (various), `src/components/` (various)
+  - Refactor large components into smaller, focused modules
+  - Implement proper separation of concerns
+  - **Test**: Verify components are focused and reusable
+
+- [ ] **Step 16.3**: Verify/add comprehensive TypeScript types and validation.
+  - Files: `src/lib/types.ts`, `src/lib/schema.ts`
+  - Verify strict TypeScript configuration
+  - **Test**: Verify type safety and runtime validation
+
+### Authentication & Security (5 points) - Target: Excellent (5 points)
+
+**Current Status:** Good (4 points) - Functional auth, minor security considerations
+
+**Steps to Achieve Excellent:**
+
+- [ ] **Step 16.4**: Implement robust session handling.
+  - Files: `src/contexts/AuthContext.tsx`, `src/hooks/useAuth.ts`
+  - Add session timeout and refresh logic
+  - Implement secure token storage
+  - **Test**: Verify session handling and token security
+
+- [ ] **Step 16.5**: Enhance security with proper route protection.
+  - Files: `src/components/ProtectedRoute.tsx`, `src/pages/CanvasPage.tsx`
+  - Implement role-based access control
+  - Add security headers and CSRF protection
+  - **Test**: Verify route protection and security measures
+
+- [ ] **Step 16.6**: Implement comprehensive security audit.
+  - Files: `docs/security.md` (new file), `src/lib/security.ts` (new file)
+  - Document security measures and best practices
+  - Add security monitoring and logging
+  - **Test**: Security audit and penetration testing
+
+---
+
+## PR #17 — Section 6: Documentation & Submission Quality (5 points)
+
+**Goal:** Enhance documentation and deployment to achieve excellent scores.
+
+### Repository & Setup (3 points) - Target: Excellent (3 points)
+
+**Current Status:** Good (2 points) - Adequate documentation, setup mostly clear
+
+**Steps to Achieve Excellent:**
+
+- [ ] **Step 17.1**: Update and enhance existing architecture documentation.
+  - Files: `docs/arch.md`, `docs/runtime-arch.md`
+  - Review and update system architecture documentation
+  - Add component diagrams and data flow charts to existing docs
+  - Ensure documentation reflects current implementation
+  - **Test**: Verify documentation is complete and accurate
+
+- [ ] **Step 17.2**: Verify and update README.md for comprehensive setup guide.
+  - Files: `README.md`
+  - Verify README.md is up-to-date and comprehensive
+  - Ensure setup guide includes all dependencies and steps
+  - Add troubleshooting section for common issues
+  - Verify environment-specific setup instructions are complete
+  - **Test**: Follow setup guide from scratch to verify completeness
+
+- [ ] **Step 17.3**: Verify and enhance dependency documentation in README.md.
+  - Files: `README.md`, `package.json`
+  - Verify all dependencies are documented with their purposes
+  - Ensure version compatibility information is included
+  - Add dependency update and maintenance guidelines
+  - **Test**: Verify all dependencies are properly documented and explained
+
+### Deployment (2 points) - Target: Excellent (2 points)
+
+**Current Status:** Good (1 point) - Deployed, minor stability issues
+
+**Steps to Achieve Excellent:**
+
+- [ ] **Step 17.4**: Optimize deployment for stability and performance.
+  - Files: `vercel.json`, `docs/deployment.md` (new file)
+  - Configure CDN and caching strategies
+  - Implement health checks and monitoring
+  - **Test**: Verify deployment stability and performance
+
+- [ ] **Step 17.5**: Implement comprehensive monitoring and logging.
+  - Files: `src/lib/monitoring.ts` (new file), `docs/monitoring.md` (new file)
+  - Add performance monitoring and error tracking
+  - Implement user analytics and usage metrics
+  - **Test**: Verify monitoring and logging functionality
+
+**Documentation Requirements for PR #17:**
+
+1. **Architecture Documentation**: Update existing `docs/arch.md` and `docs/runtime-arch.md`
+2. **Setup Guide**: Verify and enhance `README.md` with comprehensive setup instructions
+3. **Dependency Documentation**: Ensure all dependencies are documented with purposes
+4. **Deployment Guide**: Production deployment and monitoring (existing)
+5. **Troubleshooting Guide**: Add common issues and solutions to README.md
+
+---
+
 ## Optional (Post-MVP) — AI Agent Foundations (Stub Only)
 
 **Goal:** Prepare minimal API for future AI function-calling (no AI yet).
