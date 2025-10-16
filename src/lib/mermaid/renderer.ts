@@ -57,8 +57,43 @@ export class MermaidRenderer {
       }
     }
 
+    // Basic syntax checks
+    const trimmedCode = code.trim()
+
+    // Check for common syntax issues
+    if (
+      trimmedCode.includes('-->') &&
+      !trimmedCode.match(
+        /^\s*(graph|flowchart|sequence|class|state|er|journey|gantt|pie|gitgraph|mindmap|timeline|quadrant|requirement|c4)/i
+      )
+    ) {
+      return {
+        isValid: false,
+        error:
+          'Missing diagram type declaration. Start with "graph", "flowchart", "sequence", etc.'
+      }
+    }
+
+    // Check for unbalanced brackets
+    const openBrackets = (trimmedCode.match(/\[/g) || []).length
+    const closeBrackets = (trimmedCode.match(/\]/g) || []).length
+    if (openBrackets !== closeBrackets) {
+      return {
+        isValid: false,
+        error: 'Unbalanced brackets in node definitions'
+      }
+    }
+
     try {
       const diagramType = this.getDiagramType(code)
+      if (diagramType === 'unknown') {
+        return {
+          isValid: false,
+          error:
+            'Unknown diagram type. Supported types: flowchart, sequence, class, state, er, journey, gantt, pie, gitgraph, mindmap, timeline, quadrant, requirement, c4'
+        }
+      }
+
       return {
         isValid: true,
         diagramType
@@ -157,11 +192,33 @@ export class MermaidRenderer {
       }
     } catch (error) {
       console.error('Mermaid rendering error:', error)
-      throw new Error(
-        error instanceof Error
-          ? `Failed to render Mermaid diagram: ${error.message}`
-          : 'Failed to render Mermaid diagram'
-      )
+
+      // Provide more specific error messages based on the error type
+      let errorMessage = 'Failed to render Mermaid diagram'
+
+      if (error instanceof Error) {
+        const message = error.message.toLowerCase()
+
+        // Common Mermaid syntax errors
+        if (
+          message.includes('parse error') ||
+          message.includes('syntax error')
+        ) {
+          errorMessage = `Syntax Error: ${error.message}`
+        } else if (message.includes('unknown diagram type')) {
+          errorMessage = `Unknown diagram type. Supported types: flowchart, sequence, class, state, er, journey, gantt, pie, gitgraph, mindmap, timeline, quadrant, requirement, c4`
+        } else if (message.includes('invalid') && message.includes('arrow')) {
+          errorMessage = `Invalid arrow syntax: ${error.message}`
+        } else if (message.includes('node') && message.includes('not found')) {
+          errorMessage = `Node reference error: ${error.message}`
+        } else if (message.includes('theme') || message.includes('config')) {
+          errorMessage = `Configuration error: ${error.message}`
+        } else {
+          errorMessage = `Rendering error: ${error.message}`
+        }
+      }
+
+      throw new Error(errorMessage)
     }
   }
 

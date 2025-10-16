@@ -42,6 +42,64 @@ const MermaidImportDialog: React.FC<MermaidImportDialogProps> = ({
   const [error, setError] = useState<string | null>(null)
   const [diagramType, setDiagramType] = useState<string>('')
 
+  // Helper function to get error recovery suggestions
+  const getErrorSuggestions = (error: string): string[] => {
+    const suggestions: string[] = []
+    const lowerError = error.toLowerCase()
+
+    if (
+      lowerError.includes('syntax error') ||
+      lowerError.includes('parse error')
+    ) {
+      suggestions.push('Check for missing semicolons or commas')
+      suggestions.push('Verify arrow syntax (use -->, ---, or -.)')
+      suggestions.push(
+        'Ensure proper node syntax with brackets [] or parentheses ()'
+      )
+    }
+
+    if (lowerError.includes('unknown diagram type')) {
+      suggestions.push(
+        'Start your diagram with a valid type: graph, flowchart, sequence, class, state, er, journey, gantt, pie, gitgraph, mindmap, timeline, quadrant, requirement, or c4'
+      )
+    }
+
+    if (lowerError.includes('arrow')) {
+      suggestions.push(
+        'Use proper arrow syntax: --> for solid arrows, --- for dotted lines, -. for dashed lines'
+      )
+    }
+
+    if (lowerError.includes('node') && lowerError.includes('not found')) {
+      suggestions.push(
+        'Make sure all referenced nodes are defined before being used'
+      )
+      suggestions.push('Check for typos in node names')
+    }
+
+    if (lowerError.includes('bracket')) {
+      suggestions.push(
+        'Ensure all opening brackets [ have matching closing brackets ]'
+      )
+      suggestions.push(
+        'Check for proper node syntax: [Node Name] or (Node Name)'
+      )
+    }
+
+    if (lowerError.includes('missing diagram type')) {
+      suggestions.push(
+        'Add a diagram type declaration at the beginning (e.g., "graph TD" or "flowchart TD")'
+      )
+    }
+
+    if (suggestions.length === 0) {
+      suggestions.push('Check the Mermaid documentation for syntax examples')
+      suggestions.push('Try using one of the provided templates')
+    }
+
+    return suggestions
+  }
+
   // Sample Mermaid code for initial state
   const sampleCode = `flowchart TD
     A[Start] --> B{Decision}
@@ -75,7 +133,26 @@ const MermaidImportDialog: React.FC<MermaidImportDialogProps> = ({
       setDiagramType(result.diagramType)
     } catch (err: unknown) {
       console.error('Failed to render Mermaid diagram:', err)
-      setError('Failed to render diagram')
+
+      // Extract more specific error message
+      let errorMessage = 'Failed to render diagram'
+      if (err instanceof Error) {
+        // Check if it's a Mermaid-specific error
+        if (err.message.includes('Failed to render Mermaid diagram:')) {
+          // Extract the specific error from the message
+          const specificError = err.message.replace(
+            'Failed to render Mermaid diagram: ',
+            ''
+          )
+          errorMessage = specificError
+        } else if (err.message.includes('Invalid Mermaid code')) {
+          errorMessage = err.message
+        } else {
+          errorMessage = `Rendering error: ${err.message}`
+        }
+      }
+
+      setError(errorMessage)
       setPreviewSvg(null)
       setDiagramType('')
     } finally {
@@ -272,8 +349,60 @@ const MermaidImportDialog: React.FC<MermaidImportDialogProps> = ({
                     </Typography>
                   </Box>
                 ) : error ? (
-                  <Alert severity="error" sx={{ width: '100%' }}>
-                    <Typography variant="body2">{error}</Typography>
+                  <Alert
+                    severity="error"
+                    sx={{ width: '100%' }}
+                    action={
+                      <Button
+                        size="small"
+                        onClick={() => {
+                          // Clear error and try to render again
+                          setError(null)
+                          renderPreview(mermaidCode)
+                        }}
+                      >
+                        Retry
+                      </Button>
+                    }
+                  >
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 'medium', mb: 1 }}
+                      >
+                        Diagram Error
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        {error}
+                      </Typography>
+                      {getErrorSuggestions(error).length > 0 && (
+                        <Box sx={{ mt: 1 }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{
+                              fontWeight: 'medium',
+                              display: 'block',
+                              mb: 0.5
+                            }}
+                          >
+                            Suggestions:
+                          </Typography>
+                          {getErrorSuggestions(error).map(
+                            (suggestion, index) => (
+                              <Typography
+                                key={index}
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: 'block', ml: 1 }}
+                              >
+                                • {suggestion}
+                              </Typography>
+                            )
+                          )}
+                        </Box>
+                      )}
+                    </Box>
                   </Alert>
                 ) : previewSvg ? (
                   <Box

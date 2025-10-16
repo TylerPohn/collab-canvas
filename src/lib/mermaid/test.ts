@@ -39,6 +39,41 @@ export async function testMermaidRenderer() {
     const templates = mermaidRenderer.getTemplates()
     console.log('✅ Templates available:', Object.keys(templates))
 
+    // Test error handling
+    console.log('\n--- Testing Error Handling ---')
+
+    // Test empty code
+    const emptyValidation = mermaidRenderer.validateMermaidCode('')
+    console.log('✅ Empty code validation:', emptyValidation)
+
+    // Test invalid syntax
+    const invalidCode = 'A --> B'
+    const invalidValidation = mermaidRenderer.validateMermaidCode(invalidCode)
+    console.log('✅ Invalid syntax validation:', invalidValidation)
+
+    // Test unbalanced brackets
+    const unbalancedCode = 'flowchart TD\nA[Start --> B[End'
+    const unbalancedValidation =
+      mermaidRenderer.validateMermaidCode(unbalancedCode)
+    console.log('✅ Unbalanced brackets validation:', unbalancedValidation)
+
+    // Test unknown diagram type
+    const unknownTypeCode = 'unknownDiagram TD\nA --> B'
+    const unknownTypeValidation =
+      mermaidRenderer.validateMermaidCode(unknownTypeCode)
+    console.log('✅ Unknown diagram type validation:', unknownTypeValidation)
+
+    // Test rendering error handling
+    try {
+      await mermaidRenderer.renderDiagram('invalid syntax here')
+      console.log('❌ Should have thrown an error for invalid syntax')
+    } catch (error) {
+      console.log(
+        '✅ Rendering error handling works:',
+        error instanceof Error ? error.message : 'Unknown error'
+      )
+    }
+
     return true
   } catch (error) {
     console.error('❌ Mermaid renderer test failed:', error)
