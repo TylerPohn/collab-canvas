@@ -347,7 +347,7 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
   return (
     <>
       {/* Toggle button - always visible */}
-      <div className="fixed top-20 right-4" style={{ zIndex: 999999 }}>
+      <div className="fixed top-20 right-4" style={{ zIndex: 8 }}>
         <Button
           variant={isOpen ? 'default' : 'outline'}
           size="sm"
@@ -362,7 +362,7 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
       <div
         className="fixed top-20 right-16 w-80 h-[calc(100vh-6rem)] max-w-[calc(100vw-2rem)]"
         style={{
-          zIndex: 999999,
+          zIndex: 9,
           border: '5px solid black',
           borderRadius: '12px',
           backgroundColor: 'rgba(255, 255, 0, 0.3)',
