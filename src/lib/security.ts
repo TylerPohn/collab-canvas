@@ -168,7 +168,7 @@ export class SecurityLogger {
     }
 
     // Log to console in development
-    console.warn('[Security]', securityEvent)
+    // console.warn('[Security]', securityEvent)
 
     // In production, you would send to a monitoring service
     // Example: sendToMonitoringService(securityEvent)
@@ -212,7 +212,8 @@ export const CSP_CONFIG = {
     'https://*.firebaseapp.com',
     'https://*.googleapis.com',
     'https://accounts.google.com/gsi/',
-    'https://securetoken.googleapis.com'
+    'https://securetoken.googleapis.com',
+    'https://api.openai.com' // Allow OpenAI API calls
   ],
   'frame-src': [
     "'self'",

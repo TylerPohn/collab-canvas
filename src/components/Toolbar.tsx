@@ -1,4 +1,5 @@
 import {
+  Bot,
   Circle,
   Copy,
   Hand,
@@ -30,6 +31,8 @@ interface ToolbarProps {
   canDuplicate: boolean
   onToggleDesignPalette?: () => void
   isDesignPaletteOpen?: boolean
+  onToggleAI?: () => void
+  isAIOpen?: boolean
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -40,7 +43,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   canDelete,
   canDuplicate,
   onToggleDesignPalette,
-  isDesignPaletteOpen = false
+  isDesignPaletteOpen = false,
+  onToggleAI,
+  isAIOpen = false
 }) => {
   const tools: {
     type: ToolType
@@ -183,6 +188,28 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Design Palette</p>
+                </TooltipContent>
+              </Tooltip>
+            </>
+          )}
+
+          {/* AI Agent Toggle */}
+          {onToggleAI && (
+            <>
+              <Separator orientation="vertical" className="h-6" />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={isAIOpen ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={onToggleAI}
+                    className="h-9 w-9 p-0"
+                  >
+                    <Bot className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>AI Agent</p>
                 </TooltipContent>
               </Tooltip>
             </>

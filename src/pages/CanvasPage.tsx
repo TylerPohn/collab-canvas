@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import AIPanel from '../components/AIPanel'
 import CanvasStage from '../components/CanvasStage'
 import DesignPalette from '../components/DesignPalette'
 import EmptyCanvasState from '../components/EmptyCanvasState'
@@ -21,6 +22,7 @@ const CanvasPage: React.FC = () => {
   const [selectedTool, setSelectedTool] = useState<ToolType>('select')
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   const [isDesignPaletteOpen, setIsDesignPaletteOpen] = useState(true)
+  const [isAIOpen, setIsAIOpen] = useState(false)
 
   const { selectedIds, hasSelection } = useSelectionStore()
   const { user } = useAuth()
@@ -284,6 +286,8 @@ const CanvasPage: React.FC = () => {
         canDuplicate={hasSelection()}
         onToggleDesignPalette={handleToggleDesignPalette}
         isDesignPaletteOpen={isDesignPaletteOpen}
+        onToggleAI={() => setIsAIOpen(!isAIOpen)}
+        isAIOpen={isAIOpen}
       />
 
       <div className="flex-1 relative">
@@ -365,6 +369,13 @@ const CanvasPage: React.FC = () => {
           onShapeUpdateDebounced={handleShapeUpdateDebounced}
           currentUser={user}
           presence={presence}
+        />
+
+        {/* AI Panel */}
+        <AIPanel
+          canvasId={canvasId}
+          isOpen={isAIOpen}
+          onClose={() => setIsAIOpen(false)}
         />
       </div>
     </div>

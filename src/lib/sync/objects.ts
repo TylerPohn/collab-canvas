@@ -719,6 +719,400 @@ export class ObjectSyncService {
   async getAllObjects(canvasId: string): Promise<Shape[]> {
     return await getAllObjects(canvasId)
   }
+
+  // AI-friendly high-level methods
+
+  // AI-friendly shape creation with smart defaults
+  async createShapeWithDefaults(
+    canvasId: string,
+    type: 'rect' | 'circle' | 'text',
+    position: { x: number; y: number },
+    options: {
+      size?: { width: number; height: number }
+      radius?: number
+      text?: string
+      fill?: string
+      stroke?: string
+      strokeWidth?: number
+      fontSize?: number
+      fontFamily?: string
+      fontWeight?: string
+    } = {},
+    userId: string
+  ): Promise<Shape> {
+    console.log('🤖 createShapeWithDefaults called:', {
+      canvasId,
+      type,
+      position,
+      options,
+      userId
+    })
+    const defaults = {
+      fill: '#3B82F6',
+      stroke: '#1E40AF',
+      strokeWidth: 2,
+      fontSize: 16,
+      fontFamily: 'Arial',
+      fontWeight: 'normal'
+    }
+
+    // Filter out undefined values from options to prevent Firestore errors
+    const cleanOptions = Object.fromEntries(
+      Object.entries(options).filter(([_, value]) => value !== undefined)
+    )
+
+    const shapeData = {
+      type,
+      x: position.x,
+      y: position.y,
+      ...defaults,
+      ...cleanOptions
+    }
+
+    if (type === 'rect') {
+      const rectData = {
+        ...shapeData,
+        width: cleanOptions.size?.width || 100,
+        height: cleanOptions.size?.height || 60
+      }
+      // Ensure no undefined values
+      Object.keys(rectData).forEach(key => {
+        if (rectData[key] === undefined) {
+          delete rectData[key]
+        }
+      })
+      return this.createObject(canvasId, rectData as any, userId)
+    } else if (type === 'circle') {
+      const circleData = {
+        ...shapeData,
+        radius: cleanOptions.radius || 50
+      }
+      // Ensure no undefined values
+      Object.keys(circleData).forEach(key => {
+        if (circleData[key] === undefined) {
+          delete circleData[key]
+        }
+      })
+      const shape = await this.createObject(canvasId, circleData as any, userId)
+      console.log('🤖 createShapeWithDefaults created circle:', shape)
+      return shape
+    } else if (type === 'text') {
+      const textData = {
+        ...shapeData,
+        text: cleanOptions.text || 'Text',
+        fontSize: cleanOptions.fontSize || 16
+      }
+      // Ensure no undefined values
+      Object.keys(textData).forEach(key => {
+        if (textData[key] === undefined) {
+          delete textData[key]
+        }
+      })
+      return this.createObject(canvasId, textData as any, userId)
+    }
+
+    throw new Error(`Unsupported shape type: ${type}`)
+  }
+
+  // AI-friendly batch operations
+  async createMultipleShapes(
+    canvasId: string,
+    shapes: Array<{
+      type: 'rect' | 'circle' | 'text'
+      position: { x: number; y: number }
+      options?: {
+        size?: { width: number; height: number }
+        radius?: number
+        text?: string
+        fill?: string
+        stroke?: string
+        strokeWidth?: number
+        fontSize?: number
+        fontFamily?: string
+        fontWeight?: string
+      }
+    }>,
+    userId: string
+  ): Promise<Shape[]> {
+    const shapeData = shapes.map(shape => {
+      const defaults = {
+        fill: '#3B82F6',
+        stroke: '#1E40AF',
+        strokeWidth: 2,
+        fontSize: 16,
+        fontFamily: 'Arial',
+        fontWeight: 'normal'
+      }
+
+      const baseData = {
+        type: shape.type,
+        x: shape.position.x,
+        y: shape.position.y,
+        ...defaults,
+        ...shape.options
+      }
+
+      if (shape.type === 'rect') {
+        return {
+          ...baseData,
+          width: shape.options?.size?.width || 100,
+          height: shape.options?.size?.height || 60
+        }
+      } else if (shape.type === 'circle') {
+        return {
+          ...baseData,
+          radius: shape.options?.radius || 50
+        }
+      } else if (shape.type === 'text') {
+        return {
+          ...baseData,
+          text: shape.options?.text || 'Text',
+          fontSize: shape.options?.fontSize || 16
+        }
+      }
+
+      throw new Error(`Unsupported shape type: ${shape.type}`)
+    })
+
+    return this.batchCreateObjects(canvasId, shapeData as any, userId)
+  }
+
+  // Smart layout operations
+  async arrangeShapesInGrid(
+    canvasId: string,
+    shapeIds: string[],
+    gridConfig: { rows: number; cols: number; spacing: number },
+    userId: string
+  ): Promise<void> {
+    const shapes = await this.getAllObjects(canvasId)
+    const targetShapes = shapes.filter(shape => shapeIds.includes(shape.id))
+
+    if (targetShapes.length === 0) return
+
+    const updates = []
+    const { rows, cols, spacing } = gridConfig
+
+    // Calculate grid positions
+    for (let i = 0; i < targetShapes.length && i < rows * cols; i++) {
+      const row = Math.floor(i / cols)
+      const col = i % cols
+
+      const x = col * (100 + spacing) // Assuming average width of 100
+      const y = row * (60 + spacing) // Assuming average height of 60
+
+      updates.push({
+        objectId: targetShapes[i].id,
+        updates: { x, y }
+      })
+    }
+
+    if (updates.length > 0) {
+      await this.batchUpdateObjects(canvasId, updates, userId)
+    }
+  }
+
+  async arrangeShapesInRow(
+    canvasId: string,
+    shapeIds: string[],
+    spacing: number,
+    userId: string
+  ): Promise<void> {
+    const shapes = await this.getAllObjects(canvasId)
+    const targetShapes = shapes.filter(shape => shapeIds.includes(shape.id))
+
+    if (targetShapes.length === 0) return
+
+    const updates = []
+    let currentX = 0
+
+    for (const shape of targetShapes) {
+      updates.push({
+        objectId: shape.id,
+        updates: { x: currentX, y: shape.y }
+      })
+
+      // Move to next position
+      if (shape.type === 'rect') {
+        currentX += (shape as any).width + spacing
+      } else if (shape.type === 'circle') {
+        currentX += (shape as any).radius * 2 + spacing
+      } else {
+        currentX += 100 + spacing // Default width for text
+      }
+    }
+
+    if (updates.length > 0) {
+      await this.batchUpdateObjects(canvasId, updates, userId)
+    }
+  }
+
+  // Complex shape operations
+  async createFormLayout(
+    canvasId: string,
+    formConfig: {
+      fields: Array<{
+        type: 'text' | 'password' | 'button'
+        label: string
+        placeholder?: string
+      }>
+      position: { x: number; y: number }
+      styling?: {
+        backgroundColor?: string
+        borderColor?: string
+        textColor?: string
+        borderWidth?: number
+        borderRadius?: number
+        padding?: number
+      }
+    },
+    userId: string
+  ): Promise<Shape[]> {
+    const { fields, position, styling = {} } = formConfig
+    const shapes: any[] = []
+
+    const defaultStyling = {
+      backgroundColor: '#FFFFFF',
+      borderColor: '#D1D5DB',
+      textColor: '#374151',
+      borderWidth: 1,
+      borderRadius: 4,
+      padding: 8
+    }
+
+    const finalStyling = { ...defaultStyling, ...styling }
+
+    let currentY = position.y
+
+    // Create form container
+    const containerHeight = fields.length * 60 + 40 // 60px per field + padding
+    shapes.push({
+      type: 'rect',
+      x: position.x,
+      y: position.y,
+      width: 300,
+      height: containerHeight,
+      fill: finalStyling.backgroundColor,
+      stroke: finalStyling.borderColor,
+      strokeWidth: finalStyling.borderWidth,
+      cornerRadius: finalStyling.borderRadius
+    })
+
+    // Create form fields
+    for (const field of fields) {
+      // Label
+      shapes.push({
+        type: 'text',
+        x: position.x + finalStyling.padding,
+        y: currentY + 5,
+        text: field.label,
+        fontSize: 14,
+        fill: finalStyling.textColor,
+        fontFamily: 'Arial',
+        fontWeight: 'normal'
+      })
+
+      // Input field
+      shapes.push({
+        type: 'rect',
+        x: position.x + finalStyling.padding,
+        y: currentY + 25,
+        width: 260,
+        height: 30,
+        fill: '#FFFFFF',
+        stroke: finalStyling.borderColor,
+        strokeWidth: finalStyling.borderWidth,
+        cornerRadius: finalStyling.borderRadius
+      })
+
+      // Placeholder text
+      if (field.placeholder) {
+        shapes.push({
+          type: 'text',
+          x: position.x + finalStyling.padding + 8,
+          y: currentY + 35,
+          text: field.placeholder,
+          fontSize: 12,
+          fill: '#9CA3AF',
+          fontFamily: 'Arial',
+          fontWeight: 'normal'
+        })
+      }
+
+      currentY += 60
+    }
+
+    return this.batchCreateObjects(canvasId, shapes, userId)
+  }
+
+  async createNavigationBar(
+    canvasId: string,
+    navConfig: {
+      items: Array<{ label: string; href?: string }>
+      position: { x: number; y: number }
+      styling?: {
+        backgroundColor?: string
+        textColor?: string
+        borderColor?: string
+        borderWidth?: number
+        borderRadius?: number
+        padding?: number
+      }
+    },
+    userId: string
+  ): Promise<Shape[]> {
+    const { items, position, styling = {} } = navConfig
+    const shapes: any[] = []
+
+    const defaultStyling = {
+      backgroundColor: '#1F2937',
+      textColor: '#FFFFFF',
+      borderColor: '#374151',
+      borderWidth: 1,
+      borderRadius: 4,
+      padding: 12
+    }
+
+    const finalStyling = { ...defaultStyling, ...styling }
+
+    // Calculate dimensions
+    const itemWidth = 120
+    const navWidth = items.length * itemWidth + finalStyling.padding * 2
+    const navHeight = 50
+
+    // Create navigation container
+    shapes.push({
+      type: 'rect',
+      x: position.x,
+      y: position.y,
+      width: navWidth,
+      height: navHeight,
+      fill: finalStyling.backgroundColor,
+      stroke: finalStyling.borderColor,
+      strokeWidth: finalStyling.borderWidth,
+      cornerRadius: finalStyling.borderRadius
+    })
+
+    // Create navigation items
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      const itemX = position.x + finalStyling.padding + i * itemWidth
+      const itemY = position.y + navHeight / 2 - 8 // Center vertically
+
+      shapes.push({
+        type: 'text',
+        x: itemX,
+        y: itemY,
+        text: item.label,
+        fontSize: 14,
+        fill: finalStyling.textColor,
+        fontFamily: 'Arial',
+        fontWeight: 'normal',
+        textAlign: 'center'
+      })
+    }
+
+    return this.batchCreateObjects(canvasId, shapes, userId)
+  }
 }
 
 // Export singleton instance

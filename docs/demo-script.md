@@ -2,7 +2,7 @@
 
 ## Opening (20 seconds)
 
-"I'm Tyler Pohn and this is my CollabCanvas - a real-time collaborative design tool built with React 19, TypeScript, Konva.js, and Firebase. It's deployed and publicly accessible on Vercel with enterprise-grade security features.
+"I'm Tyler Pohn and this is my CollabCanvas - a real-time collaborative design tool built with React 19, TypeScript, Konva.js, and Firebase. 
 
 ## Authentication & Security (25 seconds)
 
