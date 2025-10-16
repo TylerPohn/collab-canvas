@@ -36,18 +36,20 @@ FS_OBJECTS-->>CL2: current objects snapshot
 CL2->>FS_PRESENCE: set presence (user online), start cursor heartbeats
 FS_PRESENCE-->>CL2: presence/cursor updates from others
 
-Note over CL1,FS_OBJECTS: Object mutation (optimistic)
+Note over CL1,FS_OBJECTS: Object mutation (optimistic with security)
 U1->>CL1: Drag rectangle (move/resize)
+CL1->>CL1: Security validation (rate limiting, input sanitization)
 CL1->>CL1: Optimistic update (React Query cache)
 CL1->>FS_OBJECTS: write object delta (updatedAt/updatedBy)
 FS_OBJECTS-->>CL1: confirm snapshot
 FS_OBJECTS-->>CL2: broadcast snapshot
-CL2->>CL2: reconcile update
+CL2->>CL2: reconcile update with conflict resolution
 
-Note over CL1,FS_PRESENCE: Cursor broadcast (throttled 50ms)
+Note over CL1,FS_PRESENCE: Cursor broadcast (throttled 50ms with rate limiting)
+CL1->>CL1: Rate limiting check (10 updates/second)
 CL1->>FS_PRESENCE: cursor position (throttled)
 FS_PRESENCE-->>CL2: cursor position for User A
-CL2->>CL2: smooth render (interpolate)
+CL2->>CL2: smooth render (interpolate at 60fps)
 
 Note over CL1,CL2: Conflict policy (last-write-wins)
 CL2->>FS_OBJECTS: move same object (near-same time)
@@ -62,3 +64,10 @@ CL1->>FS_CANVAS: resubscribe canvas metadata
 CL1->>FS_OBJECTS: resubscribe and hydrate objects
 FS_OBJECTS-->>CL1: latest snapshot
 CL1->>FS_PRESENCE: presence re-join + heartbeat
+
+Note over CL1,CL2: Health monitoring and security
+CL1->>CL1: Health check (Firebase connection, Firestore availability)
+CL1->>CL1: Security audit logging (rate limits, invalid inputs)
+CL1->>CL1: CSP header validation
+CL1->>CL1: Input sanitization (DOMPurify, validation)
+CL1->>CL1: Display connection status in UI

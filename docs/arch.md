@@ -3,11 +3,13 @@ flowchart LR
 subgraph Client
 direction TB
 A1[src - main tsx - App tsx - pages - auth login - canvas page]
-A2[components - CanvasStage Konva - Shapes - CursorLayer - PresenceList - Toolbar shadcn/ui - DesignPalette with object info - AuthProvider]
-A3[hooks - usePanZoom - useShapes React Query - usePresence React Query - useCanvasShortcuts]
-A4[store - selection ts - designPalette ts UI state]
-A5[lib - types ts and schema ts - sync objects - sync presence - firebase client - firebase firestore - react query client]
-A6[styles - globals css - Tailwind CSS - shadcn/ui components]
+A2[components - CanvasStage Konva - Shapes - CursorLayer - PresenceList - Toolbar - DesignPalette - AuthProvider - TextEditor - Toast - EmptyCanvasState]
+A3[hooks - usePanZoom - useShapes React Query - usePresence React Query - useCanvasShortcuts - useToast - useAuth - useConnectionStatus]
+A4[store - selection ts - designPalette ts UI state with Zustand]
+A5[lib - types ts and schema ts - sync objects - sync presence - firebase client - firebase firestore - react query client - security ts - health ts - utils ts]
+A6[styles - globals css - Tailwind CSS - shadcn/ui components - lucide-react icons]
+A7[contexts - AuthContext - ToastContext - ToastContextDefinition]
+A8[ui components - button card input badge avatar tooltip slider separator dropdown-menu collapsible alert label]
 end
 
 %% ========= DEVELOPMENT TOOLING =========
@@ -22,10 +24,12 @@ end
 %% ========= BACKEND =========
 subgraph Backend
 direction TB
-F1[Auth - Google OAuth - currentUser - displayName]
+F1[Auth - Google OAuth - currentUser - displayName - session management]
 F2[Firestore Canvas Documents - canvases/{id} with meta and objects subcollections]
-F3[Firestore Objects - canvases/{id}/objects/{objectId} - shapes with metadata]
-F4[Firestore Presence - canvases/{id}/presence/{userId} - heartbeat and cursors]
+F3[Firestore Objects - canvases/{id}/objects/{objectId} - shapes with metadata - updatedAt/updatedBy tracking]
+F4[Firestore Presence - canvases/{id}/presence/{userId} - heartbeat and cursors - 30s intervals]
+F5[Security - Rate limiting - Input sanitization - XSS protection - CSP headers]
+F6[Health Monitoring - Connection status - Firestore availability - Auth service status]
 end
 
 %% ========= HOSTING DELIVERY =========
@@ -41,12 +45,17 @@ A2 -->|Render and Input| A3
 A3 -->|mutations and queries| A5
 A5 -->|subscribe onSnapshot| F2
 A5 -->|write deltas create move resize rotate delete| F3
-A3 -->|cursor and presence updates throttled| F4
+A3 -->|cursor and presence updates throttled 50ms| F4
 F4 -->|presence feed and other cursors| A2
-F3 -->|object updates real-time| A2
+F3 -->|object updates real-time with conflict resolution| A2
 
 A2 -->|Auth state and guards| F1
 F1 -->|currentUser| A2
+
+A5 -->|Security validation and rate limiting| F5
+F5 -->|Sanitized data and security events| A5
+A5 -->|Health monitoring| F6
+F6 -->|Connection status| A2
 
 %% Hosting and deployment relations
 A1 --> H1
@@ -66,3 +75,38 @@ T3 --> F4
 %% Developer loop
 Dev[Developer or Coding Agent] -->|PRs| Repo[(GitHub Repo)]
 Repo -->|deploy| H1
+
+%% ========= COMPONENT ARCHITECTURE =========
+subgraph ComponentArchitecture
+direction TB
+CA1[CanvasPage - Main page component]
+CA2[CanvasStage - Konva canvas with shapes and interactions]
+CA3[Toolbar - Drawing tools and controls]
+CA4[DesignPalette - Right sidebar for styling and object info]
+CA5[CursorLayer - Multi-user cursor rendering]
+CA6[PresenceList - User presence display]
+CA7[TextEditor - Inline text editing]
+CA8[Toast - Notification system]
+CA9[EmptyCanvasState - Empty state component]
+CA10[ProfileMenu - User profile and auth]
+CA11[ProtectedRoute - Route protection]
+CA12[AuthProvider - Authentication context]
+end
+
+%% Component relationships
+CA1 --> CA2
+CA1 --> CA3
+CA1 --> CA4
+CA1 --> CA5
+CA1 --> CA6
+CA1 --> CA7
+CA1 --> CA8
+CA1 --> CA9
+CA1 --> CA10
+CA1 --> CA11
+CA1 --> CA12
+
+CA2 --> CA5
+CA2 --> CA6
+CA3 --> CA2
+CA4 --> CA2

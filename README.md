@@ -37,8 +37,8 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 
 - **Frontend**: React 19, TypeScript, Vite
 - **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui (Radix + Tailwind) 🚧 _Planned_
-- **Icons**: lucide-react 🚧 _Planned_
+- **UI Components**: shadcn/ui (Radix + Tailwind) ✅ _Implemented_
+- **Icons**: lucide-react ✅ _Implemented_
 - **Canvas**: Konva.js with React-Konva
 - **State Management**: React Query (TanStack Query) + Zustand
 - **Authentication**: Firebase Auth (Google OAuth)
@@ -47,6 +47,8 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 - **Build Tool**: Vite
 - **Linting**: ESLint + Prettier
 - **Deployment**: Vercel
+- **Security**: DOMPurify, CSP headers, rate limiting, input validation
+- **Monitoring**: Health checks, security audit logging
 
 ## 🚀 Getting Started
 
@@ -104,6 +106,70 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 
 6. Open [http://localhost:5173](http://localhost:5173) in your browser.
 
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### Firebase Connection Issues
+
+- **Problem**: "Firebase connection failed" error
+- **Solution**:
+  1. Verify your Firebase configuration in `.env.local`
+  2. Check that your Firebase project has Authentication and Firestore enabled
+  3. Ensure your domain is added to Firebase authorized domains
+  4. Check browser console for specific error messages
+
+#### Authentication Problems
+
+- **Problem**: Google OAuth not working
+- **Solution**:
+  1. Verify Google provider is enabled in Firebase Console
+  2. Add `localhost:5173` to authorized domains in Firebase
+  3. Check that OAuth consent screen is configured
+  4. Ensure `VITE_FIREBASE_AUTH_DOMAIN` matches your Firebase project
+
+#### Build Errors
+
+- **Problem**: TypeScript or build errors
+- **Solution**:
+  1. Run `npm run typecheck` to identify type errors
+  2. Run `npm run lint:fix` to fix linting issues
+  3. Ensure all dependencies are installed with `npm install`
+  4. Check that Node.js version is 18.x or higher
+
+#### Real-time Sync Issues
+
+- **Problem**: Changes not syncing between users
+- **Solution**:
+  1. Check Firestore security rules are properly configured
+  2. Verify users are authenticated
+  3. Check browser network tab for Firestore connection errors
+  4. Ensure Firestore database is in production mode
+
+#### Performance Issues
+
+- **Problem**: Canvas lag or slow performance
+- **Solution**:
+  1. Check browser performance tab for frame drops
+  2. Reduce number of shapes on canvas
+  3. Check for memory leaks in browser dev tools
+  4. Verify rate limiting is not being exceeded
+
+### Environment-Specific Setup
+
+#### Development Environment
+
+- Use `localhost:5173` for local development
+- Enable Firebase emulators for offline development (optional)
+- Use development Firebase project for testing
+
+#### Production Environment
+
+- Deploy to Vercel with production Firebase project
+- Configure production domain in Firebase authorized domains
+- Use production Firestore security rules
+- Enable Firebase App Check for additional security (optional)
+
 ## 📜 Available Scripts
 
 - `npm run dev` - Start development server
@@ -128,17 +194,37 @@ src/
 │   ├── EmptyCanvasState.tsx # Empty state component
 │   ├── TextEditor.tsx   # Inline text editing
 │   ├── Toast.tsx        # Toast notifications
-│   └── Shapes/          # Shape components
-│       ├── RectangleShape.tsx
-│       ├── CircleShape.tsx
-│       └── TextShape.tsx
+│   ├── ProfileMenu.tsx  # User profile and authentication
+│   ├── ProtectedRoute.tsx # Route protection component
+│   ├── ConnectionStatus.tsx # Connection status indicator
+│   ├── providers/       # Context providers
+│   │   └── AuthProvider.tsx
+│   ├── Shapes/          # Shape components
+│   │   ├── RectangleShape.tsx
+│   │   ├── CircleShape.tsx
+│   │   └── TextShape.tsx
+│   └── ui/              # shadcn/ui components
+│       ├── button.tsx
+│       ├── card.tsx
+│       ├── input.tsx
+│       ├── badge.tsx
+│       ├── avatar.tsx
+│       ├── tooltip.tsx
+│       ├── slider.tsx
+│       ├── separator.tsx
+│       ├── dropdown-menu.tsx
+│       ├── collapsible.tsx
+│       ├── alert.tsx
+│       └── label.tsx
 ├── hooks/               # Custom React hooks
 │   ├── usePanZoom.ts    # Canvas pan/zoom logic
 │   ├── usePresence.ts   # User presence management
 │   ├── usePresenceQuery.ts # Presence React Query hooks
 │   ├── useShapes.ts     # Shape state management
 │   ├── useCanvasShortcuts.ts # Keyboard shortcuts
-│   └── useToast.ts      # Toast notifications
+│   ├── useToast.ts      # Toast notifications
+│   ├── useAuth.ts       # Authentication hook
+│   └── useConnectionStatus.ts # Connection status hook
 ├── lib/                 # Utility libraries
 │   ├── firebase/        # Firebase configuration
 │   │   ├── client.ts    # Firebase client setup
@@ -148,9 +234,11 @@ src/
 │   │   ├── objects.ts   # Object synchronization
 │   │   └── presence.ts  # Presence synchronization
 │   ├── health.ts        # Health monitoring
+│   ├── security.ts      # Security utilities and validation
 │   ├── types.ts         # TypeScript types
 │   ├── schema.ts        # Data schemas
-│   └── toastTypes.ts    # Toast type definitions
+│   ├── toastTypes.ts    # Toast type definitions
+│   └── utils.ts         # Utility functions
 ├── pages/               # Page components
 │   ├── LoginPage.tsx    # Authentication page
 │   └── CanvasPage.tsx   # Main canvas page
@@ -159,7 +247,8 @@ src/
 │   ├── ToastContext.tsx # Toast context
 │   └── ToastContextDefinition.tsx
 ├── store/               # Local state management
-│   └── selection.ts     # Selection state (Zustand)
+│   ├── selection.ts     # Selection state (Zustand)
+│   └── designPalette.ts # Design palette state (Zustand)
 ├── App.tsx              # Main app component
 └── main.tsx             # App entry point
 ```
@@ -210,6 +299,122 @@ service cloud.firestore {
   }
 }
 ```
+
+## 📦 Dependencies
+
+### Core Dependencies
+
+#### Frontend Framework
+
+- **React 19.1.1** - Modern React with concurrent features and improved performance
+- **React DOM 19.1.1** - React rendering for web browsers
+- **TypeScript 5.9.3** - Type safety and enhanced developer experience
+
+#### Build & Development Tools
+
+- **Vite 7.1.7** - Fast build tool and development server
+- **@vitejs/plugin-react 5.0.4** - React plugin for Vite
+- **ESLint 9.36.0** - Code linting and quality enforcement
+- **Prettier 3.6.2** - Code formatting
+- **TypeScript ESLint 8.46.1** - TypeScript-specific linting rules
+
+#### UI & Styling
+
+- **Tailwind CSS 4.1.14** - Utility-first CSS framework
+- **@tailwindcss/postcss 4.1.14** - PostCSS integration for Tailwind
+- **tailwindcss-animate 1.0.7** - Animation utilities for Tailwind
+- **lucide-react 0.545.0** - Beautiful, customizable SVG icons
+- **class-variance-authority 0.7.1** - Component variant management
+- **clsx 2.1.1** - Utility for constructing className strings
+- **tailwind-merge 3.3.1** - Merge Tailwind CSS classes without conflicts
+
+#### shadcn/ui Components (Radix UI + Tailwind)
+
+- **@radix-ui/react-avatar 1.1.10** - Avatar component
+- **@radix-ui/react-collapsible 1.1.12** - Collapsible content component
+- **@radix-ui/react-dropdown-menu 2.1.16** - Dropdown menu component
+- **@radix-ui/react-label 2.1.7** - Label component
+- **@radix-ui/react-separator 1.1.7** - Separator component
+- **@radix-ui/react-slider 1.3.6** - Slider component
+- **@radix-ui/react-slot 1.2.3** - Slot component for composition
+- **@radix-ui/react-tooltip 1.2.8** - Tooltip component
+
+#### Canvas & Graphics
+
+- **Konva 10.0.2** - 2D canvas library for high-performance graphics
+- **React-Konva 19.0.10** - React bindings for Konva
+
+#### State Management & Data Fetching
+
+- **@tanstack/react-query 5.90.2** - Powerful data synchronization for React
+- **@tanstack/react-query-devtools 5.90.2** - DevTools for React Query
+- **Zustand 5.0.8** - Lightweight state management
+
+#### Authentication & Database
+
+- **Firebase 12.4.0** - Backend-as-a-Service for authentication and database
+- **React Router DOM 7.9.4** - Declarative routing for React
+
+#### Security & Validation
+
+- **DOMPurify 3.3.0** - XSS sanitization library
+- **@types/dompurify 3.0.5** - TypeScript definitions for DOMPurify
+- **Zod 4.1.12** - TypeScript-first schema validation
+
+#### Utilities
+
+- **Autoprefixer 10.4.21** - CSS vendor prefixing
+- **PostCSS 8.5.6** - CSS transformation tool
+
+### Development Dependencies
+
+#### Type Definitions
+
+- **@types/node 24.6.0** - Node.js type definitions
+- **@types/react 19.1.16** - React type definitions
+- **@types/react-dom 19.1.9** - React DOM type definitions
+
+#### Linting & Formatting
+
+- **@eslint/js 9.36.0** - ESLint JavaScript configuration
+- **eslint-plugin-react-hooks 5.2.0** - React Hooks linting rules
+- **eslint-plugin-react-refresh 0.4.22** - React Refresh linting rules
+- **globals 16.4.0** - Global variables for ESLint
+
+#### Build Tools
+
+- **babel-plugin-react-compiler 19.1.0-rc.3** - React Compiler plugin for Babel
+
+### Dependency Management
+
+#### Version Compatibility
+
+- **Node.js**: 18.x or higher required
+- **npm**: 8.x or higher recommended
+- **React**: 19.x (latest stable)
+- **TypeScript**: 5.9.x (latest stable)
+- **Firebase**: 12.x (latest stable)
+
+#### Security Considerations
+
+- All dependencies are regularly updated to latest stable versions
+- Security vulnerabilities are monitored and patched promptly
+- DOMPurify provides XSS protection for user-generated content
+- Firebase provides enterprise-grade security for authentication and data
+
+#### Performance Impact
+
+- **Bundle Size**: Optimized with Vite's tree-shaking and code splitting
+- **Runtime Performance**: React 19 concurrent features improve user experience
+- **Canvas Performance**: Konva provides 60fps rendering for smooth interactions
+- **Network Optimization**: React Query provides intelligent caching and synchronization
+
+#### Maintenance Guidelines
+
+- **Regular Updates**: Dependencies are updated monthly for security and features
+- **Breaking Changes**: Major version updates are tested thoroughly before deployment
+- **Security Patches**: Critical security updates are applied immediately
+- **Performance Monitoring**: Bundle size and runtime performance are monitored
 
 ## 🔧 Environment Variables
 
