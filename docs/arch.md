@@ -7,9 +7,9 @@ A2[components - CanvasStage Konva - Shapes - CursorLayer - PresenceList - Toolba
 A3[hooks - usePanZoom - useShapes React Query - usePresence React Query - useCanvasShortcuts - useToast - useAuth - useConnectionStatus]
 A4[store - selection ts - designPalette ts UI state with Zustand]
 A5[lib - types ts and schema ts - sync objects - sync presence - firebase client - firebase firestore - react query client - security ts - health ts - utils ts]
-A6[styles - globals css - Tailwind CSS - shadcn/ui components - lucide-react icons]
+A6[styles - globals css - Tailwind CSS - MUI components - lucide-react icons]
 A7[contexts - AuthContext - ToastContext - ToastContextDefinition]
-A8[ui components - button card input badge avatar tooltip slider separator dropdown-menu collapsible alert label]
+A8[MUI components - DesignPaletteMUI ToolbarMUI with Material Design system]
 end
 
 %% ========= DEVELOPMENT TOOLING =========

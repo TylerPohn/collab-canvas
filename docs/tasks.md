@@ -410,27 +410,27 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 
 ---
 
-## PR #11 — Modern UI with shadcn/ui (Complete UI Overhaul) 🚧 PLANNED
+## PR #11 — Modern UI with MUI (Complete UI Overhaul) ✅ COMPLETED
 
-**Goal:** Implement shadcn/ui components with Radix + Tailwind and lucide-react icons for a professional, modern UI across the entire application.
+**Goal:** Implement MUI components with Material Design and lucide-react icons for a professional, modern UI across the entire application.
 
 ### Phase 1: Setup and Foundation
 
-- [x] **Step 1.1**: Install and configure shadcn/ui with Radix primitives and Tailwind CSS.
-  - Files: `package.json`, `components.json`, `tailwind.config.ts`
-  - Run: `npx shadcn@latest init`
+- [x] **Step 1.1**: Install and configure MUI with Material Design and Tailwind CSS.
+  - Files: `package.json`, `tailwind.config.ts`
+  - Install: `@mui/material`, `@mui/icons-material`, `@emotion/react`, `@emotion/styled`
 
 - [x] **Step 1.2**: Install lucide-react for consistent iconography.
   - Files: `package.json`
   - Run: `npm install lucide-react`
 
-- [x] **Step 1.3**: Install core shadcn/ui components needed for the overhaul.
-  - Files: `src/components/ui/` (auto-generated)
-  - Run: `npx shadcn@latest add button card input label separator tooltip`
+- [x] **Step 1.3**: Install core MUI components needed for the overhaul.
+  - Files: MUI component library with Material Design system
+  - Install: MUI component library with proper theming
 
 ### Phase 2: Homepage Redesign ✅ COMPLETED
 
-- [x] **Step 2.1**: Create modern hero section with shadcn/ui Card component.
+- [x] **Step 2.1**: Create modern hero section with MUI Card component.
   - Files: `src/App.tsx` (LandingPage component)
   - Replace basic div with Card, CardHeader, CardContent
   - **COMPLETED**: Implemented modern hero section with gradient background, large typography, and professional layout
@@ -461,17 +461,17 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 
 ### Phase 3: Login Page Redesign ✅ COMPLETED
 
-- [x] **Step 3.1**: Create centered login card with shadcn/ui Card component.
+- [x] **Step 3.1**: Create centered login card with MUI Card component.
   - Files: `src/pages/LoginPage.tsx`
   - Replace basic form with Card, CardHeader, CardContent, CardFooter
-  - **COMPLETED**: Implemented modern card-based layout with proper shadcn/ui components
+  - **COMPLETED**: Implemented modern card-based layout with proper MUI components
 
 - [x] **Step 3.2**: Add Google OAuth button with proper styling and Google icon.
   - Files: `src/pages/LoginPage.tsx`
   - Use Button component with Google branding colors
-  - **COMPLETED**: Used shadcn/ui Button component with Google icon and proper styling
+  - **COMPLETED**: Used MUI Button component with Google icon and proper styling
 
-- [x] **Step 3.3**: Implement loading states with shadcn/ui components.
+- [x] **Step 3.3**: Implement loading states with MUI components.
   - Files: `src/pages/LoginPage.tsx`
   - Add loading spinner and disabled states
   - **COMPLETED**: Implemented loading states with Loader2 icon and proper disabled button states
@@ -491,10 +491,10 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 
 ### Phase 4: Toolbar Redesign ✅ COMPLETED
 
-- [x] **Step 4.1**: Create modern toolbar component with shadcn/ui components.
+- [x] **Step 4.1**: Create modern toolbar component with MUI components.
   - Files: `src/components/Toolbar.tsx` (refactor existing)
   - Use Button components with proper variants
-  - **COMPLETED**: Replaced custom buttons with shadcn/ui Button components using proper variants (default, ghost)
+  - **COMPLETED**: Replaced custom buttons with MUI Button components using proper variants
 
 - [x] **Step 4.2**: Implement tool selection with proper visual states and hover effects.
   - Files: `src/components/Toolbar.tsx`, `src/components/ui/button.tsx`
@@ -523,10 +523,10 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 
 ### Phase 5: Component Updates ✅ COMPLETED
 
-- [x] **Step 5.1**: Update ProfileMenu with shadcn/ui components.
+- [x] **Step 5.1**: Update ProfileMenu with MUI components.
   - Files: `src/components/ProfileMenu.tsx`
   - Use DropdownMenu, Avatar, Button components
-  - **COMPLETED**: Replaced custom dropdown with shadcn/ui DropdownMenu, Avatar, and Button components
+  - **COMPLETED**: Replaced custom dropdown with MUI DropdownMenu, Avatar, and Button components
 
 - [x] **Step 5.2**: Update PresenceList with modern styling.
   - Files: `src/components/PresenceList.tsx`
@@ -553,11 +553,11 @@ _Note:_ Firestore lacks `onDisconnect`; we'll use **Firestore heartbeat document
 
 **PR #11 Implementation Plan:**
 
-- **Complete UI Overhaul**: Modernize entire application with shadcn/ui
+- **Complete UI Overhaul**: Modernize entire application with MUI
 - **Homepage Redesign**: Professional landing page with hero section and features
 - **Login Page Redesign**: Modern authentication experience with proper styling
 - **Toolbar Redesign**: Figma-like toolbar with proper tool grouping
-- **Component Library**: Build reusable UI components using Radix primitives
+- **Component Library**: Build reusable UI components using MUI
 - **Responsive Design**: Mobile-first design for all screen sizes
 - **Accessibility**: Implement proper ARIA labels and keyboard navigation
 - **Visual Polish**: Consistent design system with hover states and animations
@@ -580,7 +580,7 @@ Each step is designed to be:
 - **Well-documented**: Clear file paths and specific instructions
 - **Testable**: Each step can be tested independently
 - **Incremental**: Build upon previous steps without breaking existing functionality
-- **Educational**: Learn shadcn/ui, Radix, and modern React patterns
+- **Educational**: Learn MUI, Material Design, and modern React patterns
 
 ---
 
@@ -590,9 +590,9 @@ Each step is designed to be:
 
 ### Phase 1: Panel Structure and Layout ✅ COMPLETED
 
-- [x] **Step 1.1**: Create DesignPalette component with shadcn/ui Card layout.
+- [x] **Step 1.1**: Create DesignPalette component with MUI Card layout.
   - Files: `src/components/DesignPalette.tsx` (new file)
-  - **COMPLETED**: Modern card-based layout with proper shadcn/ui components
+  - **COMPLETED**: Modern card-based layout with proper MUI components
   - **COMPLETED**: Fixed right sidebar positioning (320px width)
   - **COMPLETED**: Black border with rounded edges (12px border radius)
 
@@ -769,7 +769,7 @@ Each step is designed to be:
 
 - ✅ **Slider UX Enhancements**: Replaced +/- buttons with smooth sliders for stroke width and corner radius
 - ✅ **Corner Radius Visibility**: Made corner radius section always visible (not just for rectangles) with helpful labeling
-- ✅ **Slider Component Updates**: Enhanced shadcn/ui slider with larger thumbs and thicker tracks
+- ✅ **Slider Component Updates**: Enhanced MUI slider with larger thumbs and thicker tracks
 - ✅ **Font Defaults System**: Created design palette store to apply current font settings to new text objects
 - ✅ **Inline Text Editor Styling**: Real-time application of design palette settings during text editing
 - ✅ **TypeScript Error Fixes**: Resolved unused parameter warnings in shape components
@@ -1365,6 +1365,176 @@ canvases/{canvasId}/comments/{commentId}
 
 ---
 
+## PR #19 — Mermaid Diagram Import & Rendering (15 points)
+
+**Goal:** Add comprehensive Mermaid diagram import and rendering functionality to enable users to create, import, and collaborate on technical diagrams within the canvas.
+
+### Phase 1: Core Infrastructure Setup (5 points)
+
+**Step 19.1**: Install and configure Mermaid.js dependencies.
+
+- Files: `package.json`
+- Install: `mermaid`, `@types/mermaid` (if available)
+- Run: `npm install mermaid`
+- **Test**: Verify Mermaid library loads without errors
+
+**Step 19.2**: Extend type system for Mermaid diagrams.
+
+- Files: `src/lib/types.ts`
+- Add `'mermaid'` to `ShapeType` union
+- Create `MermaidShape` interface extending `ShapeBase`
+- Add properties: `mermaidCode: string`, `renderedSvg?: string`, `diagramType?: string`
+- **Test**: TypeScript compilation succeeds with new types
+
+**Step 19.3**: Create Mermaid rendering service.
+
+- Files: `src/lib/mermaid/renderer.ts` (new file)
+- Implement `MermaidRenderer` class with methods:
+  - `renderDiagram(code: string): Promise<string>` - Convert Mermaid code to SVG
+  - `validateMermaidCode(code: string): boolean` - Validate syntax
+  - `getDiagramType(code: string): string` - Detect diagram type
+- **Test**: Render sample Mermaid diagrams to SVG
+
+### Phase 2: Mermaid Shape Component (4 points)
+
+**Step 19.4**: Create MermaidShape component.
+
+- Files: `src/components/Shapes/MermaidShape.tsx` (new file)
+- Implement Konva-based rendering using `react-konva`
+- Handle SVG-to-Konva conversion for diagram display
+- Support selection, dragging, and resizing like other shapes
+- Add error handling for invalid Mermaid code
+- **Test**: Create and manipulate Mermaid shapes on canvas
+
+**Step 19.5**: Integrate MermaidShape into CanvasStage.
+
+- Files: `src/components/CanvasStage.tsx`
+- Add MermaidShape import and case in shape rendering switch
+- Update shape creation logic to handle 'mermaid' tool
+- Ensure proper zIndex and selection handling
+- **Test**: Mermaid shapes render and behave like other shapes
+
+### Phase 3: Import & Creation UI (3 points)
+
+**Step 19.6**: Add Mermaid tool to toolbar.
+
+- Files: `src/components/ToolbarMUI.tsx`
+- Add 'mermaid' to `ToolType` union
+- Add Mermaid tool button with appropriate icon (Diagram icon)
+- Include keyboard shortcut (M key)
+- **Test**: Mermaid tool appears in toolbar and is selectable
+
+**Step 19.7**: Create Mermaid import dialog.
+
+- Files: `src/components/MermaidImportDialog.tsx` (new file)
+- Implement modal dialog with:
+  - Text area for Mermaid code input
+  - Live preview of rendered diagram
+  - Syntax validation with error messages
+  - Import/Cancel buttons
+- **Test**: Dialog opens, validates code, and imports diagrams
+
+**Step 19.8**: Add import functionality to toolbar.
+
+- Files: `src/components/ToolbarMUI.tsx`
+- Add "Import Mermaid" button that opens import dialog
+- Position button in appropriate toolbar section
+- **Test**: Import button opens dialog and creates shapes
+
+### Phase 4: Advanced Features (2 points)
+
+**Step 19.9**: Add Mermaid-specific design palette controls.
+
+- Files: `src/components/DesignPaletteMUI.tsx`
+- Add Mermaid section when Mermaid shape is selected:
+  - Edit Mermaid code button (opens inline editor)
+  - Diagram type display
+  - Export as SVG button
+- **Test**: Mermaid-specific controls appear when shape selected
+
+**Step 19.10**: Implement Mermaid code editing.
+
+- Files: `src/components/MermaidCodeEditor.tsx` (new file)
+- Create inline code editor with:
+  - Syntax highlighting for Mermaid
+  - Live preview updates
+  - Save/Cancel functionality
+- **Test**: Edit Mermaid code and see live updates
+
+### Phase 5: Integration & Polish (1 point)
+
+**Step 19.11**: Add Mermaid templates and examples.
+
+- Files: `src/lib/mermaid/templates.ts` (new file)
+- Create common Mermaid diagram templates:
+  - Flowchart template
+  - Sequence diagram template
+  - Class diagram template
+  - Gantt chart template
+- **Test**: Templates load and render correctly
+
+**Step 19.12**: Update documentation and add keyboard shortcuts.
+
+- Files: `src/hooks/useCanvasShortcuts.ts`, `README.md`
+- Add M key shortcut for Mermaid tool
+- Update README with Mermaid feature documentation
+- Add Mermaid examples and usage guide
+- **Test**: Keyboard shortcuts work and documentation is accurate
+
+### Implementation Details
+
+**Mermaid Shape Data Structure:**
+
+```typescript
+export interface MermaidShape extends ShapeBase {
+  type: 'mermaid'
+  mermaidCode: string
+  renderedSvg?: string
+  diagramType?: string
+  width: number
+  height: number
+}
+```
+
+**Mermaid Renderer Service:**
+
+```typescript
+export class MermaidRenderer {
+  async renderDiagram(code: string): Promise<string>
+  validateMermaidCode(code: string): boolean
+  getDiagramType(code: string): string
+  initialize(): Promise<void>
+}
+```
+
+**Key Features Delivered:**
+
+- Import Mermaid diagrams via text input
+- Real-time diagram rendering and preview
+- Full shape manipulation (move, resize, select, delete)
+- Mermaid code editing with live updates
+- Template library for common diagram types
+- Integration with existing collaboration features
+- Error handling for invalid Mermaid syntax
+
+**Testing Scenarios:**
+
+1. Import various Mermaid diagram types (flowchart, sequence, class, etc.)
+2. Edit Mermaid code and verify live updates
+3. Multi-user collaboration on Mermaid diagrams
+4. Error handling for malformed Mermaid syntax
+5. Performance with multiple Mermaid diagrams on canvas
+
+**Junior Developer Guidance:**
+
+- Start with Phase 1 to understand Mermaid.js integration
+- Use existing shape components as reference for MermaidShape
+- Test each phase thoroughly before moving to the next
+- Focus on error handling and user experience
+- Leverage existing collaboration infrastructure
+
+---
+
 ## Optional (Post-MVP) — AI Agent Foundations (Stub Only)
 
 **Goal:** Prepare minimal API for future AI function-calling (no AI yet).
@@ -1478,9 +1648,9 @@ setupTests.ts   // RTL + JSDOM setup
 
 ### Immediate (PR #11)
 
-- **Modern UI Implementation**: shadcn/ui with Figma-like toolbar
+- **Modern UI Implementation**: MUI with Figma-like toolbar
 - **Icon System**: lucide-react for consistent iconography
-- **Component Library**: Radix primitives for accessibility
+- **Component Library**: MUI components for accessibility
 
 ### Short-term (Post-PR #11)
 

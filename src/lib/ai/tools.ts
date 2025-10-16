@@ -45,15 +45,37 @@ export const AIToolSchemas = {
     position: PositionSchema
   }),
 
+  moveShapeByOthers: z.object({
+    shapeId: z.string().min(1),
+    direction: z.enum(['left', 'right', 'up', 'down', 'center']),
+    distance: z.number().min(1).default(50)
+  }),
+
   resizeShape: z.object({
     shapeId: z.string().min(1),
     size: SizeSchema.optional(),
     radius: z.number().min(1).optional()
   }),
 
+  resizeLarger: z.object({
+    shapeId: z.string().min(1)
+  }),
+
+  resizeSmaller: z.object({
+    shapeId: z.string().min(1)
+  }),
+
   rotateShape: z.object({
     shapeId: z.string().min(1),
     degrees: z.number().min(-360).max(360)
+  }),
+
+  rotateShapeClockwise: z.object({
+    shapeId: z.string().min(1)
+  }),
+
+  rotateShapeCounterclockwise: z.object({
+    shapeId: z.string().min(1)
   }),
 
   // Layout Commands
@@ -64,10 +86,21 @@ export const AIToolSchemas = {
     spacing: z.number().min(0).default(20)
   }),
 
+  // Delete Commands
+  deleteAllShapes: z.object({
+    confirm: z.boolean().default(false)
+  }),
+
   arrangeInRow: z.object({
     shapeIds: z.array(z.string()).min(2),
     spacing: z.number().min(0).default(20),
     alignment: z.enum(['left', 'center', 'right']).default('left')
+  }),
+
+  spaceEvenly: z.object({
+    shapeIds: z.array(z.string()).min(2),
+    direction: z.enum(['horizontal', 'vertical']).default('horizontal'),
+    padding: z.number().min(0).default(20)
   }),
 
   // Complex Commands
@@ -98,6 +131,29 @@ export const AIToolSchemas = {
         backgroundColor: ColorSchema.optional(),
         textColor: ColorSchema.optional(),
         borderColor: ColorSchema.optional()
+      })
+      .optional()
+  }),
+
+  createCardLayout: z.object({
+    position: PositionSchema,
+    cardConfig: z.object({
+      title: z.string().min(1).max(100),
+      description: z.string().min(1).max(500),
+      imageUrl: z.string().url().optional(),
+      imageAlt: z.string().optional()
+    }),
+    styling: z
+      .object({
+        backgroundColor: ColorSchema.optional(),
+        borderColor: ColorSchema.optional(),
+        textColor: ColorSchema.optional(),
+        titleColor: ColorSchema.optional(),
+        borderWidth: z.number().min(0).optional(),
+        borderRadius: z.number().min(0).optional(),
+        padding: z.number().min(0).optional(),
+        cardWidth: z.number().min(200).max(600).optional(),
+        cardHeight: z.number().min(200).max(800).optional()
       })
       .optional()
   }),
@@ -217,6 +273,84 @@ export function createAITools(queryClient: any) {
         return { success: true }
       }
     },
+
+    moveShapeByOthers: {
+      name: 'moveShapeByOthers',
+      description: 'Move a shape relative to other shapes on the canvas',
+      parameters: AIToolSchemas.moveShapeByOthers,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.moveShapeByOthers>,
+        context: AIContext
+      ) => {
+        // Get the target shape
+        const targetShape = await objectSync.getObject(
+          context.canvasId,
+          params.shapeId
+        )
+
+        if (!targetShape) {
+          throw new Error(`Shape with id ${params.shapeId} not found`)
+        }
+
+        // Get all other shapes on the canvas
+        const allShapes = await objectSync.getAllObjects(context.canvasId)
+        const otherShapes = allShapes.filter(
+          (shape: any) => shape.id !== params.shapeId
+        )
+
+        if (otherShapes.length === 0) {
+          throw new Error('No other shapes found on canvas to move relative to')
+        }
+
+        let newX = targetShape.x
+        let newY = targetShape.y
+
+        if (params.direction === 'center') {
+          // Move to center of all other shapes
+          const centerX =
+            otherShapes.reduce((sum: number, shape: any) => sum + shape.x, 0) /
+            otherShapes.length
+          const centerY =
+            otherShapes.reduce((sum: number, shape: any) => sum + shape.y, 0) /
+            otherShapes.length
+          newX = centerX
+          newY = centerY
+        } else {
+          // Calculate bounds of other shapes
+          const minX = Math.min(...otherShapes.map((shape: any) => shape.x))
+          const maxX = Math.max(
+            ...otherShapes.map((shape: any) => shape.x + (shape.width || 0))
+          )
+          const minY = Math.min(...otherShapes.map((shape: any) => shape.y))
+          const maxY = Math.max(
+            ...otherShapes.map((shape: any) => shape.y + (shape.height || 0))
+          )
+
+          switch (params.direction) {
+            case 'left':
+              newX = minX - params.distance
+              break
+            case 'right':
+              newX = maxX + params.distance
+              break
+            case 'up':
+              newY = minY - params.distance
+              break
+            case 'down':
+              newY = maxY + params.distance
+              break
+          }
+        }
+
+        await objectSync.updateObject(
+          context.canvasId,
+          params.shapeId,
+          { x: newX, y: newY },
+          context.userId
+        )
+        return { success: true }
+      }
+    },
     resizeShape: {
       name: 'resizeShape',
       description: 'Resize a shape',
@@ -225,14 +359,144 @@ export function createAITools(queryClient: any) {
         params: z.infer<typeof AIToolSchemas.resizeShape>,
         context: AIContext
       ) => {
+        // Get the current shape to determine its type
+        const currentShape = await objectSync.getObject(
+          context.canvasId,
+          params.shapeId
+        )
+
+        if (!currentShape) {
+          throw new Error(`Shape with ID ${params.shapeId} not found`)
+        }
+
         const updates: any = {}
-        if (params.size) {
+
+        // Apply size changes based on shape type
+        if (currentShape.type === 'rect' && params.size) {
           updates.width = params.size.width
           updates.height = params.size.height
-        }
-        if (params.radius !== undefined) {
+        } else if (
+          currentShape.type === 'circle' &&
+          params.radius !== undefined
+        ) {
           updates.radius = params.radius
+        } else if (currentShape.type === 'text' && params.size) {
+          // For text, we might want to adjust fontSize instead
+          updates.fontSize = Math.max(8, Math.min(72, params.size.width / 10))
         }
+
+        console.log('🤖 Resizing shape:', {
+          shapeId: params.shapeId,
+          shapeType: currentShape.type,
+          updates
+        })
+
+        await objectSync.updateObject(
+          context.canvasId,
+          params.shapeId,
+          updates,
+          context.userId
+        )
+        return { success: true }
+      }
+    },
+    resizeLarger: {
+      name: 'resizeLarger',
+      description: 'Make a shape larger using Fibonacci ratio (1.618x)',
+      parameters: AIToolSchemas.resizeLarger,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.resizeLarger>,
+        context: AIContext
+      ) => {
+        const currentShape = await objectSync.getObject(
+          context.canvasId,
+          params.shapeId
+        )
+
+        if (!currentShape) {
+          throw new Error(`Shape with ID ${params.shapeId} not found`)
+        }
+
+        const updates: any = {}
+        const fibRatio = 1.618 // Golden ratio
+
+        // Apply Fibonacci ratio based on shape type
+        if (currentShape.type === 'rect') {
+          const currentWidth = (currentShape as any).width || 100
+          const currentHeight = (currentShape as any).height || 100
+          updates.width = Math.round(currentWidth * fibRatio)
+          updates.height = Math.round(currentHeight * fibRatio)
+        } else if (currentShape.type === 'circle') {
+          const currentRadius = (currentShape as any).radius || 50
+          updates.radius = Math.round(currentRadius * fibRatio)
+        } else if (currentShape.type === 'text') {
+          const currentFontSize = (currentShape as any).fontSize || 16
+          updates.fontSize = Math.max(
+            8,
+            Math.min(72, Math.round(currentFontSize * fibRatio))
+          )
+        }
+
+        console.log('🤖 Making shape larger:', {
+          shapeId: params.shapeId,
+          shapeType: currentShape.type,
+          fibRatio,
+          updates
+        })
+
+        await objectSync.updateObject(
+          context.canvasId,
+          params.shapeId,
+          updates,
+          context.userId
+        )
+        return { success: true }
+      }
+    },
+    resizeSmaller: {
+      name: 'resizeSmaller',
+      description: 'Make a shape smaller using Fibonacci ratio (0.618x)',
+      parameters: AIToolSchemas.resizeSmaller,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.resizeSmaller>,
+        context: AIContext
+      ) => {
+        const currentShape = await objectSync.getObject(
+          context.canvasId,
+          params.shapeId
+        )
+
+        if (!currentShape) {
+          throw new Error(`Shape with ID ${params.shapeId} not found`)
+        }
+
+        const updates: any = {}
+        const fibRatio = 0.618 // Inverse golden ratio
+
+        // Apply Fibonacci ratio based on shape type
+        if (currentShape.type === 'rect') {
+          const currentWidth = (currentShape as any).width || 100
+          const currentHeight = (currentShape as any).height || 100
+          updates.width = Math.max(10, Math.round(currentWidth * fibRatio))
+          updates.height = Math.max(10, Math.round(currentHeight * fibRatio))
+        } else if (currentShape.type === 'circle') {
+          const currentRadius = (currentShape as any).radius || 50
+          updates.radius = Math.max(5, Math.round(currentRadius * fibRatio))
+        } else if (currentShape.type === 'text') {
+          const currentFontSize = (currentShape as any).fontSize || 16
+          updates.fontSize = Math.max(
+            8,
+            Math.min(72, Math.round(currentFontSize * fibRatio))
+          )
+        }
+
+        console.log('🤖 Making shape smaller:', {
+          shapeId: params.shapeId,
+          shapeType: currentShape.type,
+          fibRatio,
+          updates
+        })
+
         await objectSync.updateObject(
           context.canvasId,
           params.shapeId,
@@ -244,16 +508,94 @@ export function createAITools(queryClient: any) {
     },
     rotateShape: {
       name: 'rotateShape',
-      description: 'Rotate a shape by specified degrees',
+      description: 'Rotate a shape by specified degrees (cumulative)',
       parameters: AIToolSchemas.rotateShape,
       execute: async (
         params: z.infer<typeof AIToolSchemas.rotateShape>,
         context: AIContext
       ) => {
+        // Get current shape to add to existing rotation
+        const currentShape = await objectSync.getObject(
+          context.canvasId,
+          params.shapeId
+        )
+
+        if (!currentShape) {
+          throw new Error(`Shape with id ${params.shapeId} not found`)
+        }
+
+        // Add to existing rotation (cumulative)
+        const currentRotation = currentShape.rotation || 0
+        const newRotation = currentRotation + params.degrees
+
         await objectSync.updateObject(
           context.canvasId,
           params.shapeId,
-          { rotation: params.degrees },
+          { rotation: newRotation },
+          context.userId
+        )
+        return { success: true }
+      }
+    },
+
+    rotateShapeClockwise: {
+      name: 'rotateShapeClockwise',
+      description: 'Rotate a shape 45 degrees clockwise (cumulative)',
+      parameters: AIToolSchemas.rotateShapeClockwise,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.rotateShapeClockwise>,
+        context: AIContext
+      ) => {
+        // Get current shape to add to existing rotation
+        const currentShape = await objectSync.getObject(
+          context.canvasId,
+          params.shapeId
+        )
+
+        if (!currentShape) {
+          throw new Error(`Shape with id ${params.shapeId} not found`)
+        }
+
+        // Add 45 degrees clockwise to existing rotation (cumulative)
+        const currentRotation = currentShape.rotation || 0
+        const newRotation = currentRotation + 45
+
+        await objectSync.updateObject(
+          context.canvasId,
+          params.shapeId,
+          { rotation: newRotation },
+          context.userId
+        )
+        return { success: true }
+      }
+    },
+
+    rotateShapeCounterclockwise: {
+      name: 'rotateShapeCounterclockwise',
+      description: 'Rotate a shape 45 degrees counterclockwise (cumulative)',
+      parameters: AIToolSchemas.rotateShapeCounterclockwise,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.rotateShapeCounterclockwise>,
+        context: AIContext
+      ) => {
+        // Get current shape to add to existing rotation
+        const currentShape = await objectSync.getObject(
+          context.canvasId,
+          params.shapeId
+        )
+
+        if (!currentShape) {
+          throw new Error(`Shape with id ${params.shapeId} not found`)
+        }
+
+        // Add -45 degrees (counterclockwise) to existing rotation (cumulative)
+        const currentRotation = currentShape.rotation || 0
+        const newRotation = currentRotation - 45
+
+        await objectSync.updateObject(
+          context.canvasId,
+          params.shapeId,
+          { rotation: newRotation },
           context.userId
         )
         return { success: true }
@@ -291,6 +633,51 @@ export function createAITools(queryClient: any) {
           context.userId
         )
         return { success: true }
+      }
+    },
+    spaceEvenly: {
+      name: 'spaceEvenly',
+      description: 'Space shapes evenly with equal gaps between them',
+      parameters: AIToolSchemas.spaceEvenly,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.spaceEvenly>,
+        context: AIContext
+      ) => {
+        await objectSync.spaceShapesEvenly(
+          context.canvasId,
+          params.shapeIds,
+          params.direction,
+          params.padding,
+          context.userId
+        )
+        return { success: true }
+      }
+    },
+
+    deleteAllShapes: {
+      name: 'deleteAllShapes',
+      description: 'Delete all shapes from the canvas',
+      parameters: AIToolSchemas.deleteAllShapes,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.deleteAllShapes>,
+        context: AIContext
+      ) => {
+        if (!params.confirm) {
+          throw new Error('Delete all shapes requires confirmation')
+        }
+
+        // Get all shapes on the canvas
+        const allShapes = await objectSync.getAllObjects(context.canvasId)
+
+        if (allShapes.length === 0) {
+          return { success: true, message: 'No shapes to delete' }
+        }
+
+        // Delete all shapes
+        const shapeIds = allShapes.map((shape: any) => shape.id)
+        await objectSync.batchDeleteObjects(context.canvasId, shapeIds)
+
+        return { success: true, deletedCount: shapeIds.length }
       }
     },
     createLoginForm: {
@@ -337,6 +724,26 @@ export function createAITools(queryClient: any) {
           context.canvasId,
           {
             items: params.items,
+            position: params.position,
+            styling: params.styling
+          },
+          context.userId
+        )
+        return { success: true, shapeIds: shapes.map(s => s.id), shapes }
+      }
+    },
+    createCardLayout: {
+      name: 'createCardLayout',
+      description: 'Create a card layout with title, image, and description',
+      parameters: AIToolSchemas.createCardLayout,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.createCardLayout>,
+        context: AIContext
+      ) => {
+        const shapes = await objectSync.createCardLayout(
+          context.canvasId,
+          {
+            cardConfig: params.cardConfig,
             position: params.position,
             styling: params.styling
           },

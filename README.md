@@ -37,7 +37,7 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 
 - **Frontend**: React 19, TypeScript, Vite
 - **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui (Radix + Tailwind) ✅ _Implemented_
+- **UI Components**: Material-UI (MUI) ✅ _Implemented_
 - **Icons**: lucide-react ✅ _Implemented_
 - **Canvas**: Konva.js with React-Konva
 - **State Management**: React Query (TanStack Query) + Zustand
@@ -203,19 +203,8 @@ src/
 │   │   ├── RectangleShape.tsx
 │   │   ├── CircleShape.tsx
 │   │   └── TextShape.tsx
-│   └── ui/              # shadcn/ui components
-│       ├── button.tsx
-│       ├── card.tsx
-│       ├── input.tsx
-│       ├── badge.tsx
-│       ├── avatar.tsx
-│       ├── tooltip.tsx
-│       ├── slider.tsx
-│       ├── separator.tsx
-│       ├── dropdown-menu.tsx
-│       ├── collapsible.tsx
-│       ├── alert.tsx
-│       └── label.tsx
+│   ├── DesignPaletteMUI.tsx # MUI-based design palette
+│   └── ToolbarMUI.tsx       # MUI-based toolbar
 ├── hooks/               # Custom React hooks
 │   ├── usePanZoom.ts    # Canvas pan/zoom logic
 │   ├── usePresence.ts   # User presence management
@@ -324,20 +313,13 @@ service cloud.firestore {
 - **@tailwindcss/postcss 4.1.14** - PostCSS integration for Tailwind
 - **tailwindcss-animate 1.0.7** - Animation utilities for Tailwind
 - **lucide-react 0.545.0** - Beautiful, customizable SVG icons
-- **class-variance-authority 0.7.1** - Component variant management
-- **clsx 2.1.1** - Utility for constructing className strings
-- **tailwind-merge 3.3.1** - Merge Tailwind CSS classes without conflicts
 
-#### shadcn/ui Components (Radix UI + Tailwind)
+#### Material-UI (MUI) Components
 
-- **@radix-ui/react-avatar 1.1.10** - Avatar component
-- **@radix-ui/react-collapsible 1.1.12** - Collapsible content component
-- **@radix-ui/react-dropdown-menu 2.1.16** - Dropdown menu component
-- **@radix-ui/react-label 2.1.7** - Label component
-- **@radix-ui/react-separator 1.1.7** - Separator component
-- **@radix-ui/react-slider 1.3.6** - Slider component
-- **@radix-ui/react-slot 1.2.3** - Slot component for composition
-- **@radix-ui/react-tooltip 1.2.8** - Tooltip component
+- **@mui/material 7.3.4** - Core Material-UI component library
+- **@mui/icons-material 7.3.4** - Material Design icons
+- **@emotion/react 11.14.0** - CSS-in-JS library for MUI
+- **@emotion/styled 11.14.1** - Styled components for MUI
 
 #### Canvas & Graphics
 
@@ -688,7 +670,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 #### Immediate (Next PR)
 
-- [ ] **Complete UI Overhaul with shadcn/ui**: Modern design system across entire app
+- [ ] **Complete UI Overhaul with MUI**: Modern design system across entire app
 - [ ] **Homepage Redesign**: Professional landing page with hero section and features
 - [ ] **Login Page Redesign**: Modern authentication experience with card-based design
 - [ ] **Toolbar Redesign**: Figma-like toolbar with proper tool grouping and shortcuts

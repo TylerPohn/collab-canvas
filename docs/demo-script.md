@@ -2,7 +2,7 @@
 
 ## Opening (20 seconds)
 
-"I'm Tyler Pohn and this is my CollabCanvas - a real-time collaborative design tool built with React 19, TypeScript, Konva.js, and Firebase. 
+"I'm Tyler Pohn and this is my CollabCanvas - a real-time collaborative design tool built with React 19, TypeScript, Konva.js, and Firebase.
 
 ## Authentication & Security (25 seconds)
 
@@ -68,7 +68,7 @@ _[Demonstrate keyboard shortcuts, text editing, multi-selection, refresh to show
 - React Query provides optimistic updates and intelligent caching
 - Custom ObjectSyncService bridges React Query with Firebase Firestore
 - Zustand for lightweight state management
-- shadcn/ui components with Radix primitives for accessibility
+- MUI components with Material Design for accessibility
 - DOMPurify for XSS protection and comprehensive input validation
 - Rate limiting and security audit logging
 - Debounced updates (50ms) and cursor throttling (25ms) for optimal performance

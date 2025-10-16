@@ -27,7 +27,7 @@ The AI Agent API Layer has been successfully implemented and is fully functional
 - ✅ **Multi-Step Operation Support** - Context management system
 - ✅ **Real-Time Synchronization** - All AI changes sync across users
 - ✅ **Security & Rate Limiting** - Comprehensive safeguards implemented
-- ✅ **UI Integration** - AI panel with sample commands and natural language input
+- ✅ **UI Integration** - AI panel with sample commands and natural language input (MUI-based)
 
 #### **Working Features:**
 
@@ -946,6 +946,308 @@ If issues arise, the AI layer can be disabled by:
 1. Removing AI agent initialization from the main app
 2. Disabling AI command endpoints
 3. The existing canvas functionality will remain fully operational
+
+---
+
+# PR 19: AI Agent UI Enhancement - Complete Command Coverage
+
+## Overview
+
+This PR enhances the AI Agent UI to provide complete coverage of all available API commands through dedicated sample command buttons. While the current implementation covers creation and complex commands well, manipulation and layout commands are only accessible through natural language or manual command input.
+
+## Goals
+
+- **Complete UI Coverage**: Add sample buttons for all missing API commands
+- **Improved User Experience**: Make manipulation and layout commands easily accessible
+- **Consistent Interface**: Maintain the same UI pattern for all command types
+- **Enhanced Discoverability**: Help users discover available AI capabilities
+
+## Missing UI Implementation
+
+### **Manipulation Commands** (3 missing):
+
+- `moveShape` - Move shapes to new positions
+- `resizeShape` - Resize shapes (width/height or radius)
+- `rotateShape` - Rotate shapes by degrees
+
+### **Layout Commands** (2 missing):
+
+- `arrangeInGrid` - Arrange shapes in grid layout
+- `arrangeInRow` - Arrange shapes in horizontal row
+
+### **Context Commands** (1 missing):
+
+- `findShapes` - Find shapes by criteria (type, color, text, position)
+
+## Implementation Plan
+
+### Step 1: Add Missing Sample Command Buttons
+
+**File: `src/components/AIPanel.tsx`**
+
+Add new sample command buttons to the existing "Sample Commands" section:
+
+```typescript
+// Add to sampleCommands array
+const sampleCommands = [
+  // Existing commands...
+  {
+    id: 'moveShape',
+    label: 'Move Shape',
+    command: 'moveShape',
+    parameters: {
+      shapeId: 'selected-shape-id', // Will need to be dynamic
+      position: { x: 300, y: 200 }
+    },
+    description: 'Move selected shape to new position'
+  },
+  {
+    id: 'resizeShape',
+    label: 'Resize Shape',
+    command: 'resizeShape',
+    parameters: {
+      shapeId: 'selected-shape-id', // Will need to be dynamic
+      size: { width: 200, height: 150 }
+    },
+    description: 'Resize selected shape'
+  },
+  {
+    id: 'rotateShape',
+    label: 'Rotate Shape',
+    command: 'rotateShape',
+    parameters: {
+      shapeId: 'selected-shape-id', // Will need to be dynamic
+      degrees: 45
+    },
+    description: 'Rotate selected shape by 45 degrees'
+  },
+  {
+    id: 'arrangeInGrid',
+    label: 'Arrange in Grid',
+    command: 'arrangeInGrid',
+    parameters: {
+      shapeIds: ['shape1', 'shape2', 'shape3'], // Will need to be dynamic
+      rows: 2,
+      cols: 2,
+      spacing: 20
+    },
+    description: 'Arrange selected shapes in a grid'
+  },
+  {
+    id: 'arrangeInRow',
+    label: 'Arrange in Row',
+    command: 'arrangeInRow',
+    parameters: {
+      shapeIds: ['shape1', 'shape2', 'shape3'], // Will need to be dynamic
+      spacing: 30,
+      alignment: 'center'
+    },
+    description: 'Arrange selected shapes in a row'
+  },
+  {
+    id: 'findShapes',
+    label: 'Find Shapes',
+    command: 'findShapes',
+    parameters: {
+      criteria: {
+        type: 'rect',
+        color: '#3B82F6'
+      }
+    },
+    description: 'Find all blue rectangles'
+  }
+]
+```
+
+### Step 2: Implement Dynamic Shape Selection
+
+**Challenge**: Manipulation and layout commands require shape IDs, but the current UI doesn't have shape selection context.
+
+**Solution**: Add shape selection awareness to the AI panel:
+
+```typescript
+// Add to AIPanel component
+const { selectedIds } = useSelectionStore()
+
+// Update command execution to use selected shapes
+const executeSampleCommand = async (command: SampleCommand) => {
+  let parameters = { ...command.parameters }
+
+  // Replace placeholder shape IDs with actual selected shapes
+  if (command.parameters.shapeId === 'selected-shape-id') {
+    if (selectedIds.length === 0) {
+      throw new Error('Please select a shape first')
+    }
+    parameters.shapeId = selectedIds[0]
+  }
+
+  if (command.parameters.shapeIds === ['shape1', 'shape2', 'shape3']) {
+    if (selectedIds.length < 2) {
+      throw new Error('Please select at least 2 shapes')
+    }
+    parameters.shapeIds = selectedIds
+  }
+
+  await executeCommand(command.command, parameters)
+}
+```
+
+### Step 3: Add Smart Command Suggestions
+
+**Enhancement**: Show contextual command suggestions based on current selection:
+
+```typescript
+// Add to AIPanel component
+const getContextualCommands = () => {
+  if (selectedIds.length === 0) {
+    return sampleCommands.filter(
+      cmd =>
+        ![
+          'moveShape',
+          'resizeShape',
+          'rotateShape',
+          'arrangeInGrid',
+          'arrangeInRow'
+        ].includes(cmd.id)
+    )
+  } else if (selectedIds.length === 1) {
+    return sampleCommands.filter(
+      cmd => !['arrangeInGrid', 'arrangeInRow'].includes(cmd.id)
+    )
+  } else {
+    return sampleCommands // Show all commands
+  }
+}
+```
+
+### Step 4: Add Command Categories
+
+**UI Enhancement**: Organize commands into logical categories:
+
+```typescript
+// Add to AIPanel component
+const commandCategories = {
+  'Create': ['createShape', 'createText', 'createLoginForm', 'createNavigationBar'],
+  'Manipulate': ['moveShape', 'resizeShape', 'rotateShape'],
+  'Layout': ['arrangeInGrid', 'arrangeInRow'],
+  'Context': ['getCanvasState', 'findShapes']
+}
+
+// Render commands grouped by category
+{Object.entries(commandCategories).map(([category, commandIds]) => (
+  <div key={category} className="command-category">
+    <h4 className="category-title">{category}</h4>
+    <div className="command-buttons">
+      {sampleCommands
+        .filter(cmd => commandIds.includes(cmd.id))
+        .map(cmd => (
+          <button key={cmd.id} onClick={() => executeSampleCommand(cmd)}>
+            {cmd.label}
+          </button>
+        ))
+    }
+    </div>
+  </div>
+))}
+```
+
+### Step 5: Add Command Validation and Feedback
+
+**Enhancement**: Provide better user feedback for command requirements:
+
+```typescript
+// Add to AIPanel component
+const getCommandStatus = (command: SampleCommand) => {
+  if (
+    command.parameters.shapeId === 'selected-shape-id' &&
+    selectedIds.length === 0
+  ) {
+    return { disabled: true, tooltip: 'Select a shape first' }
+  }
+  if (command.parameters.shapeIds && selectedIds.length < 2) {
+    return { disabled: true, tooltip: 'Select at least 2 shapes' }
+  }
+  return { disabled: false, tooltip: command.description }
+}
+```
+
+## UI Layout Considerations
+
+### **Responsive Design**
+
+- Ensure new buttons fit within existing panel layout
+- Consider horizontal scrolling for command categories
+- Maintain consistent button sizing and spacing
+
+### **Accessibility**
+
+- Add proper ARIA labels for new buttons
+- Ensure keyboard navigation works for all commands
+- Provide clear error messages for invalid operations
+
+### **Visual Hierarchy**
+
+- Use consistent iconography for command types
+- Group related commands visually
+- Highlight contextual commands based on selection
+
+## Testing Strategy
+
+### **Unit Tests**
+
+- Test command parameter substitution with selected shapes
+- Test command validation and error handling
+- Test UI state management for command categories
+
+### **Integration Tests**
+
+- Test command execution with real shape selections
+- Test error handling for invalid selections
+- Test UI responsiveness with different command sets
+
+### **User Experience Tests**
+
+- Test discoverability of new commands
+- Test workflow from shape selection to command execution
+- Test error messaging and user guidance
+
+## Performance Considerations
+
+- **Lazy Loading**: Load command categories on demand
+- **Memoization**: Cache command status calculations
+- **Debouncing**: Prevent rapid command execution
+
+## Security Considerations
+
+- **Parameter Validation**: Ensure all dynamic parameters are validated
+- **Shape Access Control**: Verify user has permission to manipulate selected shapes
+- **Rate Limiting**: Apply existing rate limiting to new commands
+
+## Future Enhancements
+
+1. **Command History**: Show recently used commands
+2. **Custom Commands**: Allow users to create custom command shortcuts
+3. **Command Presets**: Save common parameter combinations
+4. **Batch Operations**: Execute multiple commands in sequence
+5. **Undo/Redo**: Add undo support for AI commands
+
+## Dependencies
+
+- Existing `useSelectionStore` for shape selection
+- Existing `useAIAgent` hook for command execution
+- Existing UI components and styling
+
+## Migration Notes
+
+This PR is additive and doesn't break existing functionality. All current sample commands will continue to work unchanged. The new commands will be available immediately after deployment.
+
+## Rollback Plan
+
+If issues arise, the new command buttons can be disabled by:
+
+1. Removing new commands from the `sampleCommands` array
+2. The existing natural language and manual command inputs will continue to work
+3. No changes to the underlying API layer are required
 
 ---
 

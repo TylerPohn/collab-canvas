@@ -932,13 +932,18 @@ export class ObjectSyncService {
 
     if (targetShapes.length === 0) return
 
+    // Calculate the average Y position to align all shapes horizontally
+    const averageY =
+      targetShapes.reduce((sum, shape) => sum + shape.y, 0) /
+      targetShapes.length
+
     const updates = []
     let currentX = 0
 
     for (const shape of targetShapes) {
       updates.push({
         objectId: shape.id,
-        updates: { x: currentX, y: shape.y }
+        updates: { x: currentX, y: averageY }
       })
 
       // Move to next position
@@ -948,6 +953,106 @@ export class ObjectSyncService {
         currentX += (shape as any).radius * 2 + spacing
       } else {
         currentX += 100 + spacing // Default width for text
+      }
+    }
+
+    if (updates.length > 0) {
+      await this.batchUpdateObjects(canvasId, updates, userId)
+    }
+  }
+
+  async spaceShapesEvenly(
+    canvasId: string,
+    shapeIds: string[],
+    direction: 'horizontal' | 'vertical',
+    padding: number,
+    userId: string
+  ): Promise<void> {
+    const shapes = await this.getAllObjects(canvasId)
+    const targetShapes = shapes.filter(shape => shapeIds.includes(shape.id))
+
+    if (targetShapes.length < 2) return
+
+    const updates = []
+
+    if (direction === 'horizontal') {
+      // Sort shapes by current X position
+      const sortedShapes = [...targetShapes].sort((a, b) => a.x - b.x)
+
+      // Calculate total width needed
+      let totalWidth = 0
+      for (const shape of sortedShapes) {
+        if (shape.type === 'rect') {
+          totalWidth += (shape as any).width
+        } else if (shape.type === 'circle') {
+          totalWidth += (shape as any).radius * 2
+        } else {
+          totalWidth += 100 // Default width for text
+        }
+      }
+
+      // Add padding between shapes
+      totalWidth += padding * (sortedShapes.length - 1)
+
+      // Calculate starting X position (center the group)
+      const startX = sortedShapes[0].x
+      let currentX = startX
+
+      // Position each shape with even spacing
+      for (const shape of sortedShapes) {
+        updates.push({
+          objectId: shape.id,
+          updates: { x: currentX }
+        })
+
+        // Move to next position
+        if (shape.type === 'rect') {
+          currentX += (shape as any).width + padding
+        } else if (shape.type === 'circle') {
+          currentX += (shape as any).radius * 2 + padding
+        } else {
+          currentX += 100 + padding // Default width for text
+        }
+      }
+    } else {
+      // Vertical spacing
+      // Sort shapes by current Y position
+      const sortedShapes = [...targetShapes].sort((a, b) => a.y - b.y)
+
+      // Calculate total height needed
+      let totalHeight = 0
+      for (const shape of sortedShapes) {
+        if (shape.type === 'rect') {
+          totalHeight += (shape as any).height
+        } else if (shape.type === 'circle') {
+          totalHeight += (shape as any).radius * 2
+        } else {
+          totalHeight += 20 // Default height for text
+        }
+      }
+
+      // Add padding between shapes
+      totalHeight += padding * (sortedShapes.length - 1)
+
+      // Calculate starting Y position
+      const startY = sortedShapes[0].y
+      let currentY = startY
+
+      // Position each shape with even spacing
+      for (const shape of sortedShapes) {
+        updates.push({
+          objectId: shape.id,
+          updates: { y: currentY }
+        })
+
+        // Move to next position
+        if (shape.type === 'rect') {
+          currentY += (shape as any).height + padding
+        } else if (shape.type === 'circle') {
+          currentY += (shape as any).radius * 2 + padding
+        } else {
+          currentY += 20 + padding // Default height for text
+        }
       }
     }
 
@@ -1126,6 +1231,148 @@ export class ObjectSyncService {
         zIndex: 1 // Ensure navigation text appears above container
       })
     }
+
+    return this.batchCreateObjects(canvasId, shapes, userId)
+  }
+
+  async createCardLayout(
+    canvasId: string,
+    cardConfig: {
+      cardConfig: {
+        title: string
+        description: string
+        imageUrl?: string
+        imageAlt?: string
+      }
+      position: { x: number; y: number }
+      styling?: {
+        backgroundColor?: string
+        borderColor?: string
+        textColor?: string
+        titleColor?: string
+        borderWidth?: number
+        borderRadius?: number
+        padding?: number
+        cardWidth?: number
+        cardHeight?: number
+      }
+    },
+    userId: string
+  ): Promise<Shape[]> {
+    const { cardConfig: config, position, styling = {} } = cardConfig
+    const shapes: any[] = []
+
+    const defaultStyling = {
+      backgroundColor: '#FFFFFF',
+      borderColor: '#E5E7EB',
+      textColor: '#374151',
+      titleColor: '#111827',
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 16,
+      cardWidth: 300,
+      cardHeight: 400
+    }
+
+    const finalStyling = { ...defaultStyling, ...styling }
+
+    // Create card container (background)
+    shapes.push({
+      type: 'rect',
+      x: position.x,
+      y: position.y,
+      width: finalStyling.cardWidth,
+      height: finalStyling.cardHeight,
+      fill: finalStyling.backgroundColor,
+      stroke: finalStyling.borderColor,
+      strokeWidth: finalStyling.borderWidth,
+      cornerRadius: finalStyling.borderRadius,
+      zIndex: 0 // Background layer
+    })
+
+    let currentY = position.y + finalStyling.padding
+
+    // Create image placeholder (if imageUrl provided)
+    if (config.imageUrl) {
+      const imageHeight = 120
+      shapes.push({
+        type: 'rect',
+        x: position.x + finalStyling.padding,
+        y: currentY,
+        width: finalStyling.cardWidth - finalStyling.padding * 2,
+        height: imageHeight,
+        fill: '#F3F4F6',
+        stroke: '#D1D5DB',
+        strokeWidth: 1,
+        cornerRadius: 4,
+        zIndex: 1
+      })
+
+      // Image placeholder text
+      shapes.push({
+        type: 'text',
+        x: position.x + finalStyling.padding + 10,
+        y: currentY + imageHeight / 2 - 8,
+        text: config.imageAlt || 'Image',
+        fontSize: 12,
+        fill: '#9CA3AF',
+        fontFamily: 'Arial',
+        fontWeight: 'normal',
+        zIndex: 2
+      })
+
+      currentY += imageHeight + finalStyling.padding
+    }
+
+    // Create title
+    shapes.push({
+      type: 'text',
+      x: position.x + finalStyling.padding,
+      y: currentY,
+      text: config.title,
+      fontSize: 18,
+      fill: finalStyling.titleColor,
+      fontFamily: 'Arial',
+      fontWeight: 'bold',
+      zIndex: 1
+    })
+
+    currentY += 30
+
+    // Create description
+    const maxDescriptionWidth =
+      finalStyling.cardWidth - finalStyling.padding * 2
+    const words = config.description.split(' ')
+    const lines = []
+    let currentLine = ''
+
+    // Simple text wrapping
+    for (const word of words) {
+      const testLine = currentLine + (currentLine ? ' ' : '') + word
+      if (testLine.length * 8 <= maxDescriptionWidth) {
+        // Rough character width estimation
+        currentLine = testLine
+      } else {
+        if (currentLine) lines.push(currentLine)
+        currentLine = word
+      }
+    }
+    if (currentLine) lines.push(currentLine)
+
+    // Create description text lines
+    lines.forEach((line, index) => {
+      shapes.push({
+        type: 'text',
+        x: position.x + finalStyling.padding,
+        y: currentY + index * 20,
+        text: line,
+        fontSize: 14,
+        fill: finalStyling.textColor,
+        fontFamily: 'Arial',
+        fontWeight: 'normal',
+        zIndex: 1
+      })
+    })
 
     return this.batchCreateObjects(canvasId, shapes, userId)
   }

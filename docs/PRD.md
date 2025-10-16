@@ -76,7 +76,7 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 - **Konva.js** for canvas manipulation and shape rendering (chosen for performance with multiple concurrent users).
 - **React Query** for local state and data synchronization with optimistic updates.
 - **Tailwind CSS** for styling and responsive design.
-- **shadcn/ui** (Radix + Tailwind) for accessible UI components ✅ _Implemented_.
+- **Material-UI (MUI)** for accessible UI components ✅ _Implemented_.
 - **lucide-react** for consistent iconography ✅ _Implemented_.
 
 ### **Backend**
@@ -138,7 +138,7 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 
 ### **Design Palette System ✅ COMPLETED**
 
-- **Comprehensive Right Sidebar**: 320px fixed-width panel with modern shadcn/ui components
+- **Comprehensive Right Sidebar**: 320px fixed-width panel with modern MUI components
 - **Object Information Display**: Shows "Last edited at [timestamp] by [name]" at the top of the palette for selected objects
 - **Advanced Shape Styling**: Fill/stroke color pickers, stroke width sliders (0-10px), corner radius controls (0-100px)
 - **Text Styling Controls**: Font family, size, weight, style, and decoration options
@@ -150,7 +150,7 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 
 ### **UI/UX Improvements ✅ COMPLETED**
 
-- **Modern Design System**: Complete shadcn/ui integration with consistent styling
+- **Modern Design System**: Complete MUI integration with consistent styling
 - **Enhanced Sliders**: Larger thumbs (40px) and thicker tracks (16px) for better usability
 - **Professional Toolbar**: Icon-based design with comprehensive tooltips and keyboard shortcuts
 - **Responsive Design**: Mobile-optimized with touch-friendly controls
@@ -165,7 +165,7 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 1. **Phase 1:** ✅ Firebase project, user auth, and real-time connection implemented.
 2. **Phase 2:** ✅ Real-time cursor and object sync with React Query.
 3. **Phase 3:** ✅ Transformations, persistence, and deployed MVP on Vercel.
-4. **Phase 4:** ✅ Complete UI overhaul with shadcn/ui, including homepage, login page, and Figma-like toolbar.
+4. **Phase 4:** ✅ Complete UI overhaul with MUI, including homepage, login page, and Figma-like toolbar.
 5. **Phase 5:** ✅ Design palette panel, testing infrastructure, performance testing, mobile optimization.
 
 ### **🚧 Future Enhancements**
