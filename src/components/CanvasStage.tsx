@@ -118,8 +118,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
       setViewport
     } = usePanZoom(initialViewport)
 
-    const { selectedIds, selectShape, clearSelection, isSelected } =
-      useSelectionStore()
+    const { selectedIds, selectShape, clearSelection } = useSelectionStore()
 
     const { getDefaultTextProperties, getDefaultShapeProperties } =
       useDesignPaletteStore()
@@ -932,7 +931,6 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 const commonProps = {
                   key: shape.id,
                   shape,
-                  isSelected: isSelected(shape.id),
                   onSelect: (e: Konva.KonvaEventObject<MouseEvent>) =>
                     handleShapeSelect(shape.id, e),
                   onDragStart: () => handleShapeDragStart(shape.id),

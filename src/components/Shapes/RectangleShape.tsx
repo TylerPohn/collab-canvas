@@ -5,7 +5,6 @@ import type { RectangleShape as RectangleShapeType } from '../../lib/types'
 
 interface RectangleShapeProps {
   shape: RectangleShapeType
-  isSelected: boolean
   onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void
   onDragStart: () => void
   onDragMove: (e: Konva.KonvaEventObject<DragEvent>) => void
@@ -14,15 +13,7 @@ interface RectangleShapeProps {
 }
 
 const RectangleShape: React.FC<RectangleShapeProps> = memo(
-  ({
-    shape,
-    isSelected,
-    onSelect,
-    onDragStart,
-    onDragMove,
-    onDragEnd,
-    onTransformEnd
-  }) => {
+  ({ shape, onSelect, onDragStart, onDragMove, onDragEnd, onTransformEnd }) => {
     return (
       <Rect
         id={shape.id}
@@ -31,8 +22,8 @@ const RectangleShape: React.FC<RectangleShapeProps> = memo(
         width={shape.width}
         height={shape.height}
         fill={shape.fill || '#3b82f6'}
-        stroke={isSelected ? '#3b82f6' : shape.stroke || 'transparent'}
-        strokeWidth={isSelected ? 2 : shape.strokeWidth || 0}
+        stroke={shape.stroke || 'transparent'}
+        strokeWidth={shape.strokeWidth || 0}
         rotation={shape.rotation || 0}
         cornerRadius={shape.cornerRadius || 0}
         draggable

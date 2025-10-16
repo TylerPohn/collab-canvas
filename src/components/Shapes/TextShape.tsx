@@ -6,7 +6,6 @@ import type { TextShape as TextShapeType } from '../../lib/types'
 
 interface TextShapeProps {
   shape: TextShapeType
-  isSelected: boolean
   onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void
   onDragStart: () => void
   onDragMove: (e: Konva.KonvaEventObject<DragEvent>) => void
@@ -19,7 +18,6 @@ interface TextShapeProps {
 const TextShape: React.FC<TextShapeProps> = memo(
   ({
     shape,
-    isSelected,
     onSelect,
     onDragStart,
     onDragMove,
@@ -41,8 +39,8 @@ const TextShape: React.FC<TextShapeProps> = memo(
         text={sanitizeText(shape.text)}
         fontSize={shape.fontSize || 16}
         fill={shape.fill || '#374151'}
-        stroke={isSelected ? '#374151' : shape.stroke || 'transparent'}
-        strokeWidth={isSelected ? 1 : shape.strokeWidth || 0}
+        stroke={shape.stroke || 'transparent'}
+        strokeWidth={shape.strokeWidth || 0}
         rotation={shape.rotation || 0}
         draggable
         onClick={onSelect}
