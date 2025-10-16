@@ -523,6 +523,7 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
                     min={0}
                     step={1}
                     className="w-full"
+                    style={{ height: '24px' }}
                   />
                 </div>
               </div>
@@ -618,6 +619,7 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
                       min={0}
                       step={2}
                       className="w-full"
+                      style={{ height: '24px' }}
                     />
                   </div>
                 )}
@@ -871,6 +873,7 @@ const DesignPalette: React.FC<DesignPaletteProps> = ({
                     min={0.5}
                     step={0.1}
                     className="w-full"
+                    style={{ height: '24px' }}
                   />
                 </div>
               </div>
