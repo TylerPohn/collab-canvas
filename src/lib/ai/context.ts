@@ -29,7 +29,7 @@ export class AIContextManager {
 
     if (context) {
       context.operations.push(operation)
-      context.currentState = this.updateCurrentState(context, operation)
+      context.currentState = this.updateCurrentState(context)
     }
   }
 
@@ -101,10 +101,7 @@ export class AIContextManager {
     return Date.now() - oldestOperation.timestamp > this.MAX_CONTEXT_AGE
   }
 
-  private updateCurrentState(
-    context: AIContext,
-    operation: AIOperation
-  ): AIContext['currentState'] {
+  private updateCurrentState(context: AIContext): AIContext['currentState'] {
     // Update the current state based on the operation
     // This is a simplified version - real implementation would be more complex
 

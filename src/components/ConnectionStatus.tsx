@@ -1,37 +1,28 @@
+import { Box, Chip, useTheme } from '@mui/material'
 import React from 'react'
 import { useConnectionStatus } from '../hooks/useConnectionStatus'
 
 interface ConnectionStatusProps {
   canvasId?: string
-  className?: string
   showText?: boolean
 }
 
 export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   canvasId,
-  className = '',
   showText = true
 }) => {
   const { isConnected, isReconnecting, isOnline } =
     useConnectionStatus(canvasId)
+  const theme = useTheme()
 
-  const getStatusStyle = () => {
+  const getStatusColor = () => {
     if (isConnected && isOnline) {
-      return {
-        backgroundColor: '#10b981', // green-500
-        border: '1px solid #059669' // green-600
-      }
+      return theme.palette.success.main
     }
     if (isReconnecting) {
-      return {
-        backgroundColor: '#f59e0b', // yellow-500
-        border: '1px solid #d97706' // yellow-600
-      }
+      return theme.palette.warning.main
     }
-    return {
-      backgroundColor: '#ef4444', // red-500
-      border: '1px solid #dc2626' // red-600
-    }
+    return theme.palette.error.main
   }
 
   const getStatusText = () => {
@@ -40,24 +31,73 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
     return 'Offline'
   }
 
-  return (
-    <div className={`flex items-center space-x-2 ${className}`}>
-      <div
-        className="rounded-full flex-shrink-0"
-        style={{
-          width: '12px',
-          height: '12px',
-          minWidth: '12px',
-          minHeight: '12px',
-          display: 'block',
-          ...getStatusStyle()
+  const getStatusVariant = () => {
+    if (isConnected && isOnline) return 'filled'
+    return 'outlined'
+  }
+
+  if (showText) {
+    return (
+      <Chip
+        label={getStatusText()}
+        size="small"
+        variant={getStatusVariant() as any}
+        sx={{
+          height: 24,
+          fontSize: '0.75rem',
+          fontWeight: 500,
+          backgroundColor:
+            isConnected && isOnline ? getStatusColor() : 'transparent',
+          color:
+            isConnected && isOnline
+              ? theme.palette.success.contrastText
+              : getStatusColor(),
+          borderColor: getStatusColor(),
+          '& .MuiChip-label': {
+            px: 1
+          }
         }}
-        title={getStatusText()}
+        icon={
+          <Box
+            sx={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor:
+                isConnected && isOnline
+                  ? theme.palette.success.contrastText
+                  : getStatusColor(),
+              animation: isReconnecting
+                ? 'pulse 1.5s ease-in-out infinite'
+                : 'none',
+              '@keyframes pulse': {
+                '0%': { opacity: 1 },
+                '50%': { opacity: 0.5 },
+                '100%': { opacity: 1 }
+              }
+            }}
+          />
+        }
       />
-      {showText && (
-        <span className="text-sm text-muted-foreground">{getStatusText()}</span>
-      )}
-    </div>
+    )
+  }
+
+  return (
+    <Box
+      sx={{
+        width: 12,
+        height: 12,
+        borderRadius: '50%',
+        backgroundColor: getStatusColor(),
+        animation: isReconnecting ? 'pulse 1.5s ease-in-out infinite' : 'none',
+        '@keyframes pulse': {
+          '0%': { opacity: 1 },
+          '50%': { opacity: 0.5 },
+          '100%': { opacity: 1 }
+        }
+      }}
+      title={getStatusText()}
+    />
   )
 }
 

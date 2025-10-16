@@ -17,7 +17,7 @@ export class AIRateLimiter {
     // Check hourly limit
     if (recentRequests.length >= this.MAX_REQUESTS_PER_HOUR) {
       securityLogger.log({
-        type: 'ai_rate_limit_exceeded',
+        type: 'rate_limit_exceeded',
         userId,
         details: `AI agent hourly rate limit exceeded for user ${userId}`,
         severity: 'high'
@@ -32,7 +32,7 @@ export class AIRateLimiter {
 
     if (minuteRequests.length >= this.MAX_REQUESTS_PER_MINUTE) {
       securityLogger.log({
-        type: 'ai_rate_limit_exceeded',
+        type: 'rate_limit_exceeded',
         userId,
         details: `AI agent minute rate limit exceeded for user ${userId}`,
         severity: 'medium'

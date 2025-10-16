@@ -1,22 +1,27 @@
-import { Loader2 } from 'lucide-react'
-import React, { useState } from 'react'
-import { Navigate } from 'react-router-dom'
-import { Alert, AlertDescription } from '../components/ui/alert'
-import { Button } from '../components/ui/button'
+import { Google as GoogleIcon } from '@mui/icons-material'
 import {
+  Alert,
+  alpha,
+  Box,
+  Button,
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '../components/ui/card'
+  CircularProgress,
+  Container,
+  Divider,
+  Paper,
+  Typography,
+  useTheme
+} from '@mui/material'
+import React, { useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
 const LoginPage: React.FC = () => {
   const { user, loading, signInWithGoogle } = useAuth()
   const [isSigningIn, setIsSigningIn] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const theme = useTheme()
 
   // Redirect if already authenticated
   if (user) {
@@ -38,93 +43,136 @@ const LoginPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-              <div className="space-y-2">
-                <p className="text-lg font-medium text-foreground">
-                  Loading...
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Preparing your canvas experience
-                </p>
-              </div>
-            </div>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`
+        }}
+      >
+        <Card sx={{ maxWidth: 400, width: '100%', mx: 2 }}>
+          <CardContent sx={{ textAlign: 'center', py: 4 }}>
+            <CircularProgress
+              size={48}
+              sx={{ mb: 3, color: theme.palette.primary.main }}
+            />
+            <Typography variant="h6" gutterBottom color="text.primary">
+              Loading...
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Preparing your canvas experience
+            </Typography>
           </CardContent>
         </Card>
-      </div>
+      </Box>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">
-            Sign in to Collab Canvas
-          </CardTitle>
-          <CardDescription>
-            Join the collaborative canvas experience
-          </CardDescription>
-        </CardHeader>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`,
+        py: 3,
+        px: 2
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper
+          elevation={8}
+          sx={{
+            borderRadius: 3,
+            overflow: 'hidden',
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
+          }}
+        >
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            {/* Header */}
+            <Box sx={{ mb: 4 }}>
+              <Typography
+                variant="h4"
+                component="h1"
+                gutterBottom
+                sx={{
+                  fontWeight: 700,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  mb: 1
+                }}
+              >
+                Welcome to Collab Canvas
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                Join the collaborative canvas experience
+              </Typography>
+              <Divider sx={{ my: 2 }} />
+            </Box>
 
-        <CardContent className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <Button
-            onClick={handleGoogleSignIn}
-            disabled={isSigningIn}
-            className="w-full"
-            size="sm"
-          >
-            {isSigningIn ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              <>
-                <svg
-                  className="mr-2"
-                  viewBox="0 0 24 24"
-                  style={{ width: '12px', height: '12px' }}
-                >
-                  <path
-                    fill="currentColor"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  />
-                </svg>
-                Continue with Google
-              </>
+            {/* Error Alert */}
+            {error && (
+              <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                {error}
+              </Alert>
             )}
-          </Button>
-        </CardContent>
 
-        <CardFooter className="text-center">
-          <p className="text-xs text-muted-foreground">
-            By signing in, you agree to our terms of service and privacy policy.
-          </p>
-        </CardFooter>
-      </Card>
-    </div>
+            {/* Google Sign In Button */}
+            <Button
+              onClick={handleGoogleSignIn}
+              disabled={isSigningIn}
+              variant="outlined"
+              size="large"
+              fullWidth
+              startIcon={
+                isSigningIn ? <CircularProgress size={20} /> : <GoogleIcon />
+              }
+              sx={{
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontSize: '1rem',
+                fontWeight: 500,
+                borderColor: theme.palette.grey[300],
+                color: theme.palette.text.primary,
+                '&:hover': {
+                  borderColor: theme.palette.primary.main,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                  transform: 'translateY(-1px)',
+                  boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
+                },
+                '&:disabled': {
+                  borderColor: theme.palette.grey[300],
+                  color: theme.palette.text.disabled
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
+            >
+              {isSigningIn ? 'Signing in...' : 'Continue with Google'}
+            </Button>
+
+            {/* Footer */}
+            <Box sx={{ mt: 4, pt: 2 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: '0.75rem' }}
+              >
+                By signing in, you agree to our terms of service and privacy
+                policy.
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
   )
 }
 

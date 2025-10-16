@@ -1,3 +1,33 @@
+import {
+  CheckCircle as CheckCircleIcon,
+  Close as CloseIcon,
+  Error as ErrorIcon,
+  HourglassEmpty as HourglassIcon,
+  Lightbulb as LightbulbIcon,
+  PlayArrow as PlayIcon,
+  SmartToy as RobotIcon,
+  Send as SendIcon
+} from '@mui/icons-material'
+import {
+  Alert,
+  alpha,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Divider,
+  Fade,
+  IconButton,
+  InputAdornment,
+  List,
+  ListItem,
+  ListItemText,
+  Paper,
+  Slide,
+  TextField,
+  Typography,
+  useTheme
+} from '@mui/material'
 import React, { useState } from 'react'
 import { useAIAgent } from '../hooks/useAIAgent'
 import { useAuth } from '../hooks/useAuth'
@@ -8,20 +38,24 @@ interface AIPanelProps {
   onClose: () => void
 }
 
+interface CommandParameters {
+  [key: string]: string | number | boolean | object | undefined
+}
+
 const AIPanel: React.FC<AIPanelProps> = ({ canvasId, isOpen, onClose }) => {
   const { user } = useAuth()
-  const {
-    executeCommand,
-    executeComplexCommand,
-    processNaturalLanguage,
-    isExecuting,
-    error,
-    lastCommand
-  } = useAIAgent(canvasId, user?.uid || '')
+  const { executeCommand, processNaturalLanguage, isExecuting, error } =
+    useAIAgent(canvasId, user?.uid || '')
+  const theme = useTheme()
 
   const [lastResult, setLastResult] = useState<string | null>(null)
+  const [naturalLanguageInput, setNaturalLanguageInput] = useState('')
+  const [manualCommandInput, setManualCommandInput] = useState('')
 
-  const handleExecuteCommand = async (command: string, parameters: any) => {
+  const handleExecuteCommand = async (
+    command: string,
+    parameters: CommandParameters
+  ) => {
     setLastResult(null)
 
     try {
@@ -134,292 +168,401 @@ const AIPanel: React.FC<AIPanelProps> = ({ canvasId, isOpen, onClose }) => {
   if (!isOpen) return null
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: '80px',
-        left: '20px',
-        width: '400px',
-        maxHeight: 'calc(100vh - 100px)',
-        backgroundColor: 'white',
-        border: '2px solid #3B82F6',
-        borderRadius: '12px',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
-        zIndex: 9999,
-        padding: '20px',
-        overflowY: 'auto',
-        fontFamily: 'system-ui, -apple-system, sans-serif'
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
+    <Slide direction="right" in={isOpen} timeout={300}>
+      <Paper
+        elevation={12}
+        sx={{
+          position: 'fixed',
+          top: 80,
+          left: 20,
+          width: 420,
+          maxHeight: 'calc(100vh - 100px)',
+          borderRadius: 3,
+          background: `rgba(255, 255, 255, 0.95)`,
+          backdropFilter: 'blur(20px)',
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+          zIndex: 9999,
+          overflow: 'hidden',
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px',
-          paddingBottom: '10px',
-          borderBottom: '1px solid #E5E7EB'
+          flexDirection: 'column'
         }}
       >
-        <h2
-          style={{
-            margin: 0,
-            color: '#1F2937',
-            fontSize: '18px',
-            fontWeight: '600'
+        {/* Header */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            p: 2,
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+            background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)}, ${alpha(theme.palette.secondary.main, 0.05)})`
           }}
         >
-          🤖 AI Agent
-        </h2>
-        <button
-          onClick={onClose}
-          style={{
-            background: 'none',
-            border: 'none',
-            fontSize: '20px',
-            cursor: 'pointer',
-            color: '#6B7280',
-            padding: '4px'
-          }}
-        >
-          ×
-        </button>
-      </div>
-
-      {/* Status */}
-      {isExecuting && (
-        <div
-          style={{
-            backgroundColor: '#DBEAFE',
-            color: '#1E40AF',
-            padding: '12px',
-            borderRadius: '8px',
-            marginBottom: '16px',
-            fontSize: '14px'
-          }}
-        >
-          ⏳ Executing AI command...
-        </div>
-      )}
-
-      {(error || lastResult?.includes('❌')) && (
-        <div
-          style={{
-            backgroundColor: '#FEE2E2',
-            color: '#991B1B',
-            padding: '12px',
-            borderRadius: '8px',
-            marginBottom: '16px',
-            fontSize: '14px'
-          }}
-        >
-          ❌ Error: {error || lastResult}
-        </div>
-      )}
-
-      {lastResult && !lastResult.includes('❌') && (
-        <div
-          style={{
-            backgroundColor: '#D1FAE5',
-            color: '#065F46',
-            padding: '12px',
-            borderRadius: '8px',
-            marginBottom: '16px',
-            fontSize: '14px'
-          }}
-        >
-          {lastResult}
-        </div>
-      )}
-
-      {/* Sample Commands */}
-      <div style={{ marginBottom: '16px' }}>
-        <h3
-          style={{
-            margin: '0 0 12px 0',
-            color: '#374151',
-            fontSize: '16px',
-            fontWeight: '500'
-          }}
-        >
-          Sample Commands
-        </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {sampleCommands.map((cmd, index) => (
-            <button
-              key={index}
-              onClick={() => handleExecuteCommand(cmd.command, cmd.parameters)}
-              disabled={isExecuting}
-              style={{
-                backgroundColor: isExecuting ? '#F3F4F6' : '#3B82F6',
-                color: isExecuting ? '#9CA3AF' : 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 16px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: isExecuting ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                textAlign: 'left'
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <RobotIcon
+              sx={{
+                fontSize: 24,
+                color: theme.palette.primary.main
               }}
-              onMouseEnter={e => {
-                if (!isExecuting) {
-                  e.currentTarget.style.backgroundColor = '#2563EB'
-                }
-              }}
-              onMouseLeave={e => {
-                if (!isExecuting) {
-                  e.currentTarget.style.backgroundColor = '#3B82F6'
-                }
+            />
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 600,
+                color: 'text.primary',
+                fontSize: '1.125rem'
               }}
             >
-              {cmd.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Natural Language Input */}
-      <div style={{ marginBottom: '16px' }}>
-        <h3
-          style={{
-            margin: '0 0 12px 0',
-            color: '#374151',
-            fontSize: '16px',
-            fontWeight: '500'
-          }}
-        >
-          Natural Language
-        </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <input
-            type="text"
-            placeholder="Tell the AI what you want (e.g., 'create a blue rectangle')"
-            style={{
-              padding: '10px 12px',
-              border: '1px solid #D1D5DB',
-              borderRadius: '6px',
-              fontSize: '14px',
-              outline: 'none'
-            }}
-            onKeyPress={e => {
-              if (e.key === 'Enter') {
-                const input = e.currentTarget.value
-                if (input) {
-                  handleNaturalLanguage(input)
-                  e.currentTarget.value = ''
-                }
+              AI Agent
+            </Typography>
+          </Box>
+          <IconButton
+            onClick={onClose}
+            size="small"
+            sx={{
+              color: 'text.secondary',
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.error.main, 0.1),
+                color: theme.palette.error.main
               }
-            }}
-          />
-          <button
-            onClick={() => {
-              const input = document.querySelector(
-                'input[placeholder*="Tell the AI"]'
-              ) as HTMLInputElement
-              if (input?.value) {
-                handleNaturalLanguage(input.value)
-                input.value = ''
-              }
-            }}
-            disabled={isExecuting}
-            style={{
-              backgroundColor: isExecuting ? '#F3F4F6' : '#8B5CF6',
-              color: isExecuting ? '#9CA3AF' : 'white',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '10px 16px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: isExecuting ? 'not-allowed' : 'pointer'
             }}
           >
-            Ask AI
-          </button>
-        </div>
-      </div>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
 
-      {/* Manual Command Input */}
-      <div style={{ marginBottom: '16px' }}>
-        <h3
-          style={{
-            margin: '0 0 12px 0',
-            color: '#374151',
-            fontSize: '16px',
-            fontWeight: '500'
-          }}
-        >
-          Manual Command
-        </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <input
-            type="text"
-            placeholder="Command (e.g., createShape)"
-            style={{
-              padding: '10px 12px',
-              border: '1px solid #D1D5DB',
-              borderRadius: '6px',
-              fontSize: '14px',
-              outline: 'none'
-            }}
-            onKeyPress={e => {
-              if (e.key === 'Enter') {
-                const command = e.currentTarget.value
-                if (command) {
-                  handleExecuteCommand(command, {})
-                }
-              }
-            }}
-          />
-          <button
-            onClick={() => {
-              const input = document.querySelector(
-                'input[placeholder*="Command"]'
-              ) as HTMLInputElement
-              if (input?.value) {
-                handleExecuteCommand(input.value, {})
-                input.value = ''
-              }
-            }}
-            disabled={isExecuting}
-            style={{
-              backgroundColor: isExecuting ? '#F3F4F6' : '#10B981',
-              color: isExecuting ? '#9CA3AF' : 'white',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '10px 16px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: isExecuting ? 'not-allowed' : 'pointer'
+        {/* Content */}
+        <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+          {/* Status Messages */}
+          {isExecuting && (
+            <Fade in timeout={300}>
+              <Alert
+                severity="info"
+                icon={<HourglassIcon />}
+                sx={{
+                  mb: 2,
+                  borderRadius: 2,
+                  '& .MuiAlert-message': {
+                    fontSize: '0.875rem'
+                  }
+                }}
+              >
+                Executing AI command...
+              </Alert>
+            </Fade>
+          )}
+
+          {(error || lastResult?.includes('❌')) && (
+            <Fade in timeout={300}>
+              <Alert
+                severity="error"
+                icon={<ErrorIcon />}
+                sx={{
+                  mb: 2,
+                  borderRadius: 2,
+                  '& .MuiAlert-message': {
+                    fontSize: '0.875rem'
+                  }
+                }}
+              >
+                {error || lastResult}
+              </Alert>
+            </Fade>
+          )}
+
+          {lastResult && !lastResult.includes('❌') && (
+            <Fade in timeout={300}>
+              <Alert
+                severity="success"
+                icon={<CheckCircleIcon />}
+                sx={{
+                  mb: 2,
+                  borderRadius: 2,
+                  '& .MuiAlert-message': {
+                    fontSize: '0.875rem'
+                  }
+                }}
+              >
+                {lastResult}
+              </Alert>
+            </Fade>
+          )}
+
+          {/* Sample Commands */}
+          <Box sx={{ mb: 3 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                fontWeight: 600,
+                color: 'text.primary',
+                mb: 2,
+                fontSize: '1rem'
+              }}
+            >
+              Sample Commands
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {sampleCommands.map((cmd, index) => (
+                <Fade
+                  key={index}
+                  in
+                  timeout={400 + index * 100}
+                  style={{ transitionDelay: `${index * 50}ms` }}
+                >
+                  <Button
+                    variant="contained"
+                    onClick={() =>
+                      handleExecuteCommand(cmd.command, cmd.parameters)
+                    }
+                    disabled={isExecuting}
+                    startIcon={<PlayIcon />}
+                    sx={{
+                      justifyContent: 'flex-start',
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      py: 1.5,
+                      px: 2,
+                      borderRadius: 2,
+                      background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                      '&:hover': {
+                        background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+                        transform: 'translateY(-1px)',
+                        boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
+                      },
+                      '&:disabled': {
+                        background: theme.palette.grey[300],
+                        color: theme.palette.grey[500]
+                      },
+                      transition: 'all 0.2s ease-in-out'
+                    }}
+                  >
+                    {cmd.name}
+                  </Button>
+                </Fade>
+              ))}
+            </Box>
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+
+          {/* Natural Language Input */}
+          <Box sx={{ mb: 3 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                fontWeight: 600,
+                color: 'text.primary',
+                mb: 2,
+                fontSize: '1rem'
+              }}
+            >
+              Natural Language
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <TextField
+                fullWidth
+                placeholder="Tell the AI what you want (e.g., 'create a blue rectangle')"
+                value={naturalLanguageInput}
+                onChange={e => setNaturalLanguageInput(e.target.value)}
+                onKeyPress={e => {
+                  if (e.key === 'Enter' && naturalLanguageInput.trim()) {
+                    handleNaturalLanguage(naturalLanguageInput)
+                    setNaturalLanguageInput('')
+                  }
+                }}
+                disabled={isExecuting}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => {
+                          if (naturalLanguageInput.trim()) {
+                            handleNaturalLanguage(naturalLanguageInput)
+                            setNaturalLanguageInput('')
+                          }
+                        }}
+                        disabled={isExecuting || !naturalLanguageInput.trim()}
+                        size="small"
+                      >
+                        <SendIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: theme.palette.primary.main
+                    }
+                  }
+                }}
+              />
+              <Button
+                variant="contained"
+                onClick={() => {
+                  if (naturalLanguageInput.trim()) {
+                    handleNaturalLanguage(naturalLanguageInput)
+                    setNaturalLanguageInput('')
+                  }
+                }}
+                disabled={isExecuting || !naturalLanguageInput.trim()}
+                startIcon={<SendIcon />}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  py: 1.5,
+                  borderRadius: 2,
+                  background: `linear-gradient(135deg, ${theme.palette.secondary.main}, ${theme.palette.secondary.dark})`,
+                  '&:hover': {
+                    background: `linear-gradient(135deg, ${theme.palette.secondary.dark}, ${theme.palette.secondary.main})`,
+                    transform: 'translateY(-1px)',
+                    boxShadow: `0 4px 12px ${alpha(theme.palette.secondary.main, 0.3)}`
+                  },
+                  '&:disabled': {
+                    background: theme.palette.grey[300],
+                    color: theme.palette.grey[500]
+                  },
+                  transition: 'all 0.2s ease-in-out'
+                }}
+              >
+                Ask AI
+              </Button>
+            </Box>
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+
+          {/* Manual Command Input */}
+          <Box sx={{ mb: 3 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                fontWeight: 600,
+                color: 'text.primary',
+                mb: 2,
+                fontSize: '1rem'
+              }}
+            >
+              Manual Command
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <TextField
+                fullWidth
+                placeholder="Command (e.g., createShape)"
+                value={manualCommandInput}
+                onChange={e => setManualCommandInput(e.target.value)}
+                onKeyPress={e => {
+                  if (e.key === 'Enter' && manualCommandInput.trim()) {
+                    handleExecuteCommand(manualCommandInput, {})
+                    setManualCommandInput('')
+                  }
+                }}
+                disabled={isExecuting}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: theme.palette.success.main
+                    }
+                  }
+                }}
+              />
+              <Button
+                variant="contained"
+                onClick={() => {
+                  if (manualCommandInput.trim()) {
+                    handleExecuteCommand(manualCommandInput, {})
+                    setManualCommandInput('')
+                  }
+                }}
+                disabled={isExecuting || !manualCommandInput.trim()}
+                startIcon={<PlayIcon />}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  py: 1.5,
+                  borderRadius: 2,
+                  background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
+                  '&:hover': {
+                    background: `linear-gradient(135deg, ${theme.palette.success.dark}, ${theme.palette.success.main})`,
+                    transform: 'translateY(-1px)',
+                    boxShadow: `0 4px 12px ${alpha(theme.palette.success.main, 0.3)}`
+                  },
+                  '&:disabled': {
+                    background: theme.palette.grey[300],
+                    color: theme.palette.grey[500]
+                  },
+                  transition: 'all 0.2s ease-in-out'
+                }}
+              >
+                Execute Command
+              </Button>
+            </Box>
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+
+          {/* Tips */}
+          <Card
+            sx={{
+              background: `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.05)}, ${alpha(theme.palette.warning.main, 0.02)})`,
+              border: `1px solid ${alpha(theme.palette.warning.main, 0.1)}`,
+              borderRadius: 2
             }}
           >
-            Execute Command
-          </button>
-        </div>
-      </div>
-
-      {/* Info */}
-      <div
-        style={{
-          backgroundColor: '#F9FAFB',
-          padding: '12px',
-          borderRadius: '8px',
-          fontSize: '12px',
-          color: '#6B7280',
-          lineHeight: '1.4'
-        }}
-      >
-        <strong>💡 Tips:</strong>
-        <ul style={{ margin: '8px 0 0 0', paddingLeft: '16px' }}>
-          <li>Use natural language: "create a blue rectangle"</li>
-          <li>Click sample buttons for quick commands</li>
-          <li>Check browser console for detailed logs</li>
-          <li>Commands will create shapes on the canvas</li>
-          <li>All operations sync in real-time</li>
-        </ul>
-      </div>
-    </div>
+            <CardContent sx={{ p: 2 }}>
+              <Box
+                sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}
+              >
+                <LightbulbIcon
+                  sx={{
+                    fontSize: 20,
+                    color: theme.palette.warning.main
+                  }}
+                />
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    fontWeight: 600,
+                    color: 'text.primary',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  Tips
+                </Typography>
+              </Box>
+              <List dense sx={{ py: 0 }}>
+                {[
+                  'Use natural language: "create a blue rectangle"',
+                  'Click sample buttons for quick commands',
+                  'Check browser console for detailed logs',
+                  'Commands will create shapes on the canvas',
+                  'All operations sync in real-time'
+                ].map((tip, index) => (
+                  <ListItem key={index} sx={{ py: 0.25, px: 0 }}>
+                    <ListItemText
+                      primary={
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontSize: '0.75rem',
+                            color: 'text.secondary',
+                            lineHeight: 1.4
+                          }}
+                        >
+                          • {tip}
+                        </Typography>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </CardContent>
+          </Card>
+        </Box>
+      </Paper>
+    </Slide>
   )
 }
 

@@ -1,9 +1,21 @@
-import { Users } from 'lucide-react'
+import { People as PeopleIcon } from '@mui/icons-material'
+import {
+  alpha,
+  Avatar,
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  Fade,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Typography,
+  useTheme
+} from '@mui/material'
 import React from 'react'
 import type { UserPresence } from '../lib/types'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { Badge } from './ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 
 export interface PresenceListProps {
   presence: UserPresence[]
@@ -21,6 +33,8 @@ const PresenceList: React.FC<PresenceListProps> = ({
   currentUser,
   className = ''
 }) => {
+  const theme = useTheme()
+
   // Filter out current user and users without userId, then sort by display name
   const otherUsers = presence
     .filter(p => p.userId && p.userId !== currentUserId)
@@ -56,78 +70,228 @@ const PresenceList: React.FC<PresenceListProps> = ({
 
   if (allUsers.length === 0) {
     return (
-      <Card className={className}>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Online
-            </CardTitle>
-            <Badge
-              variant="secondary"
-              className="bg-green-100 text-green-700 hover:bg-green-100"
+      <Fade in timeout={500}>
+        <Card
+          sx={{
+            minWidth: 200,
+            maxWidth: 280,
+            borderRadius: 3,
+            background: `rgba(255, 255, 255, 0.95)`,
+            backdropFilter: 'blur(10px)',
+            border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+            boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.1)}`
+          }}
+          className={className}
+        >
+          <CardContent sx={{ p: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 2
+              }}
             >
-              0
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="text-center py-4">
-            <p className="text-sm text-muted-foreground">No users online</p>
-          </div>
-        </CardContent>
-      </Card>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <PeopleIcon
+                  sx={{
+                    fontSize: 18,
+                    color: theme.palette.text.secondary
+                  }}
+                />
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    fontWeight: 600,
+                    color: 'text.primary',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  Online
+                </Typography>
+              </Box>
+              <Chip
+                label="0"
+                size="small"
+                sx={{
+                  height: 20,
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  bgcolor: alpha(theme.palette.success.main, 0.1),
+                  color: theme.palette.success.main,
+                  border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`
+                }}
+              />
+            </Box>
+            <Box
+              sx={{
+                textAlign: 'center',
+                py: 2
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: '0.875rem'
+                }}
+              >
+                No users online
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+      </Fade>
     )
   }
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Online
-          </CardTitle>
-          <Badge
-            variant="secondary"
-            className="bg-green-100 text-green-700 hover:bg-green-100"
+    <Fade in timeout={500}>
+      <Card
+        sx={{
+          minWidth: 200,
+          maxWidth: 280,
+          borderRadius: 3,
+          background: `rgba(255, 255, 255, 0.95)`,
+          backdropFilter: 'blur(10px)',
+          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.1)}`
+        }}
+        className={className}
+      >
+        <CardContent sx={{ p: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              mb: 2
+            }}
           >
-            {allUsers.length}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className="space-y-3">
-          {allUsers.map(user => (
-            <div key={user.userId} className="flex items-center space-x-3">
-              <div className="relative">
-                <Avatar
-                  className="h-6 w-6"
-                  style={{ width: '20px', height: '20px' }}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <PeopleIcon
+                sx={{
+                  fontSize: 18,
+                  color: theme.palette.text.secondary
+                }}
+              />
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontWeight: 600,
+                  color: 'text.primary',
+                  fontSize: '0.875rem'
+                }}
+              >
+                Online
+              </Typography>
+            </Box>
+            <Chip
+              label={allUsers.length}
+              size="small"
+              sx={{
+                height: 20,
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                bgcolor: alpha(theme.palette.success.main, 0.1),
+                color: theme.palette.success.main,
+                border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`
+              }}
+            />
+          </Box>
+
+          <List sx={{ py: 0 }}>
+            {allUsers.map((user, index) => (
+              <Fade
+                key={user.userId}
+                in
+                timeout={600 + index * 100}
+                style={{ transitionDelay: `${index * 50}ms` }}
+              >
+                <ListItem
+                  sx={{
+                    px: 0,
+                    py: 0.5,
+                    '&:hover': {
+                      bgcolor: alpha(theme.palette.primary.main, 0.04),
+                      borderRadius: 1
+                    },
+                    transition: 'all 0.2s ease-in-out'
+                  }}
                 >
-                  <AvatarImage
-                    src={user.avatar || undefined}
-                    alt={user.displayName || 'User avatar'}
-                    onError={() => {
-                      // Silently handle avatar load failures - this is common with Google profile pictures
-                      // due to rate limiting (429 errors) and CORS restrictions
-                    }}
+                  <ListItemAvatar sx={{ minWidth: 36 }}>
+                    <Box sx={{ position: 'relative' }}>
+                      <Avatar
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          bgcolor: user.isCurrentUser
+                            ? theme.palette.primary.main
+                            : theme.palette.grey[400],
+                          color: user.isCurrentUser
+                            ? theme.palette.primary.contrastText
+                            : theme.palette.grey[100]
+                        }}
+                        src={user.avatar || undefined}
+                        alt={user.displayName || 'User avatar'}
+                        onError={() => {
+                          // Silently handle avatar load failures - this is common with Google profile pictures
+                          // due to rate limiting (429 errors) and CORS restrictions
+                        }}
+                      >
+                        {getInitials(user.displayName || 'Anonymous')}
+                      </Avatar>
+                      {/* Online indicator */}
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          bottom: -1,
+                          right: -1,
+                          width: 8,
+                          height: 8,
+                          bgcolor: theme.palette.success.main,
+                          border: `2px solid ${theme.palette.background.paper}`,
+                          borderRadius: '50%',
+                          animation: 'pulse 2s ease-in-out infinite',
+                          '@keyframes pulse': {
+                            '0%': { opacity: 1 },
+                            '50%': { opacity: 0.7 },
+                            '100%': { opacity: 1 }
+                          }
+                        }}
+                      />
+                    </Box>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontSize: '0.875rem',
+                          fontWeight: user.isCurrentUser ? 600 : 500,
+                          color: user.isCurrentUser
+                            ? theme.palette.primary.main
+                            : 'text.primary',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {user.isCurrentUser
+                          ? 'me'
+                          : user.displayName || 'Anonymous'}
+                      </Typography>
+                    }
                   />
-                  <AvatarFallback className="text-xs font-medium bg-primary text-primary-foreground">
-                    {getInitials(user.displayName || 'Anonymous')}
-                  </AvatarFallback>
-                </Avatar>
-                {/* Online indicator */}
-                <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-500 border border-background rounded-full"></div>
-              </div>
-              <span className="text-sm font-medium text-foreground truncate">
-                {user.isCurrentUser ? 'me' : user.displayName || 'Anonymous'}
-              </span>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+                </ListItem>
+              </Fade>
+            ))}
+          </List>
+        </CardContent>
+      </Card>
+    </Fade>
   )
 }
 

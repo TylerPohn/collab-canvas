@@ -17,6 +17,7 @@ export interface AIOperation {
   status: 'pending' | 'executing' | 'completed' | 'failed'
   result?: any
   error?: string
+  timestamp: number
 }
 
 export interface AIContext {

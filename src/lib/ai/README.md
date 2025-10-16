@@ -118,13 +118,7 @@ The AI agent integrates seamlessly with the existing canvas system:
 
 ## Demo Component
 
-Use the `AIAgentDemo` component to test AI agent functionality:
-
-```typescript
-import { AIAgentDemo } from '../lib/ai'
-
-<AIAgentDemo canvasId="your-canvas-id" />
-```
+The AI agent functionality is available through the `useAIAgent` hook and can be integrated into any component as needed.
 
 ## Future Enhancements
 

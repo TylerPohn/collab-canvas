@@ -23,6 +23,3 @@ export type {
 
 // React Hook
 export { useAIAgent } from '../../hooks/useAIAgent'
-
-// Demo Component
-export { default as AIAgentDemo } from '../../components/AIAgentDemo'

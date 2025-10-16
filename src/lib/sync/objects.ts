@@ -772,13 +772,23 @@ export class ObjectSyncService {
     if (type === 'rect') {
       const rectData = {
         ...shapeData,
-        width: cleanOptions.size?.width || 100,
-        height: cleanOptions.size?.height || 60
+        width:
+          cleanOptions.size &&
+          typeof cleanOptions.size === 'object' &&
+          'width' in cleanOptions.size
+            ? cleanOptions.size.width
+            : 100,
+        height:
+          cleanOptions.size &&
+          typeof cleanOptions.size === 'object' &&
+          'height' in cleanOptions.size
+            ? cleanOptions.size.height
+            : 60
       }
       // Ensure no undefined values
       Object.keys(rectData).forEach(key => {
-        if (rectData[key] === undefined) {
-          delete rectData[key]
+        if ((rectData as any)[key] === undefined) {
+          delete (rectData as any)[key]
         }
       })
       return this.createObject(canvasId, rectData as any, userId)
@@ -789,8 +799,8 @@ export class ObjectSyncService {
       }
       // Ensure no undefined values
       Object.keys(circleData).forEach(key => {
-        if (circleData[key] === undefined) {
-          delete circleData[key]
+        if ((circleData as any)[key] === undefined) {
+          delete (circleData as any)[key]
         }
       })
       const shape = await this.createObject(canvasId, circleData as any, userId)
@@ -804,8 +814,8 @@ export class ObjectSyncService {
       }
       // Ensure no undefined values
       Object.keys(textData).forEach(key => {
-        if (textData[key] === undefined) {
-          delete textData[key]
+        if ((textData as any)[key] === undefined) {
+          delete (textData as any)[key]
         }
       })
       return this.createObject(canvasId, textData as any, userId)
@@ -983,7 +993,7 @@ export class ObjectSyncService {
 
     let currentY = position.y
 
-    // Create form container
+    // Create form container (with lower zIndex to appear behind fields)
     const containerHeight = fields.length * 60 + 40 // 60px per field + padding
     shapes.push({
       type: 'rect',
@@ -994,7 +1004,8 @@ export class ObjectSyncService {
       fill: finalStyling.backgroundColor,
       stroke: finalStyling.borderColor,
       strokeWidth: finalStyling.borderWidth,
-      cornerRadius: finalStyling.borderRadius
+      cornerRadius: finalStyling.borderRadius,
+      zIndex: 0 // Ensure container appears behind form fields
     })
 
     // Create form fields
@@ -1008,7 +1019,8 @@ export class ObjectSyncService {
         fontSize: 14,
         fill: finalStyling.textColor,
         fontFamily: 'Arial',
-        fontWeight: 'normal'
+        fontWeight: 'normal',
+        zIndex: 1 // Ensure labels appear above container
       })
 
       // Input field
@@ -1021,7 +1033,8 @@ export class ObjectSyncService {
         fill: '#FFFFFF',
         stroke: finalStyling.borderColor,
         strokeWidth: finalStyling.borderWidth,
-        cornerRadius: finalStyling.borderRadius
+        cornerRadius: finalStyling.borderRadius,
+        zIndex: 1 // Ensure input fields appear above container
       })
 
       // Placeholder text
@@ -1034,7 +1047,8 @@ export class ObjectSyncService {
           fontSize: 12,
           fill: '#9CA3AF',
           fontFamily: 'Arial',
-          fontWeight: 'normal'
+          fontWeight: 'normal',
+          zIndex: 2 // Ensure placeholder text appears above input fields
         })
       }
 
@@ -1079,7 +1093,7 @@ export class ObjectSyncService {
     const navWidth = items.length * itemWidth + finalStyling.padding * 2
     const navHeight = 50
 
-    // Create navigation container
+    // Create navigation container (with lower zIndex to appear behind text)
     shapes.push({
       type: 'rect',
       x: position.x,
@@ -1089,7 +1103,8 @@ export class ObjectSyncService {
       fill: finalStyling.backgroundColor,
       stroke: finalStyling.borderColor,
       strokeWidth: finalStyling.borderWidth,
-      cornerRadius: finalStyling.borderRadius
+      cornerRadius: finalStyling.borderRadius,
+      zIndex: 0 // Ensure container appears behind navigation text
     })
 
     // Create navigation items
@@ -1107,7 +1122,8 @@ export class ObjectSyncService {
         fill: finalStyling.textColor,
         fontFamily: 'Arial',
         fontWeight: 'normal',
-        textAlign: 'center'
+        textAlign: 'center',
+        zIndex: 1 // Ensure navigation text appears above container
       })
     }
 

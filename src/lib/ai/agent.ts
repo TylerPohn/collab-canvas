@@ -10,11 +10,9 @@ import { validateAICommand } from './validation'
 export class AIAgentService {
   private objectSync: any
   private contextManager = getAIContextManager()
-  private queryClient: any
   private aiTools: any
 
   constructor(queryClient: any) {
-    this.queryClient = queryClient
     this.objectSync = getObjectSyncService(queryClient)
     this.aiTools = createAITools(queryClient)
   }
@@ -43,8 +41,7 @@ export class AIAgentService {
       throw new Error('Invalid or potentially dangerous parameters detected.')
     }
 
-    const sessionId = `${canvasId}-${userId}-${Date.now()}`
-    const context = await this.getOrCreateContext(canvasId, userId, sessionId)
+    const context = await this.getOrCreateContext(canvasId, userId)
 
     // Validate command
     const validationResult = await validateAICommand(command, parameters)
@@ -86,11 +83,10 @@ export class AIAgentService {
       throw new Error('Rate limit exceeded. Please slow down your AI requests.')
     }
 
-    const sessionId = `${canvasId}-${userId}-${Date.now()}`
-    const context = await this.getOrCreateContext(canvasId, userId, sessionId)
+    const context = await this.getOrCreateContext(canvasId, userId)
 
     // Parse complex command into steps
-    const steps = await this.parseComplexCommand(command, parameters, context)
+    const steps = await this.parseComplexCommand(command, parameters)
 
     // Execute steps sequentially
     for (const step of steps) {
@@ -111,10 +107,7 @@ export class AIAgentService {
   }
 
   // Get current canvas state for AI context
-  async getCanvasState(
-    canvasId: string,
-    userId: string
-  ): Promise<AICanvasState> {
+  async getCanvasState(canvasId: string): Promise<AICanvasState> {
     const shapes = await this.objectSync.getAllObjects(canvasId)
     // Get viewport from context or default
     const viewport: ViewportState = { x: 0, y: 0, scale: 1 }
@@ -132,14 +125,12 @@ export class AIAgentService {
 
   private async getOrCreateContext(
     canvasId: string,
-    userId: string,
-    sessionId: string
+    userId: string
   ): Promise<AIContext> {
     return await this.contextManager.getContext(canvasId, userId)
   }
 
   private determineCommandType(command: string): AICommand['type'] {
-    const createKeywords = ['create', 'add', 'make', 'build']
     const manipulateKeywords = ['move', 'resize', 'rotate', 'change']
     const layoutKeywords = ['arrange', 'align', 'space', 'grid', 'row']
     const complexKeywords = ['form', 'navigation', 'layout', 'design']
@@ -161,8 +152,7 @@ export class AIAgentService {
 
   private async parseComplexCommand(
     command: string,
-    parameters: Record<string, any>,
-    context: AIContext
+    parameters: Record<string, any>
   ): Promise<AIOperation[]> {
     // This will be implemented to parse complex commands into steps
     // For now, return a simple operation based on command type
@@ -176,7 +166,8 @@ export class AIAgentService {
           commandId: `cmd-${Date.now()}`,
           type: 'createLoginForm',
           parameters,
-          status: 'pending'
+          status: 'pending',
+          timestamp: Date.now()
         }
       ]
     } else if (
@@ -189,7 +180,8 @@ export class AIAgentService {
           commandId: `cmd-${Date.now()}`,
           type: 'createNavigationBar',
           parameters,
-          status: 'pending'
+          status: 'pending',
+          timestamp: Date.now()
         }
       ]
     } else {
@@ -200,7 +192,8 @@ export class AIAgentService {
           commandId: `cmd-${Date.now()}`,
           type: 'create',
           parameters,
-          status: 'pending'
+          status: 'pending',
+          timestamp: Date.now()
         }
       ]
     }
@@ -231,7 +224,8 @@ export class AIAgentService {
       commandId: command.id,
       type: command.description,
       parameters: command.parameters,
-      status: 'executing'
+      status: 'executing',
+      timestamp: Date.now()
     }
 
     try {

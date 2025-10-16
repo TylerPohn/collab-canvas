@@ -3,6 +3,10 @@ import { useCallback, useState } from 'react'
 import { AIAgentService } from '../lib/ai/agent'
 import type { AICommand } from '../lib/ai/types'
 
+interface CommandParameters {
+  [key: string]: string | number | boolean | object | undefined
+}
+
 export function useAIAgent(canvasId: string, userId: string) {
   const queryClient = useQueryClient()
   const [isExecuting, setIsExecuting] = useState(false)
@@ -12,7 +16,7 @@ export function useAIAgent(canvasId: string, userId: string) {
   const aiAgent = new AIAgentService(queryClient)
 
   const executeCommand = useCallback(
-    async (command: string, parameters: Record<string, any>) => {
+    async (command: string, parameters: CommandParameters) => {
       setIsExecuting(true)
       setError(null)
       try {
@@ -37,7 +41,7 @@ export function useAIAgent(canvasId: string, userId: string) {
   )
 
   const executeComplexCommand = useCallback(
-    async (command: string, parameters: Record<string, any>) => {
+    async (command: string, parameters: CommandParameters) => {
       setIsExecuting(true)
       setError(null)
       try {
@@ -63,13 +67,13 @@ export function useAIAgent(canvasId: string, userId: string) {
 
   const getCanvasState = useCallback(async () => {
     try {
-      return await aiAgent.getCanvasState(canvasId, userId)
+      return await aiAgent.getCanvasState(canvasId)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       setError(errorMessage)
       throw err
     }
-  }, [aiAgent, canvasId, userId])
+  }, [aiAgent, canvasId])
 
   const processNaturalLanguage = useCallback(
     async (userInput: string) => {

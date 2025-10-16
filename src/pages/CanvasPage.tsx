@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import AIPanel from '../components/AIPanel'
 import CanvasStage from '../components/CanvasStage'
-import DesignPalette from '../components/DesignPalette'
+import DesignPaletteMUI from '../components/DesignPaletteMUI'
 import EmptyCanvasState from '../components/EmptyCanvasState'
 import PresenceList from '../components/PresenceList'
-import Toolbar, { type ToolType } from '../components/Toolbar'
+import ToolbarMUI, { type ToolType } from '../components/ToolbarMUI'
 import { useAuth } from '../hooks/useAuth'
 import { usePresence } from '../hooks/usePresence'
 import {
@@ -277,7 +277,7 @@ const CanvasPage: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <Toolbar
+      <ToolbarMUI
         selectedTool={selectedTool}
         onToolSelect={handleToolSelect}
         onDelete={handleDelete}
@@ -361,7 +361,7 @@ const CanvasPage: React.FC = () => {
         )}
 
         {/* Design Palette */}
-        <DesignPalette
+        <DesignPaletteMUI
           isOpen={isDesignPaletteOpen}
           onToggle={handleToggleDesignPalette}
           shapes={shapes}

@@ -147,7 +147,10 @@ export function createAITools(queryClient: any) {
       description:
         'Create a new shape (rectangle, circle, or text) on the canvas',
       parameters: AIToolSchemas.createShape,
-      execute: async (params, context) => {
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.createShape>,
+        context: AIContext
+      ) => {
         console.log('🤖 createShape tool executing with params:', params)
         console.log('🤖 createShape tool context:', context)
 
@@ -177,7 +180,10 @@ export function createAITools(queryClient: any) {
       name: 'createText',
       description: 'Create a text element on the canvas',
       parameters: AIToolSchemas.createText,
-      execute: async (params, context) => {
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.createText>,
+        context: AIContext
+      ) => {
         const shape = await objectSync.createShapeWithDefaults(
           context.canvasId,
           'text',
@@ -198,7 +204,10 @@ export function createAITools(queryClient: any) {
       name: 'moveShape',
       description: 'Move a shape to a new position',
       parameters: AIToolSchemas.moveShape,
-      execute: async (params, context) => {
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.moveShape>,
+        context: AIContext
+      ) => {
         await objectSync.updateObject(
           context.canvasId,
           params.shapeId,
@@ -212,7 +221,10 @@ export function createAITools(queryClient: any) {
       name: 'resizeShape',
       description: 'Resize a shape',
       parameters: AIToolSchemas.resizeShape,
-      execute: async (params, context) => {
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.resizeShape>,
+        context: AIContext
+      ) => {
         const updates: any = {}
         if (params.size) {
           updates.width = params.size.width
@@ -234,7 +246,10 @@ export function createAITools(queryClient: any) {
       name: 'rotateShape',
       description: 'Rotate a shape by specified degrees',
       parameters: AIToolSchemas.rotateShape,
-      execute: async (params, context) => {
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.rotateShape>,
+        context: AIContext
+      ) => {
         await objectSync.updateObject(
           context.canvasId,
           params.shapeId,
@@ -248,7 +263,10 @@ export function createAITools(queryClient: any) {
       name: 'arrangeInGrid',
       description: 'Arrange shapes in a grid layout',
       parameters: AIToolSchemas.arrangeInGrid,
-      execute: async (params, context) => {
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.arrangeInGrid>,
+        context: AIContext
+      ) => {
         await objectSync.arrangeShapesInGrid(
           context.canvasId,
           params.shapeIds,
@@ -262,7 +280,10 @@ export function createAITools(queryClient: any) {
       name: 'arrangeInRow',
       description: 'Arrange shapes in a horizontal row',
       parameters: AIToolSchemas.arrangeInRow,
-      execute: async (params, context) => {
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.arrangeInRow>,
+        context: AIContext
+      ) => {
         await objectSync.arrangeShapesInRow(
           context.canvasId,
           params.shapeIds,
@@ -276,7 +297,10 @@ export function createAITools(queryClient: any) {
       name: 'createLoginForm',
       description: 'Create a login form with username and password fields',
       parameters: AIToolSchemas.createLoginForm,
-      execute: async (params, context) => {
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.createLoginForm>,
+        context: AIContext
+      ) => {
         const shapes = await objectSync.createFormLayout(
           context.canvasId,
           {
@@ -305,7 +329,10 @@ export function createAITools(queryClient: any) {
       name: 'createNavigationBar',
       description: 'Create a navigation bar with menu items',
       parameters: AIToolSchemas.createNavigationBar,
-      execute: async (params, context) => {
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.createNavigationBar>,
+        context: AIContext
+      ) => {
         const shapes = await objectSync.createNavigationBar(
           context.canvasId,
           {
@@ -322,7 +349,10 @@ export function createAITools(queryClient: any) {
       name: 'getCanvasState',
       description: 'Get the current state of the canvas',
       parameters: AIToolSchemas.getCanvasState,
-      execute: async (params, context) => {
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.getCanvasState>,
+        context: AIContext
+      ) => {
         const shapes = await objectSync.getAllObjects(context.canvasId)
         return {
           success: true,
@@ -339,7 +369,10 @@ export function createAITools(queryClient: any) {
       name: 'findShapes',
       description: 'Find shapes matching specified criteria',
       parameters: AIToolSchemas.findShapes,
-      execute: async (params, context) => {
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.findShapes>,
+        context: AIContext
+      ) => {
         const allShapes = await objectSync.getAllObjects(context.canvasId)
 
         let filteredShapes = allShapes
