@@ -5,18 +5,39 @@ interface UseCanvasShortcutsProps {
   onDelete: () => void
   onDuplicate: () => void
   onNudge: (direction: 'up' | 'down' | 'left' | 'right') => void
+  onToolSelect?: (tool: string) => void
 }
 
 export const useCanvasShortcuts = ({
   onDelete,
   onDuplicate,
-  onNudge
+  onNudge,
+  onToolSelect
 }: UseCanvasShortcutsProps) => {
   const { hasSelection } = useSelectionStore()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle shortcuts if we have a selection
+      // Handle tool selection shortcuts (always available)
+      if (onToolSelect && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const toolShortcuts: Record<string, string> = {
+          v: 'select',
+          h: 'pan',
+          r: 'rectangle',
+          c: 'circle',
+          t: 'text',
+          m: 'mermaid'
+        }
+
+        const tool = toolShortcuts[e.key.toLowerCase()]
+        if (tool) {
+          e.preventDefault()
+          onToolSelect(tool)
+          return
+        }
+      }
+
+      // Only handle other shortcuts if we have a selection
       if (!hasSelection()) return
 
       // Prevent default behavior for our shortcuts
@@ -71,5 +92,5 @@ export const useCanvasShortcuts = ({
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [hasSelection, onDelete, onDuplicate, onNudge])
+  }, [hasSelection, onDelete, onDuplicate, onNudge, onToolSelect])
 }

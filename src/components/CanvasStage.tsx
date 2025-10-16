@@ -12,6 +12,7 @@ import { useCanvasShortcuts } from '../hooks/useCanvasShortcuts'
 import { usePanZoom } from '../hooks/usePanZoom'
 import type {
   CircleShape as CircleShapeType,
+  MermaidShape as MermaidShapeType,
   RectangleShape as RectangleShapeType,
   Shape,
   TextShape as TextShapeType,
@@ -23,6 +24,7 @@ import { useDesignPaletteStore } from '../store/designPalette'
 import { useSelectionStore } from '../store/selection'
 import CursorLayer from './CursorLayer'
 import CircleShape from './Shapes/CircleShape'
+import MermaidShape from './Shapes/MermaidShape'
 import RectangleShape from './Shapes/RectangleShape'
 import TextShape from './Shapes/TextShape'
 import TextEditor from './TextEditor'
@@ -50,6 +52,7 @@ interface CanvasStageProps {
   onCursorMove: (cursor: { x: number; y: number }) => void
   onViewportChange?: (viewport: ViewportState) => void
   initialViewport?: ViewportState
+  onToolSelect?: (tool: ToolType) => void
 }
 
 const CanvasStage: React.FC<CanvasStageProps> = memo(
@@ -68,7 +71,8 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
     onShapeDuplicate,
     onCursorMove,
     onViewportChange,
-    initialViewport
+    initialViewport,
+    onToolSelect
   }) => {
     const stageRef = useRef<Konva.Stage>(null)
     const transformerRef = useRef<Konva.Transformer>(null)
@@ -78,7 +82,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
       y: number
     } | null>(null)
     const [previewShape, setPreviewShape] = useState<{
-      type: 'rect' | 'circle' | 'text'
+      type: 'rect' | 'circle' | 'text' | 'mermaid'
       x: number
       y: number
       width?: number
@@ -199,7 +203,10 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
     useCanvasShortcuts({
       onDelete: handleDelete,
       onDuplicate: handleDuplicate,
-      onNudge: handleNudge
+      onNudge: handleNudge,
+      onToolSelect: onToolSelect
+        ? (tool: string) => onToolSelect(tool as ToolType)
+        : undefined
     })
 
     // Handle stage mouse events
@@ -294,7 +301,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
 
               // Create preview shape based on tool
               let previewData: {
-                type: 'rect' | 'circle' | 'text'
+                type: 'rect' | 'circle' | 'text' | 'mermaid'
                 x: number
                 y: number
                 width?: number
@@ -780,6 +787,15 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
             fontSize: newFontSize,
             rotation: node.rotation()
           })
+        } else if (shape.type === 'mermaid') {
+          // For mermaid shapes, scale affects width and height
+          onShapeUpdate(id, {
+            x: node.x(),
+            y: node.y(),
+            width: Math.max(50, node.width() * scaleX),
+            height: Math.max(50, node.height() * scaleY),
+            rotation: node.rotation()
+          })
         }
       },
       [shapes, onShapeUpdate]
@@ -967,6 +983,13 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                         isEditing={editingTextId === shape.id}
                       />
                     )
+                  case 'mermaid':
+                    return (
+                      <MermaidShape
+                        {...commonProps}
+                        shape={shape as MermaidShapeType}
+                      />
+                    )
                   default:
                     return null
                 }
@@ -1012,6 +1035,19 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                     dash={[3, 3]}
                     listening={false}
                     fontFamily="Inter, system-ui, sans-serif"
+                  />
+                )}
+                {previewShape.type === 'mermaid' && (
+                  <Rect
+                    x={previewShape.x}
+                    y={previewShape.y}
+                    width={previewShape.width || 0}
+                    height={previewShape.height || 0}
+                    fill="rgba(168, 85, 247, 0.3)"
+                    stroke="#a855f7"
+                    strokeWidth={2}
+                    dash={[5, 5]}
+                    listening={false}
                   />
                 )}
               </>

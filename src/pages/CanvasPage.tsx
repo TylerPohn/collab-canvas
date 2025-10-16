@@ -2,9 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react'
 import AIPanel from '../components/AIPanel'
 import CanvasStage from '../components/CanvasStage'
 import DesignPaletteMUI from '../components/DesignPaletteMUI'
-import EmptyCanvasState from '../components/EmptyCanvasState'
 import PresenceList from '../components/PresenceList'
-import ToolbarMUI, { type ToolType } from '../components/ToolbarMUI'
+import ToolbarMUI from '../components/ToolbarMUI'
 import { useAuth } from '../hooks/useAuth'
 import { usePresence } from '../hooks/usePresence'
 import {
@@ -16,6 +15,7 @@ import {
 } from '../hooks/useShapes'
 import { useToast } from '../hooks/useToast'
 import type { Shape } from '../lib/types'
+import { type ToolType } from '../lib/types'
 import { useSelectionStore } from '../store/selection'
 
 const CanvasPage: React.FC = () => {
@@ -24,7 +24,8 @@ const CanvasPage: React.FC = () => {
   const [isDesignPaletteOpen, setIsDesignPaletteOpen] = useState(true)
   const [isAIOpen, setIsAIOpen] = useState(false)
 
-  const { selectedIds, hasSelection } = useSelectionStore()
+  const { selectedIds, hasSelection, clearSelection, selectShape } =
+    useSelectionStore()
   const { user } = useAuth()
   const { showError, showSuccess } = useToast()
 
@@ -275,8 +276,79 @@ const CanvasPage: React.FC = () => {
     }
   }
 
+  // Handle Mermaid import
+  const handleImportMermaid = useCallback(
+    async (mermaidCode: string, diagramType: string) => {
+      if (!user?.uid) return
+
+      try {
+        // Clear any existing selections
+        clearSelection()
+
+        // Render the Mermaid diagram to get actual dimensions
+        const { mermaidRenderer } = await import('../lib/mermaid/renderer')
+        const renderResult = await mermaidRenderer.renderDiagram(mermaidCode)
+
+        // Use actual dimensions from Mermaid render result
+        const actualWidth = Math.max(200, renderResult.width) // Minimum 200px width
+        const actualHeight = Math.max(150, renderResult.height) // Minimum 150px height
+
+        // Calculate position for the imported diagram (center of viewport)
+        const centerX = canvasSize.width / 2 - actualWidth / 2
+        const centerY = canvasSize.height / 2 - actualHeight / 2
+
+        // Calculate zIndex for new shape (highest existing zIndex + 1)
+        const maxZIndex = shapes.reduce(
+          (max, shape) => Math.max(max, shape.zIndex || 0),
+          0
+        )
+        const newZIndex = maxZIndex + 1
+
+        const mermaidShape = {
+          type: 'mermaid' as const,
+          x: centerX,
+          y: centerY,
+          width: actualWidth,
+          height: actualHeight,
+          mermaidCode,
+          diagramType,
+          renderedSvg: renderResult.svg, // Cache the rendered SVG
+          fill: '#ffffff',
+          stroke: '#e5e7eb',
+          strokeWidth: 1,
+          rotation: 0,
+          zIndex: newZIndex
+        } as Omit<
+          Shape,
+          'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'
+        >
+
+        // Create the shape and get the created shape with ID
+        const createdShape = await createShape(mermaidShape)
+
+        // Select the newly created shape
+        selectShape(createdShape.id)
+
+        showSuccess('Mermaid diagram imported', 'Diagram added to canvas')
+      } catch (error) {
+        console.error('Failed to import Mermaid diagram:', error)
+        showError('Failed to import diagram', 'Please try again')
+      }
+    },
+    [
+      user?.uid,
+      canvasSize,
+      shapes,
+      createShape,
+      showSuccess,
+      showError,
+      clearSelection,
+      selectShape
+    ]
+  )
+
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       <ToolbarMUI
         selectedTool={selectedTool}
         onToolSelect={handleToolSelect}
@@ -288,6 +360,7 @@ const CanvasPage: React.FC = () => {
         isDesignPaletteOpen={isDesignPaletteOpen}
         onToggleAI={() => setIsAIOpen(!isAIOpen)}
         isAIOpen={isAIOpen}
+        onImportMermaid={handleImportMermaid}
       />
 
       <div className="flex-1 relative">
@@ -348,15 +421,8 @@ const CanvasPage: React.FC = () => {
               onCursorMove={updateCursor}
               onViewportChange={saveViewport}
               initialViewport={restoreViewport()}
+              onToolSelect={handleToolSelect}
             />
-
-            {/* Show empty state when no shapes exist */}
-            {shapes.length === 0 && (
-              <EmptyCanvasState
-                selectedTool={selectedTool}
-                onGetStarted={() => setSelectedTool('rectangle')}
-              />
-            )}
           </div>
         )}
 

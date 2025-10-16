@@ -1,4 +1,5 @@
 import {
+  AccountTree,
   ContentCopy,
   Delete,
   Info,
@@ -21,9 +22,16 @@ import {
   Typography,
   useTheme
 } from '@mui/material'
-import React from 'react'
+import React, { useState } from 'react'
+import MermaidImportDialog from './MermaidImportDialog'
 
-export type ToolType = 'select' | 'pan' | 'rectangle' | 'circle' | 'text'
+export type ToolType =
+  | 'select'
+  | 'pan'
+  | 'rectangle'
+  | 'circle'
+  | 'text'
+  | 'mermaid'
 
 interface ToolbarMUIProps {
   selectedTool: ToolType
@@ -36,6 +44,7 @@ interface ToolbarMUIProps {
   isDesignPaletteOpen?: boolean
   onToggleAI?: () => void
   isAIOpen?: boolean
+  onImportMermaid?: (mermaidCode: string, diagramType: string) => void
 }
 
 const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
@@ -48,9 +57,11 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
   onToggleDesignPalette,
   isDesignPaletteOpen = false,
   onToggleAI,
-  isAIOpen = false
+  isAIOpen = false,
+  onImportMermaid
 }) => {
   const theme = useTheme()
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
 
   const tools: {
     type: ToolType
@@ -99,6 +110,12 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
   const getToolInfo = () => {
     const tool = tools.find(t => t.type === selectedTool)
     return tool ? tool.description : ''
+  }
+
+  const handleImportMermaid = (mermaidCode: string, diagramType: string) => {
+    if (onImportMermaid) {
+      onImportMermaid(mermaidCode, diagramType)
+    }
   }
 
   return (
@@ -242,6 +259,32 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
           </Tooltip>
         </Box>
 
+        {/* Import Mermaid Button */}
+        {onImportMermaid && (
+          <>
+            <Divider orientation="vertical" flexItem />
+            <Tooltip title="Import Mermaid Diagram" arrow>
+              <IconButton
+                onClick={() => setIsImportDialogOpen(true)}
+                sx={{
+                  width: 36,
+                  height: 36,
+                  color: theme.palette.text.secondary,
+                  border: `1px solid ${theme.palette.divider}`,
+                  borderRadius: 1,
+                  '&:hover': {
+                    backgroundColor: theme.palette.action.hover,
+                    borderColor: theme.palette.primary.main
+                  },
+                  transition: 'all 0.2s ease-in-out'
+                }}
+              >
+                <AccountTree sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          </>
+        )}
+
         {/* Design Palette Toggle */}
         {onToggleDesignPalette && (
           <>
@@ -345,6 +388,15 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
           </Paper>
         </Box>
       </MUIToolbar>
+
+      {/* Mermaid Import Dialog */}
+      {onImportMermaid && (
+        <MermaidImportDialog
+          open={isImportDialogOpen}
+          onClose={() => setIsImportDialogOpen(false)}
+          onImport={handleImportMermaid}
+        />
+      )}
     </AppBar>
   )
 }

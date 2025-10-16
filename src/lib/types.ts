@@ -1,5 +1,5 @@
 // Core shape types
-export type ShapeType = 'rect' | 'circle' | 'text'
+export type ShapeType = 'rect' | 'circle' | 'text' | 'mermaid'
 
 export interface ShapeBase {
   id: string
@@ -47,7 +47,16 @@ export interface TextShape extends ShapeBase {
   fontSize: number
 }
 
-export type Shape = RectangleShape | CircleShape | TextShape
+export interface MermaidShape extends ShapeBase {
+  type: 'mermaid'
+  mermaidCode: string
+  renderedSvg?: string
+  diagramType?: string
+  width: number
+  height: number
+}
+
+export type Shape = RectangleShape | CircleShape | TextShape | MermaidShape
 
 // Canvas metadata
 export interface CanvasMeta {
@@ -97,7 +106,13 @@ export interface SelectionState {
 }
 
 // Tool types for the toolbar
-export type ToolType = 'select' | 'pan' | 'rectangle' | 'circle' | 'text'
+export type ToolType =
+  | 'select'
+  | 'pan'
+  | 'rectangle'
+  | 'circle'
+  | 'text'
+  | 'mermaid'
 
 // Viewport state
 export interface ViewportState {

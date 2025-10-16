@@ -89,7 +89,14 @@ function App() {
                   path="/canvas"
                   element={
                     <ProtectedRoute>
-                      <CanvasPage />
+                      <Box
+                        sx={{
+                          height: 'calc(100vh - 64px)',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        <CanvasPage />
+                      </Box>
                     </ProtectedRoute>
                   }
                 />

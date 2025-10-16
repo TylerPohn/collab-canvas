@@ -342,7 +342,7 @@ const DesignPaletteMUI: React.FC<DesignPaletteMUIProps> = ({
     '#EC4899',
     '#6B7280',
     '#000000',
-    '#FFFFFF'
+    '#F3F4F6'
   ]
 
   const fontFamilyOptions = [

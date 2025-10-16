@@ -1535,16 +1535,173 @@ export class MermaidRenderer {
 
 ---
 
+## PR #20 — Replace Firestore Presence with Firebase Realtime Database (RTDB)
+
+**Goal:** Replace Firestore presence system with Firebase Realtime Database for better performance with high-frequency cursor updates and reduced costs.
+
+### Phase 1: RTDB Setup and Configuration (3 points)
+
+**Step 20.1**: Install and configure Firebase Realtime Database.
+
+- Files: `package.json`, `src/lib/firebase/client.ts`
+- Install: `firebase` (already installed, add RTDB import)
+- Add RTDB configuration to Firebase client
+- **Test**: RTDB connection works without errors
+
+**Step 20.2**: Create RTDB data structure and security rules.
+
+- Files: `firebase-database-rules.json` (new file)
+- Define presence data structure: `presence/{canvasId}/{userId}`
+- Implement security rules for presence data
+- **Test**: Security rules allow proper read/write access
+
+**Step 20.3**: Create RTDB presence service.
+
+- Files: `src/lib/sync/presence.ts` (replace existing)
+- Implement `PresenceService` class with methods:
+  - `joinCanvas(canvasId, userId, userInfo)`
+  - `leaveCanvas(canvasId, userId)`
+  - `updateCursor(canvasId, userId, position)`
+  - `subscribeToPresence(canvasId, callback)`
+- **Test**: Basic presence operations work with RTDB
+
+### Phase 2: Replace Firestore Presence Implementation (4 points)
+
+**Step 20.4**: Update presence hooks to use RTDB.
+
+- Files: `src/hooks/usePresence.ts`, `src/hooks/usePresenceQuery.ts`
+- Replace Firestore presence logic with RTDB implementation
+- Maintain existing API compatibility
+- **Test**: Existing presence functionality works with RTDB
+
+**Step 20.5**: Update presence components.
+
+- Files: `src/components/CursorLayer.tsx`, `src/components/PresenceList.tsx`
+- Update components to work with RTDB presence data structure
+- Ensure real-time cursor updates work properly
+- **Test**: Cursor tracking and presence list work correctly
+
+**Step 20.6**: Remove Firestore presence code.
+
+- Files: `src/lib/sync/presence.ts` (old Firestore version)
+- Delete old Firestore presence implementation
+- Clean up unused imports and dependencies
+- **Test**: No Firestore presence code remains
+
+### Phase 3: RTDB Integration and Testing (3 points)
+
+**Step 20.7**: Implement RTDB presence service with full functionality.
+
+- Files: `src/lib/sync/presence.ts`
+- Add heartbeat system using RTDB `onDisconnect` handlers
+- Implement cursor throttling (25ms) for RTDB
+- Add presence cleanup and user tracking
+- **Test**: RTDB presence works with multiple users
+
+**Step 20.8**: Add RTDB-specific error handling and reconnection.
+
+- Files: `src/lib/sync/presence.ts`
+- Implement RTDB connection monitoring
+- Add automatic reconnection logic
+- Handle RTDB-specific error scenarios
+- **Test**: RTDB handles disconnections and reconnections gracefully
+
+**Step 20.9**: Performance testing and optimization.
+
+- Files: `src/lib/sync/presence.ts`
+- Test with 5+ concurrent users and rapid cursor movement
+- Optimize RTDB queries and data structure
+- **Test**: RTDB performs better than Firestore for cursor updates
+
+### Phase 4: Documentation and Cleanup (2 points)
+
+**Step 20.10**: Update documentation.
+
+- Files: `docs/arch.md`, `docs/runtime-arch.md`, `README.md`
+- Update architecture diagrams to show RTDB for presence
+- Update security documentation for RTDB rules
+- **Test**: Documentation accurately reflects new architecture
+
+**Step 20.11**: Clean up Firestore presence references.
+
+- Files: `src/lib/firebase/firestore.ts`, `src/lib/types.ts`
+- Remove Firestore presence-related code and types
+- Update any remaining references to use RTDB
+- **Test**: No Firestore presence references remain
+
+### Implementation Details
+
+**RTDB Data Structure:**
+
+```json
+{
+  "presence": {
+    "canvasId": {
+      "userId": {
+        "userInfo": {
+          "displayName": "User Name",
+          "email": "user@example.com",
+          "avatar": "avatar_url"
+        },
+        "cursor": {
+          "x": 100,
+          "y": 200,
+          "timestamp": 1234567890
+        },
+        "lastSeen": 1234567890,
+        "isOnline": true
+      }
+    }
+  }
+}
+```
+
+**RTDB Security Rules:**
+
+```json
+{
+  "rules": {
+    "presence": {
+      "$canvasId": {
+        "$userId": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.uid == $userId",
+          ".validate": "newData.hasChildren(['userInfo', 'cursor', 'lastSeen'])"
+        }
+      }
+    }
+  }
+}
+```
+
+**Key Benefits of RTDB:**
+
+- **Lower Latency**: RTDB optimized for real-time updates
+- **Cost Efficiency**: RTDB charges per operation, not per document read
+- **Better Performance**: No document size limits for presence data
+- **Built-in Offline**: RTDB handles offline scenarios better
+- **Simpler Queries**: Real-time listeners without complex queries
+
+**Testing Scenarios:**
+
+1. **Multi-user Cursor Tracking**: 5+ users with rapid cursor movement
+2. **Connection Handling**: Network disconnections and reconnections
+3. **Performance**: RTDB vs Firestore latency comparison
+4. **Error Recovery**: RTDB-specific error scenarios
+5. **Presence Cleanup**: Users leaving and reconnecting
+
+---
+
 ## Optional (Post-MVP) — AI Agent Foundations (Stub Only)
 
 **Goal:** Prepare minimal API for future AI function-calling (no AI yet).
 
 **Checklist**
 
-- [ ] Define callable canvas API surface to be used later by AI.
+- [x] Define callable canvas API surface to be used later by AI.
   - Files: `src/lib/sync/objects.ts` (export high-level create/move/resize), `src/lib/types.ts`
 
-- [ ] Add `/src/lib/ai/tools.ts` with TypeScript signatures (no implementation yet).
+- [x] Add `/src/lib/ai/tools.ts` with TypeScript signatures (no implementation yet).
   - Files: `src/lib/ai/tools.ts`
 
 ---
