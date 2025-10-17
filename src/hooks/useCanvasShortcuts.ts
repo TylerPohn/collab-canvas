@@ -18,8 +18,23 @@ export const useCanvasShortcuts = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Handle tool selection shortcuts (always available)
-      if (onToolSelect && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      // Check if user is typing in a text input element
+      const activeElement = document.activeElement
+      const isTextInput =
+        activeElement &&
+        (activeElement.tagName === 'TEXTAREA' ||
+          activeElement.tagName === 'INPUT' ||
+          (activeElement as HTMLElement).contentEditable === 'true' ||
+          activeElement.getAttribute('contenteditable') === 'true')
+
+      // Handle tool selection shortcuts (only when not typing in text input)
+      if (
+        onToolSelect &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        !isTextInput
+      ) {
         const toolShortcuts: Record<string, string> = {
           v: 'select',
           h: 'pan',

@@ -27,7 +27,7 @@ direction TB
 F1[Auth - Google OAuth - currentUser - displayName - session management]
 F2[Firestore Canvas Documents - canvases/{id} with meta and objects subcollections]
 F3[Firestore Objects - canvases/{id}/objects/{objectId} - shapes with metadata - updatedAt/updatedBy tracking]
-F4[Firestore Presence - canvases/{id}/presence/{userId} - heartbeat and cursors - 30s intervals]
+F4[RTDB Presence - presence/{canvasId}/{userId} - heartbeat and cursors - 30s intervals]
 F5[Security - Rate limiting - Input sanitization - XSS protection - CSP headers]
 F6[Health Monitoring - Connection status - Firestore availability - Auth service status]
 end
@@ -45,7 +45,7 @@ A2 -->|Render and Input| A3
 A3 -->|mutations and queries| A5
 A5 -->|subscribe onSnapshot| F2
 A5 -->|write deltas create move resize rotate delete| F3
-A3 -->|cursor and presence updates throttled 50ms| F4
+A3 -->|cursor and presence updates throttled 25ms| F4
 F4 -->|presence feed and other cursors| A2
 F3 -->|object updates real-time with conflict resolution| A2
 

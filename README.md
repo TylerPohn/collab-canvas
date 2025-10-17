@@ -26,7 +26,7 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 - 🎯 **Smooth pan/zoom** with Konva.js (60fps)
 - 📱 **Responsive design** with Tailwind CSS
 - 🔄 **Real-time synchronization** with debounced updates (100ms)
-- 🎪 **Live cursor tracking** with 50ms throttling
+- 🎪 **Live cursor tracking** with 25ms throttling via RTDB
 - 💾 **Persistent canvas state** across sessions
 - 🎨 **Design palette** with shape styling and object information
 - 📝 **Advanced text formatting** with alignment, line height, and style controls
@@ -42,7 +42,7 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 - **Canvas**: Konva.js with React-Konva
 - **State Management**: React Query (TanStack Query) + Zustand
 - **Authentication**: Firebase Auth (Google OAuth)
-- **Database**: Firestore with real-time subscriptions
+- **Database**: Firestore for objects + Firebase Realtime Database for presence/cursors
 - **Routing**: React Router v7
 - **Build Tool**: Vite
 - **Linting**: ESLint + Prettier
@@ -96,6 +96,7 @@ A real-time collaborative canvas application built with React, TypeScript, and F
    VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
    VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
    VITE_FIREBASE_APP_ID=your_app_id
+   VITE_FIREBASE_RTDB_URL=https://your-project-id-default-rtdb.firebaseio.com/
    ```
 
 5. Start the development server:
@@ -257,10 +258,10 @@ src/
 1. In Firebase Console, go to Firestore Database
 2. Create database in production mode
 3. Set up security rules (see below)
-4. The app uses subcollections structure:
-   - `canvases/{canvasId}` - Canvas metadata
-   - `canvases/{canvasId}/objects/{objectId}` - Individual shapes
-   - `canvases/{canvasId}/presence/{userId}` - User presence and cursors
+4. The app uses hybrid database structure:
+   - **Firestore**: `canvases/{canvasId}` - Canvas metadata
+   - **Firestore**: `canvases/{canvasId}/objects/{objectId}` - Individual shapes
+   - **RTDB**: `presence/{canvasId}/{userId}` - User presence and cursors
 
 ### Security Rules
 
@@ -279,10 +280,36 @@ service cloud.firestore {
         allow read, write: if request.auth != null;
       }
 
-      // Presence within a canvas
-      match /presence/{userId} {
-        allow read: if request.auth != null;
-        allow write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```
+
+### Firebase Realtime Database Setup
+
+1. In Firebase Console, go to Realtime Database
+2. Create database in production mode
+3. Set up security rules (see below)
+4. Add the database URL to your environment variables:
+
+```env
+VITE_FIREBASE_RTDB_URL=https://your-project-id-default-rtdb.firebaseio.com/
+```
+
+### RTDB Security Rules
+
+Add these Realtime Database security rules:
+
+```json
+{
+  "rules": {
+    "presence": {
+      "$canvasId": {
+        "$userId": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.uid == $userId",
+          ".validate": "newData.hasChildren(['userInfo', 'cursor', 'lastSeen'])"
+        }
       }
     }
   }
@@ -402,14 +429,15 @@ service cloud.firestore {
 
 See `.env.example` for all required environment variables:
 
-| Variable                            | Description                  | Example                           |
-| ----------------------------------- | ---------------------------- | --------------------------------- |
-| `VITE_FIREBASE_API_KEY`             | Firebase API key             | `AIzaSyC...`                      |
-| `VITE_FIREBASE_AUTH_DOMAIN`         | Firebase auth domain         | `my-project.firebaseapp.com`      |
-| `VITE_FIREBASE_PROJECT_ID`          | Firebase project ID          | `my-project-12345`                |
-| `VITE_FIREBASE_STORAGE_BUCKET`      | Firebase storage bucket      | `my-project.appspot.com`          |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID | `123456789012`                    |
-| `VITE_FIREBASE_APP_ID`              | Firebase app ID              | `1:123456789012:web:abcdef123456` |
+| Variable                            | Description                    | Example                                           |
+| ----------------------------------- | ------------------------------ | ------------------------------------------------- |
+| `VITE_FIREBASE_API_KEY`             | Firebase API key               | `AIzaSyC...`                                      |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | Firebase auth domain           | `my-project.firebaseapp.com`                      |
+| `VITE_FIREBASE_PROJECT_ID`          | Firebase project ID            | `my-project-12345`                                |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | Firebase storage bucket        | `my-project.appspot.com`                          |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID   | `123456789012`                                    |
+| `VITE_FIREBASE_APP_ID`              | Firebase app ID                | `1:123456789012:web:abcdef123456`                 |
+| `VITE_FIREBASE_RTDB_URL`            | Firebase Realtime Database URL | `https://project-id-default-rtdb.firebaseio.com/` |
 
 ## 💻 Development
 
@@ -450,7 +478,7 @@ The app implements sophisticated real-time collaboration:
 
 - **Object Synchronization**: Shapes sync across users with optimistic updates
 - **Presence Tracking**: Live user presence with heartbeat system (30s intervals)
-- **Cursor Tracking**: Real-time cursor positions with 50ms throttling
+- **Cursor Tracking**: Real-time cursor positions with 25ms throttling via RTDB
 - **Conflict Resolution**: Last-write-wins with timestamp-based resolution using `updatedAt` and `updatedBy` fields, displayed in design palette
 - **Performance Optimization**: Debounced updates (100ms) and batch operations
 
@@ -482,6 +510,7 @@ The app implements sophisticated real-time collaboration:
    VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
    VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
    VITE_FIREBASE_APP_ID=your_app_id
+   VITE_FIREBASE_RTDB_URL=https://your-project-id-default-rtdb.firebaseio.com/
    ```
 
 4. **Configure Firebase for Production**:
@@ -507,14 +536,15 @@ The app implements sophisticated real-time collaboration:
 
 All environment variables must be prefixed with `VITE_` to be accessible in the browser:
 
-| Variable                            | Description                  | Example                           |
-| ----------------------------------- | ---------------------------- | --------------------------------- |
-| `VITE_FIREBASE_API_KEY`             | Firebase API key             | `AIzaSyC...`                      |
-| `VITE_FIREBASE_AUTH_DOMAIN`         | Firebase auth domain         | `my-project.firebaseapp.com`      |
-| `VITE_FIREBASE_PROJECT_ID`          | Firebase project ID          | `my-project-12345`                |
-| `VITE_FIREBASE_STORAGE_BUCKET`      | Firebase storage bucket      | `my-project.appspot.com`          |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID | `123456789012`                    |
-| `VITE_FIREBASE_APP_ID`              | Firebase app ID              | `1:123456789012:web:abcdef123456` |
+| Variable                            | Description                    | Example                                           |
+| ----------------------------------- | ------------------------------ | ------------------------------------------------- |
+| `VITE_FIREBASE_API_KEY`             | Firebase API key               | `AIzaSyC...`                                      |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | Firebase auth domain           | `my-project.firebaseapp.com`                      |
+| `VITE_FIREBASE_PROJECT_ID`          | Firebase project ID            | `my-project-12345`                                |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | Firebase storage bucket        | `my-project.appspot.com`                          |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID   | `123456789012`                                    |
+| `VITE_FIREBASE_APP_ID`              | Firebase app ID                | `1:123456789012:web:abcdef123456`                 |
+| `VITE_FIREBASE_RTDB_URL`            | Firebase Realtime Database URL | `https://project-id-default-rtdb.firebaseio.com/` |
 
 ### Firebase Production Setup
 
@@ -554,7 +584,7 @@ All environment variables must be prefixed with `VITE_` to be accessible in the 
 
 - **Canvas rendering**: Optimized with Konva.js for smooth 60fps
 - **Real-time updates**: Debounced and batched for efficiency
-- **Cursor tracking**: Throttled to 50ms intervals with interpolation
+- **Cursor tracking**: Throttled to 25ms intervals with interpolation via RTDB
 - **Shape updates**: Optimistic updates with conflict resolution
 - **React optimization**: Memoized components to prevent unnecessary re-renders
 - **Network optimization**: Smart batching and debouncing to minimize Firestore calls
@@ -602,7 +632,7 @@ npm run dev
 - **Canvas FPS**: ✅ Optimized for 60 FPS during all operations
 - **Sync Latency**:
   - ✅ Object changes: Debounced to 100ms
-  - ✅ Cursor positions: Throttled to 50ms
+  - ✅ Cursor positions: Throttled to 25ms via RTDB
 - **Load Capacity**: ⚠️ Theoretical capacity for 500+ shapes and 5+ concurrent users (not load tested)
 - **Memory Usage**: ✅ Stable memory usage with proper cleanup
 

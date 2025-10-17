@@ -51,7 +51,7 @@ const safeNumber = validateNumeric(userNumber, 0, 1000)
 
 ### 4. Authentication & Authorization
 
-**Implementation**: Firebase Authentication + Firestore Security Rules
+**Implementation**: Firebase Authentication + Firestore Security Rules + RTDB Security Rules
 
 - **Google OAuth**: Secure authentication via Firebase Auth
 - **Protected Routes**: All canvas operations require authentication
@@ -94,10 +94,25 @@ service cloud.firestore {
       match /objects/{objectId} {
         allow read, write: if request.auth != null;
       }
+    }
+  }
+}
+```
 
-      match /presence/{userId} {
-        allow read: if request.auth != null;
-        allow write: if request.auth != null && request.auth.uid == userId;
+## Firebase Realtime Database Security Rules
+
+**Current Rules** for presence data:
+
+```json
+{
+  "rules": {
+    "presence": {
+      "$canvasId": {
+        "$userId": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.uid == $userId",
+          ".validate": "newData.hasChildren(['userInfo', 'cursor', 'lastSeen'])"
+        }
       }
     }
   }
@@ -124,10 +139,6 @@ service cloud.firestore {
           request.auth.uid in get(/databases/$(database)/documents/canvases/$(canvasId)).data.collaborators;
       }
 
-      match /presence/{userId} {
-        allow read: if request.auth != null;
-        allow write: if request.auth != null && request.auth.uid == userId;
-      }
     }
   }
 }

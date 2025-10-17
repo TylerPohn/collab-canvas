@@ -97,7 +97,7 @@ end
         DPL --> |Firestore| FS_DB[Firestore Database]
         DPL --> |Canvas Documents| CD[Canvas Documents]
         DPL --> |Shape Objects| SO_DB[Shape Objects]
-        DPL --> |Presence Data| PD[Presence Data]
+        DPL --> |Presence Data| PD[RTDB Presence Data]
     end
 
     %% ========= REACT INTEGRATION LAYER =========

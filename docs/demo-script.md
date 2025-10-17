@@ -44,7 +44,7 @@ For conflict resolution, we show 'last edited by [name] at [time]' in the design
 
 _[Show simultaneous editing, conflict resolution, design palette updates]_
 
-Cursor tracking is throttled to 25ms for smooth real-time feel, and object updates are debounced to 50ms for optimal performance.
+Cursor tracking is throttled to 25ms via Firebase Realtime Database for smooth real-time feel, and object updates are debounced to 100ms for optimal performance.
 
 ## Productivity Features (30 seconds)
 
@@ -71,7 +71,7 @@ _[Demonstrate keyboard shortcuts, text editing, multi-selection, refresh to show
 - MUI components with Material Design for accessibility
 - DOMPurify for XSS protection and comprehensive input validation
 - Rate limiting and security audit logging
-- Debounced updates (50ms) and cursor throttling (25ms) for optimal performance
+- Debounced updates (100ms) and cursor throttling (25ms) via RTDB for optimal performance
 - Last-write-wins conflict resolution with visual feedback in design palette
 
 The system supports 500+ objects and 5+ concurrent users with enterprise-grade security. This foundation is ready to build AI features on top of.

@@ -51,7 +51,7 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 - **Real-time synchronization** across 2+ users via Firestore.
 - **React Query** for local state synchronization and optimistic updates.
 - **Multiplayer cursors** showing live position and user names.
-- **Presence awareness** (online user list) via Firestore heartbeat documents.
+- **Presence awareness** (online user list) via Firebase Realtime Database heartbeat system.
 - **Conflict resolution:** "Last write wins" approach documented with visual feedback in design palette.
 - **Persistent state:** canvas state saved and restored on reconnects.
 
@@ -83,6 +83,7 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 
 - **Firebase** (implemented):
   - **Firestore** for syncing canvas state with subcollections structure.
+  - **Firebase Realtime Database** for presence and cursor tracking.
   - **Firebase Auth** for Google OAuth authentication.
   - Built-in **WebSocket-like** sync eliminates manual socket management.
 
@@ -90,7 +91,7 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 
 - **Canvas Documents:** `canvases/{id}` containing metadata and viewport state.
 - **Objects Subcollection:** `canvases/{id}/objects/{objectId}` for individual shapes.
-- **Presence Subcollection:** `canvases/{id}/presence/{userId}` for user presence and cursors.
+- **RTDB Presence:** `presence/{canvasId}/{userId}` for user presence and cursors.
 
 ### **AI Integration (Post-MVP)**
 
@@ -112,7 +113,7 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 | **Conflict Resolution** | ✅ Implemented with last-write-wins          | Timestamp-based conflict resolution with `updatedAt` and `updatedBy` fields, displayed in design palette |
 | **Persistence**         | ✅ Canvas metadata and viewport persistence  | Canvas metadata stored in Firestore, viewport state persisted on changes                                 |
 | **Authentication UX**   | ✅ Smooth auth flow with loading states      | Loading spinners, auth state management, automatic redirects                                             |
-| **Real-time Features**  | ✅ Full presence and cursor tracking         | Heartbeat system (30s), cursor throttling, presence cleanup on disconnect                                |
+| **Real-time Features**  | ✅ Full presence and cursor tracking         | Heartbeat system (30s), cursor throttling (25ms), presence cleanup on disconnect via RTDB                |
 
 ---
 
@@ -121,7 +122,7 @@ Deliver a **deployed, real-time collaborative canvas** that enables users to:
 - **Canvas FPS:** ✅ Optimized rendering with Konva.js and React Query caching.
 - **Sync Speed:**
   - ✅ Object changes: Debounced to 100ms for smooth interaction
-  - ✅ Cursor positions: Throttled to 50ms for real-time feel
+  - ✅ Cursor positions: Throttled to 25ms via RTDB for real-time feel
 
 - **Load:** ⚠️ Theoretical capacity for 500+ objects and 5+ users (not load tested).
 - **Optimizations Implemented:**
