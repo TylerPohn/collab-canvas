@@ -985,7 +985,8 @@ export class ObjectSyncService {
       targetShapes.length
 
     const updates = []
-    let currentX = 0
+    const startX = targetShapes[0].x // Start from first shape's X position
+    let currentX = startX
 
     for (const shape of targetShapes) {
       updates.push({
@@ -1126,7 +1127,8 @@ export class ObjectSyncService {
       targetShapes.length
 
     const updates = []
-    let currentY = 0
+    const startY = targetShapes[0].y // Start from first shape's Y position
+    let currentY = startY
 
     for (const shape of targetShapes) {
       updates.push({

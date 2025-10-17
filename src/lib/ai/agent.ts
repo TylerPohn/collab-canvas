@@ -375,14 +375,27 @@ For layout commands (arrange, grid, row, column, space, align):
 For style commands (color, style):
 1. For changeColor: change fill, stroke, opacity, or blend mode of a specific shape
 2. For copyStyle: copy style properties from source shape to target shapes
-3. Always use hex color codes (e.g., #FF0000 for red, #00FF00 for green)
-4. For opacity: use values between 0 (transparent) and 1 (opaque)
-5. For blend modes: use supported Canvas 2D modes (normal, multiply, overlay, screen, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion)
+3. CRITICAL: When user says "copy style of X to Y":
+   - sourceShapeId = X (the shape to copy FROM)
+   - targetShapeIds = [Y] (the shape to copy TO)
+   - Example: "copy style of blue rectangle to circle" means:
+     * sourceShapeId = blue rectangle ID
+     * targetShapeIds = [circle ID]
+4. Always use hex color codes (e.g., #FF0000 for red, #00FF00 for green)
+5. For opacity: use values between 0 (transparent) and 1 (opaque)
+6. For blend modes: use supported Canvas 2D modes (normal, multiply, overlay, screen, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion)
 
 For duplication commands:
 1. For duplicateShape: create a copy of a shape with optional offset positioning
 2. Default offset is 50px right and 50px down if not specified
 3. Returns the new shape ID for reference
+
+CRITICAL: When findShapes returns 0 results:
+1. DO NOT proceed with empty shape IDs - this will cause validation errors
+2. Try using getCanvasState to see all available shapes on the canvas
+3. If the requested shape truly doesn't exist, inform the user that the shape was not found
+4. For copyStyle operations: ensure you have BOTH source and target shape IDs before proceeding
+5. If you can't find the required shapes, suggest creating them first or ask for clarification
 
 You can make multiple tool calls in sequence. If you need to find shapes first, make that call, then use the results to complete the layout action.`
         },
@@ -558,6 +571,7 @@ You can make multiple tool calls in sequence. If you need to find shapes first, 
       lowerInput.includes('arrange') ||
       lowerInput.includes('grid') ||
       lowerInput.includes('row') ||
+      lowerInput.includes('column') ||
       lowerInput.includes('space') ||
       lowerInput.includes('align') ||
       lowerInput.includes('layout') ||
@@ -565,9 +579,24 @@ You can make multiple tool calls in sequence. If you need to find shapes first, 
       lowerInput.includes('distribute') ||
       lowerInput.includes('line up') ||
       lowerInput.includes('position')
+    // NEW: Style commands that need shape lookup first
+    const isStyleCommand =
+      lowerInput.includes('copy style') ||
+      lowerInput.includes('change color') ||
+      lowerInput.includes('color') ||
+      lowerInput.includes('style')
+    // NEW: Duplication commands that need shape lookup first
+    const isDuplicationCommand =
+      lowerInput.includes('duplicate') ||
+      lowerInput.includes('clone') ||
+      lowerInput.includes('copy')
     return (
       this.isFindOperation(command) &&
-      (isMovementCommand || isPositionalCreation || isLayoutCommand)
+      (isMovementCommand ||
+        isPositionalCreation ||
+        isLayoutCommand ||
+        isStyleCommand ||
+        isDuplicationCommand)
     )
   }
 

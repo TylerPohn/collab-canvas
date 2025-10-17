@@ -60,7 +60,14 @@ function getSchemaForCommand(command: string): z.ZodSchema | null {
     createNavigationBar: 'createNavigationBar',
     createCardLayout: 'createCardLayout',
     getCanvasState: 'getCanvasState',
-    findShapes: 'findShapes'
+    findShapes: 'findShapes',
+    // NEW: PR #25 Enhanced AI Agent Tools
+    arrangeInColumn: 'arrangeInColumn', // Column Layout
+    alignShapes: 'alignShapes', // Advanced Alignment
+    distributeShapes: 'distributeShapes', // Advanced Alignment
+    changeColor: 'changeColor', // Style Manipulation
+    copyStyle: 'copyStyle', // Style Manipulation
+    duplicateShape: 'duplicateShape' // Duplication
   }
 
   const schemaKey = commandMap[command]
