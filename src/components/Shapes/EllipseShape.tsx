@@ -1,6 +1,7 @@
 import type Konva from 'konva'
 import React, { memo } from 'react'
 import { Ellipse } from 'react-konva'
+import { getCanvasBlendMode } from '../../lib/blendModes'
 import type { EllipseShape as EllipseShapeType } from '../../lib/types'
 
 interface EllipseShapeProps {
@@ -25,6 +26,10 @@ const EllipseShape: React.FC<EllipseShapeProps> = memo(
         stroke={shape.stroke || 'transparent'}
         strokeWidth={shape.strokeWidth || 0}
         rotation={shape.rotation || 0}
+        opacity={shape.opacity ?? 1}
+        globalCompositeOperation={getCanvasBlendMode(
+          shape.blendMode || 'normal'
+        )}
         draggable
         onClick={onSelect}
         onTap={onSelect}

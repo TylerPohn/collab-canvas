@@ -1,6 +1,7 @@
 import type Konva from 'konva'
 import React, { memo } from 'react'
 import { Rect } from 'react-konva'
+import { getCanvasBlendMode } from '../../lib/blendModes'
 import type { RectangleShape as RectangleShapeType } from '../../lib/types'
 
 interface RectangleShapeProps {
@@ -26,6 +27,10 @@ const RectangleShape: React.FC<RectangleShapeProps> = memo(
         strokeWidth={shape.strokeWidth || 0}
         rotation={shape.rotation || 0}
         cornerRadius={shape.cornerRadius || 0}
+        opacity={shape.opacity ?? 1}
+        globalCompositeOperation={getCanvasBlendMode(
+          shape.blendMode || 'normal'
+        )}
         draggable
         onClick={onSelect}
         onTap={onSelect}

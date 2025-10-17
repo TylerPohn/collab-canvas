@@ -16,6 +16,15 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 - 🛡️ **AI Security** - Rate limiting, parameter validation, and content filtering
 - 🎨 **Smart Defaults** - AI uses intelligent positioning and styling
 
+### 📋 **Copy/Paste Functionality**
+
+- 🔄 **System Clipboard Integration** - Copy/paste objects to/from other applications
+- 📐 **Multi-Object Support** - Copy/paste multiple objects while maintaining relative positions
+- ⌨️ **Keyboard Shortcuts** - Standard Cmd/Ctrl+C and Cmd/Ctrl+V shortcuts
+- 🎯 **Smart Positioning** - Paste objects at viewport center with 50px offset
+- 🔔 **Visual Feedback** - Toast notifications for successful copy/paste operations
+- 🛡️ **Error Handling** - Comprehensive error handling with user feedback
+
 ### 🔒 **Enterprise-Grade Security**
 
 - 🛡️ **Content Security Policy (CSP)** with Google Auth compatibility
@@ -41,6 +50,8 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 - 🎨 **Design palette** with shape styling and object information
 - 📝 **Advanced text formatting** with alignment, line height, and style controls
 - 📶 **Offline editing** with operation queuing and automatic sync
+- 📋 **Copy/Paste functionality** with system clipboard integration and keyboard shortcuts
+- ⌨️ **Keyboard Shortcuts** - Cmd/Ctrl+C (copy), Cmd/Ctrl+V (paste), Cmd/Ctrl+D (duplicate), Delete (remove)
 - 🚀 **Deployed and publicly accessible** on Vercel
 
 ## 🛠️ Tech Stack
@@ -183,6 +194,25 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 - Use production Firestore security rules
 - Enable Firebase App Check for additional security (optional)
 
+## ⌨️ Keyboard Shortcuts
+
+### Canvas Operations
+
+- **Cmd/Ctrl + C** - Copy selected objects
+- **Cmd/Ctrl + V** - Paste objects from clipboard
+- **Cmd/Ctrl + D** - Duplicate selected objects
+- **Delete/Backspace** - Delete selected objects
+- **Arrow Keys** - Nudge selected objects (5px)
+
+### Tool Selection
+
+- **V** - Select tool
+- **H** - Pan tool
+- **R** - Rectangle tool
+- **C** - Circle tool
+- **T** - Text tool
+- **M** - Mermaid tool
+
 ## 📜 Available Scripts
 
 - `npm run dev` - Start development server
@@ -223,7 +253,7 @@ src/
 │   ├── usePresence.ts   # User presence management
 │   ├── usePresenceQuery.ts # Presence React Query hooks
 │   ├── useShapes.ts     # Shape state management
-│   ├── useCanvasShortcuts.ts # Keyboard shortcuts
+│   ├── useCanvasShortcuts.ts # Keyboard shortcuts (including copy/paste)
 │   ├── useToast.ts      # Toast notifications
 │   ├── useAuth.ts       # Authentication hook
 │   └── useConnectionStatus.ts # Connection status hook
@@ -235,10 +265,11 @@ src/
 │   ├── sync/            # Real-time sync logic
 │   │   ├── objects.ts   # Object synchronization
 │   │   └── presence.ts  # Presence synchronization
+│   ├── clipboard.ts     # Copy/paste functionality with system clipboard
 │   ├── health.ts        # Health monitoring
 │   ├── security.ts      # Security utilities and validation
-│   ├── types.ts         # TypeScript types
-│   ├── schema.ts        # Data schemas
+│   ├── types.ts         # TypeScript types (including clipboard types)
+│   ├── schema.ts        # Data schemas (including clipboard validation)
 │   ├── toastTypes.ts    # Toast type definitions
 │   └── utils.ts         # Utility functions
 ├── pages/               # Page components
@@ -701,7 +732,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🗺️ Roadmap
 
-### Current Status: MVP + AI Agent Complete ✅
+### Current Status: MVP + AI Agent + Copy/Paste Complete ✅
 
 - ✅ Real-time collaborative canvas
 - ✅ Multi-user presence and cursors
@@ -712,6 +743,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ AI Agent with OpenAI function calling
 - ✅ Natural language canvas manipulation
 - ✅ Complete AI tool suite (19 commands)
+- ✅ Copy/paste functionality with system clipboard integration
+- ✅ Keyboard shortcuts (Cmd/Ctrl+C, Cmd/Ctrl+V)
+- ✅ Multi-object copy/paste with relative positioning
 
 ### Future Enhancements
 

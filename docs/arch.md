@@ -4,9 +4,9 @@ subgraph Client
 direction TB
 A1[src - main tsx - App tsx - pages - auth login - canvas page]
 A2[components - CanvasStage Konva - Shapes - CursorLayer - PresenceList - Toolbar - DesignPalette - AuthProvider - TextEditor - Toast - EmptyCanvasState]
-A3[hooks - usePanZoom - useShapes React Query - usePresence React Query - useCanvasShortcuts - useToast - useAuth - useConnectionStatus]
+A3[hooks - usePanZoom - useShapes React Query - usePresence React Query - useCanvasShortcuts copy/paste - useToast - useAuth - useConnectionStatus]
 A4[store - selection ts - designPalette ts UI state with Zustand]
-A5[lib - types ts and schema ts - sync objects - sync presence - firebase client - firebase firestore - react query client - security ts - health ts - utils ts]
+A5[lib - types ts and schema ts - sync objects - sync presence - clipboard ts - firebase client - firebase firestore - react query client - security ts - health ts - utils ts]
 A6[styles - globals css - Tailwind CSS - MUI components - lucide-react icons]
 A7[contexts - AuthContext - ToastContext - ToastContextDefinition]
 A8[MUI components - DesignPaletteMUI ToolbarMUI with Material Design system]

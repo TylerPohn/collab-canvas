@@ -5,6 +5,7 @@ import {
   Delete,
   Hexagon,
   Info,
+  Layers,
   OpenWith,
   Palette,
   RadioButtonUnchecked,
@@ -43,6 +44,8 @@ interface ToolbarMUIProps {
   isDesignPaletteOpen?: boolean
   onToggleAI?: () => void
   isAIOpen?: boolean
+  onToggleLayers?: () => void
+  isLayersOpen?: boolean
   onImportMermaid?: (mermaidCode: string, diagramType: string) => void
 }
 
@@ -57,6 +60,8 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
   isDesignPaletteOpen = false,
   onToggleAI,
   isAIOpen = false,
+  onToggleLayers,
+  isLayersOpen = false,
   onImportMermaid
 }) => {
   const theme = useTheme()
@@ -379,6 +384,43 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
                 }}
               >
                 <SmartToy sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          </>
+        )}
+
+        {/* Layers Panel Toggle */}
+        {onToggleLayers && (
+          <>
+            <Divider orientation="vertical" flexItem />
+            <Tooltip title="Layers Panel" arrow>
+              <IconButton
+                onClick={onToggleLayers}
+                sx={{
+                  width: 36,
+                  height: 36,
+                  backgroundColor: isLayersOpen
+                    ? theme.palette.primary.main
+                    : 'transparent',
+                  color: isLayersOpen
+                    ? theme.palette.primary.contrastText
+                    : theme.palette.text.secondary,
+                  border: isLayersOpen
+                    ? `1px solid ${theme.palette.primary.main}`
+                    : `1px solid ${theme.palette.divider}`,
+                  borderRadius: 1,
+                  '&:hover': {
+                    backgroundColor: isLayersOpen
+                      ? theme.palette.primary.dark
+                      : theme.palette.action.hover,
+                    borderColor: isLayersOpen
+                      ? theme.palette.primary.dark
+                      : theme.palette.primary.main
+                  },
+                  transition: 'all 0.2s ease-in-out'
+                }}
+              >
+                <Layers sx={{ fontSize: 18 }} />
               </IconButton>
             </Tooltip>
           </>

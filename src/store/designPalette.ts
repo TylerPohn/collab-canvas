@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { getDefaultBlendMode, type SupportedBlendMode } from '../lib/blendModes'
 
 interface DesignPaletteState {
   // Fill and stroke
@@ -9,6 +10,8 @@ interface DesignPaletteState {
   // Effects
   rotation: number
   cornerRadius: number
+  opacity: number
+  blendMode: SupportedBlendMode
 
   // Text styling
   fontSize: number
@@ -25,6 +28,8 @@ interface DesignPaletteState {
   setStrokeWidth: (width: number) => void
   setRotation: (rotation: number) => void
   setCornerRadius: (radius: number) => void
+  setOpacity: (opacity: number) => void
+  setBlendMode: (blendMode: SupportedBlendMode) => void
   setFontSize: (size: number) => void
   setFontFamily: (family: string) => void
   setFontWeight: (weight: 'normal' | 'bold') => void
@@ -50,6 +55,8 @@ interface DesignPaletteState {
     strokeWidth: number
     rotation: number
     cornerRadius: number
+    opacity: number
+    blendMode: SupportedBlendMode
   }
 }
 
@@ -60,6 +67,8 @@ export const useDesignPaletteStore = create<DesignPaletteState>((set, get) => ({
   strokeWidth: 2,
   rotation: 0,
   cornerRadius: 0,
+  opacity: 1.0,
+  blendMode: getDefaultBlendMode(),
   fontSize: 16,
   fontFamily: 'Arial',
   fontWeight: 'normal',
@@ -74,6 +83,8 @@ export const useDesignPaletteStore = create<DesignPaletteState>((set, get) => ({
   setStrokeWidth: width => set({ strokeWidth: width }),
   setRotation: rotation => set({ rotation }),
   setCornerRadius: radius => set({ cornerRadius: radius }),
+  setOpacity: opacity => set({ opacity }),
+  setBlendMode: blendMode => set({ blendMode }),
   setFontSize: size => set({ fontSize: size }),
   setFontFamily: family => set({ fontFamily: family }),
   setFontWeight: weight => set({ fontWeight: weight }),
@@ -103,7 +114,9 @@ export const useDesignPaletteStore = create<DesignPaletteState>((set, get) => ({
       stroke: state.selectedStrokeColor,
       strokeWidth: state.strokeWidth,
       rotation: state.rotation,
-      cornerRadius: state.cornerRadius
+      cornerRadius: state.cornerRadius,
+      opacity: state.opacity,
+      blendMode: state.blendMode
     }
   }
 }))

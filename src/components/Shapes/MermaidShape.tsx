@@ -1,6 +1,7 @@
 import type Konva from 'konva'
 import React, { memo, useCallback, useEffect, useState } from 'react'
 import { Group, Image, Rect } from 'react-konva'
+import { getCanvasBlendMode } from '../../lib/blendModes'
 import { mermaidRenderer } from '../../lib/mermaid/renderer'
 import type { MermaidShape as MermaidShapeType } from '../../lib/types'
 
@@ -94,6 +95,10 @@ const MermaidShape: React.FC<MermaidShapeProps> = memo(
           width={shape.width}
           height={shape.height}
           rotation={shape.rotation || 0}
+          opacity={shape.opacity ?? 1}
+          globalCompositeOperation={getCanvasBlendMode(
+            shape.blendMode || 'normal'
+          )}
           draggable
           onClick={onSelect}
           onTap={onSelect}
@@ -132,6 +137,10 @@ const MermaidShape: React.FC<MermaidShapeProps> = memo(
           width={shape.width}
           height={shape.height}
           rotation={shape.rotation || 0}
+          opacity={shape.opacity ?? 1}
+          globalCompositeOperation={getCanvasBlendMode(
+            shape.blendMode || 'normal'
+          )}
           draggable
           onClick={onSelect}
           onTap={onSelect}

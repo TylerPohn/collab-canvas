@@ -5,14 +5,24 @@ interface UseCanvasShortcutsProps {
   onDelete: () => void
   onDuplicate: () => void
   onNudge: (direction: 'up' | 'down' | 'left' | 'right') => void
+  onCopy?: () => void
+  onPaste?: () => void
   onToolSelect?: (tool: string) => void
+  onToggleLayers?: () => void
+  onBringForward?: () => void
+  onSendBackward?: () => void
 }
 
 export const useCanvasShortcuts = ({
   onDelete,
   onDuplicate,
   onNudge,
-  onToolSelect
+  onCopy,
+  onPaste,
+  onToolSelect,
+  onToggleLayers,
+  onBringForward,
+  onSendBackward
 }: UseCanvasShortcutsProps) => {
   const { hasSelection } = useSelectionStore()
 
@@ -52,12 +62,11 @@ export const useCanvasShortcuts = ({
         }
       }
 
-      // Only handle other shortcuts if we have a selection
-      if (!hasSelection()) return
-
       // Prevent default behavior for our shortcuts
       const isDelete = e.key === 'Delete' || e.key === 'Backspace'
       const isDuplicate = (e.metaKey || e.ctrlKey) && e.key === 'd'
+      const isCopy = (e.metaKey || e.ctrlKey) && e.key === 'c'
+      const isPaste = (e.metaKey || e.ctrlKey) && e.key === 'v'
       const isArrowKey = [
         'ArrowUp',
         'ArrowDown',
@@ -65,7 +74,38 @@ export const useCanvasShortcuts = ({
         'ArrowRight'
       ].includes(e.key)
 
-      if (isDelete || isDuplicate || isArrowKey) {
+      // Handle paste first (doesn't require selection)
+      if (isPaste && onPaste) {
+        e.preventDefault()
+        onPaste()
+        return
+      }
+
+      // Handle layers panel toggle (Cmd/Ctrl + L)
+      if (e.key === 'l' && (e.metaKey || e.ctrlKey) && onToggleLayers) {
+        e.preventDefault()
+        onToggleLayers()
+        return
+      }
+
+      // Handle layer ordering shortcuts (Cmd/Ctrl + Shift + Up/Down)
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey) {
+        if (e.key === 'ArrowUp' && onBringForward) {
+          e.preventDefault()
+          onBringForward()
+          return
+        }
+        if (e.key === 'ArrowDown' && onSendBackward) {
+          e.preventDefault()
+          onSendBackward()
+          return
+        }
+      }
+
+      // Only handle other shortcuts if we have a selection
+      if (!hasSelection()) return
+
+      if (isDelete || isDuplicate || isCopy || isArrowKey) {
         e.preventDefault()
       }
 
@@ -78,6 +118,12 @@ export const useCanvasShortcuts = ({
       // Handle duplicate (Cmd/Ctrl + D)
       if (isDuplicate) {
         onDuplicate()
+        return
+      }
+
+      // Handle copy (Cmd/Ctrl + C)
+      if (isCopy && onCopy) {
+        onCopy()
         return
       }
 
@@ -107,5 +153,13 @@ export const useCanvasShortcuts = ({
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [hasSelection, onDelete, onDuplicate, onNudge, onToolSelect])
+  }, [
+    hasSelection,
+    onDelete,
+    onDuplicate,
+    onNudge,
+    onCopy,
+    onPaste,
+    onToolSelect
+  ])
 }

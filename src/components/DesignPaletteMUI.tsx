@@ -33,6 +33,7 @@ import {
   useTheme
 } from '@mui/material'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { getDefaultBlendMode, SUPPORTED_BLEND_MODES } from '../lib/blendModes'
 import type { Shape, User, UserPresence } from '../lib/types'
 import { formatLastEdited, getUserDisplayName } from '../lib/utils'
 import { useDesignPaletteStore } from '../store/designPalette'
@@ -74,6 +75,8 @@ const DesignPaletteMUI: React.FC<DesignPaletteMUIProps> = ({
     strokeWidth,
     rotation,
     cornerRadius,
+    opacity,
+    blendMode,
     fontSize,
     fontFamily,
     fontWeight,
@@ -92,7 +95,9 @@ const DesignPaletteMUI: React.FC<DesignPaletteMUIProps> = ({
     setFontStyle,
     setTextDecoration,
     setTextAlign,
-    setLineHeight
+    setLineHeight,
+    setOpacity,
+    setBlendMode
   } = useDesignPaletteStore()
 
   // Local state for UI toggles
@@ -108,6 +113,8 @@ const DesignPaletteMUI: React.FC<DesignPaletteMUIProps> = ({
       setStrokeWidth(firstSelectedShape.strokeWidth ?? 2)
       setRotation(firstSelectedShape.rotation ?? 0)
       setCornerRadius(firstSelectedShape.cornerRadius ?? 0)
+      setOpacity(firstSelectedShape.opacity ?? 1.0)
+      setBlendMode(firstSelectedShape.blendMode ?? getDefaultBlendMode())
       setFontSize(firstSelectedShape.fontSize ?? 16)
       setFontFamily(firstSelectedShape.fontFamily || 'Arial')
       setFontWeight(
@@ -760,10 +767,71 @@ const DesignPaletteMUI: React.FC<DesignPaletteMUIProps> = ({
                       />
                     </Box>
                   )}
+
+                  {/* Opacity Control */}
+                  {hasSelection && (
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 1 }}
+                      >
+                        Opacity: {Math.round(opacity * 100)}%
+                      </Typography>
+                      <Slider
+                        value={opacity}
+                        onChange={(_, value) => {
+                          const newOpacity = value as number
+                          setOpacity(newOpacity)
+                          // Update selected shapes
+                          selectedShapes.forEach(shape => {
+                            onShapeUpdate(shape.id, { opacity: newOpacity })
+                          })
+                        }}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        size="small"
+                        sx={{ height: 24 }}
+                      />
+                    </Box>
+                  )}
+
+                  {/* Blend Mode Control */}
+                  {hasSelection && (
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 1 }}
+                      >
+                        Blend Mode
+                      </Typography>
+                      <Select
+                        value={blendMode}
+                        onChange={e => {
+                          const newBlendMode = e.target.value
+                          setBlendMode(newBlendMode)
+                          // Update selected shapes
+                          selectedShapes.forEach(shape => {
+                            onShapeUpdate(shape.id, { blendMode: newBlendMode })
+                          })
+                        }}
+                        size="small"
+                        fullWidth
+                        sx={{ height: 32 }}
+                      >
+                        {SUPPORTED_BLEND_MODES.map(mode => (
+                          <MenuItem key={mode} value={mode}>
+                            {mode.charAt(0).toUpperCase() +
+                              mode.slice(1).replace('-', ' ')}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </Box>
+                  )}
                 </Stack>
               </Box>
-
-              <Divider />
 
               {/* Shape-Specific Controls */}
               {selectedShapes.length === 1 && (

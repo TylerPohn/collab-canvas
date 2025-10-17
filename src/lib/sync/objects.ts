@@ -1108,6 +1108,287 @@ export class ObjectSyncService {
     }
   }
 
+  // NEW: Column Layout (PR #25)
+  async arrangeShapesInColumn(
+    canvasId: string,
+    shapeIds: string[],
+    spacing: number,
+    userId: string
+  ): Promise<void> {
+    const shapes = await this.getAllObjects(canvasId)
+    const targetShapes = shapes.filter(shape => shapeIds.includes(shape.id))
+
+    if (targetShapes.length < 2) return
+
+    // Calculate the average X position to align all shapes vertically
+    const averageX =
+      targetShapes.reduce((sum, shape) => sum + shape.x, 0) /
+      targetShapes.length
+
+    const updates = []
+    let currentY = 0
+
+    for (const shape of targetShapes) {
+      updates.push({
+        objectId: shape.id,
+        updates: { x: averageX, y: currentY }
+      })
+
+      // Move to next position
+      if (shape.type === 'rect') {
+        currentY += (shape as any).height + spacing
+      } else if (shape.type === 'circle') {
+        currentY += (shape as any).radius * 2 + spacing
+      } else {
+        currentY += 20 + spacing // Default height for text
+      }
+    }
+
+    if (updates.length > 0) {
+      await this.batchUpdateObjects(canvasId, updates, userId)
+    }
+  }
+
+  // NEW: Advanced Alignment (PR #25)
+  async alignShapes(
+    canvasId: string,
+    shapeIds: string[],
+    alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom',
+    axis: 'horizontal' | 'vertical',
+    userId: string
+  ): Promise<void> {
+    const shapes = await this.getAllObjects(canvasId)
+    const targetShapes = shapes.filter(shape => shapeIds.includes(shape.id))
+
+    if (targetShapes.length < 2) return
+
+    const updates = []
+
+    if (axis === 'horizontal') {
+      // Align horizontally (left, center, right)
+      let targetX: number
+
+      if (alignment === 'left') {
+        targetX = Math.min(...targetShapes.map(shape => shape.x))
+      } else if (alignment === 'right') {
+        targetX = Math.max(
+          ...targetShapes.map(shape => {
+            if (shape.type === 'rect') return shape.x + (shape as any).width
+            if (shape.type === 'circle')
+              return shape.x + (shape as any).radius * 2
+            return shape.x + 100 // Default width for text
+          })
+        )
+      } else {
+        // center
+        const leftmost = Math.min(...targetShapes.map(shape => shape.x))
+        const rightmost = Math.max(
+          ...targetShapes.map(shape => {
+            if (shape.type === 'rect') return shape.x + (shape as any).width
+            if (shape.type === 'circle')
+              return shape.x + (shape as any).radius * 2
+            return shape.x + 100
+          })
+        )
+        targetX = (leftmost + rightmost) / 2
+      }
+
+      for (const shape of targetShapes) {
+        updates.push({
+          objectId: shape.id,
+          updates: { x: targetX }
+        })
+      }
+    } else {
+      // Align vertically (top, middle, bottom)
+      let targetY: number
+
+      if (alignment === 'top') {
+        targetY = Math.min(...targetShapes.map(shape => shape.y))
+      } else if (alignment === 'bottom') {
+        targetY = Math.max(
+          ...targetShapes.map(shape => {
+            if (shape.type === 'rect') return shape.y + (shape as any).height
+            if (shape.type === 'circle')
+              return shape.y + (shape as any).radius * 2
+            return shape.y + 20 // Default height for text
+          })
+        )
+      } else {
+        // middle
+        const topmost = Math.min(...targetShapes.map(shape => shape.y))
+        const bottommost = Math.max(
+          ...targetShapes.map(shape => {
+            if (shape.type === 'rect') return shape.y + (shape as any).height
+            if (shape.type === 'circle')
+              return shape.y + (shape as any).radius * 2
+            return shape.y + 20
+          })
+        )
+        targetY = (topmost + bottommost) / 2
+      }
+
+      for (const shape of targetShapes) {
+        updates.push({
+          objectId: shape.id,
+          updates: { y: targetY }
+        })
+      }
+    }
+
+    if (updates.length > 0) {
+      await this.batchUpdateObjects(canvasId, updates, userId)
+    }
+  }
+
+  async distributeShapes(
+    canvasId: string,
+    shapeIds: string[],
+    direction: 'horizontal' | 'vertical',
+    spacing: number,
+    userId: string
+  ): Promise<void> {
+    const shapes = await this.getAllObjects(canvasId)
+    const targetShapes = shapes.filter(shape => shapeIds.includes(shape.id))
+
+    if (targetShapes.length < 3) return
+
+    const updates = []
+
+    if (direction === 'horizontal') {
+      // Sort by X position
+      const sortedShapes = [...targetShapes].sort((a, b) => a.x - b.x)
+
+      const startX = sortedShapes[0].x
+      let currentX = startX
+
+      for (const shape of sortedShapes) {
+        updates.push({
+          objectId: shape.id,
+          updates: { x: currentX }
+        })
+
+        if (shape.type === 'rect') currentX += (shape as any).width + spacing
+        else if (shape.type === 'circle')
+          currentX += (shape as any).radius * 2 + spacing
+        else currentX += 100 + spacing
+      }
+    } else {
+      // Sort by Y position
+      const sortedShapes = [...targetShapes].sort((a, b) => a.y - b.y)
+
+      let currentY = sortedShapes[0].y
+
+      for (const shape of sortedShapes) {
+        updates.push({
+          objectId: shape.id,
+          updates: { y: currentY }
+        })
+
+        if (shape.type === 'rect') currentY += (shape as any).height + spacing
+        else if (shape.type === 'circle')
+          currentY += (shape as any).radius * 2 + spacing
+        else currentY += 20 + spacing
+      }
+    }
+
+    if (updates.length > 0) {
+      await this.batchUpdateObjects(canvasId, updates, userId)
+    }
+  }
+
+  // NEW: Style Manipulation (PR #25)
+  async changeShapeColor(
+    canvasId: string,
+    shapeId: string,
+    fill?: string,
+    stroke?: string,
+    userId?: string,
+    opacity?: number,
+    blendMode?: string
+  ): Promise<void> {
+    const updates: any = {}
+    if (fill !== undefined) updates.fill = fill
+    if (stroke !== undefined) updates.stroke = stroke
+    if (opacity !== undefined) updates.opacity = opacity
+    if (blendMode !== undefined) updates.blendMode = blendMode
+
+    if (Object.keys(updates).length > 0) {
+      await this.updateObject(canvasId, shapeId, updates, userId || 'system')
+    }
+  }
+
+  async copyShapeStyle(
+    canvasId: string,
+    sourceShapeId: string,
+    targetShapeIds: string[],
+    userId: string
+  ): Promise<void> {
+    // Get source shape
+    const sourceShape = await this.getObject(canvasId, sourceShapeId)
+    if (!sourceShape) {
+      throw new Error(`Source shape ${sourceShapeId} not found`)
+    }
+
+    // Extract style properties
+    const styleProperties = {
+      fill: (sourceShape as any).fill,
+      stroke: (sourceShape as any).stroke,
+      strokeWidth: (sourceShape as any).strokeWidth,
+      fontSize: (sourceShape as any).fontSize,
+      fontFamily: (sourceShape as any).fontFamily,
+      fontWeight: (sourceShape as any).fontWeight
+    }
+
+    // Filter out undefined values
+    const cleanStyle = Object.fromEntries(
+      Object.entries(styleProperties).filter(
+        ([_, value]) => value !== undefined
+      )
+    )
+
+    // Apply style to target shapes
+    const updates = targetShapeIds.map(shapeId => ({
+      objectId: shapeId,
+      updates: cleanStyle
+    }))
+
+    if (updates.length > 0) {
+      await this.batchUpdateObjects(canvasId, updates, userId)
+    }
+  }
+
+  // NEW: Duplication (PR #25)
+  async duplicateShape(
+    canvasId: string,
+    shapeId: string,
+    offset?: { x: number; y: number },
+    userId?: string
+  ): Promise<string> {
+    // Get the original shape
+    const originalShape = await this.getObject(canvasId, shapeId)
+    if (!originalShape) {
+      throw new Error(`Shape ${shapeId} not found`)
+    }
+
+    // Create a copy with new ID and position
+    const duplicate = {
+      ...originalShape,
+      id: `shape_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      x: originalShape.x + (offset?.x || 50),
+      y: originalShape.y + (offset?.y || 50),
+      createdAt: Date.now(),
+      createdBy: userId || 'system',
+      updatedAt: Date.now(),
+      updatedBy: userId || 'system'
+    }
+
+    // Add the duplicate to the canvas
+    await this.createObject(canvasId, duplicate, userId || 'system')
+
+    return duplicate.id
+  }
+
   // Complex shape operations
   async createFormLayout(
     canvasId: string,

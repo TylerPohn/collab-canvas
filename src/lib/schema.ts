@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { SUPPORTED_BLEND_MODES } from './blendModes'
 
 // Shape type schemas
 export const ShapeTypeSchema = z.enum([
@@ -38,6 +39,8 @@ export const ShapeBaseSchema = z.object({
   lineHeight: z.number().optional(),
   cornerRadius: z.number().optional(),
   zIndex: z.number().optional(),
+  opacity: z.number().min(0).max(1).optional(),
+  blendMode: z.enum(SUPPORTED_BLEND_MODES).optional(),
   createdAt: z.number(),
   createdBy: z.string(),
   updatedAt: z.number(),
@@ -158,9 +161,47 @@ export const CanvasDocumentSchema = z.object({
   objects: z.record(z.string(), ShapeSchema)
 })
 
+// Clipboard schemas
+export const RelativePositionsSchema = z.object({
+  centerX: z.number(),
+  centerY: z.number(),
+  offsets: z.array(
+    z.object({
+      x: z.number(),
+      y: z.number()
+    })
+  )
+})
+
+export const ShapeWithOriginalPositionSchema = z.intersection(
+  ShapeSchema,
+  z.object({
+    originalX: z.number(),
+    originalY: z.number()
+  })
+)
+
+export const CanvasClipboardDataSchema = z.object({
+  shapes: z.array(ShapeWithOriginalPositionSchema),
+  relativePositions: RelativePositionsSchema,
+  copiedAt: z.number(),
+  version: z.string()
+})
+
+export const PastePositionSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  offsetX: z.number().optional(),
+  offsetY: z.number().optional()
+})
+
 // Validation helpers
 export function validateShape(data: unknown) {
   return ShapeSchema.parse(data)
+}
+
+export function validateCanvasClipboardData(data: unknown) {
+  return CanvasClipboardDataSchema.parse(data)
 }
 
 export function validateCanvasMeta(data: unknown) {

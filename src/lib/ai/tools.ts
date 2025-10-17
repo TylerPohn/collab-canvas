@@ -27,7 +27,24 @@ export const AIToolSchemas = {
     fill: ColorSchema.optional(),
     stroke: ColorSchema.optional(),
     strokeWidth: z.number().min(0).optional(),
-    fontSize: z.number().min(8).max(72).optional()
+    fontSize: z.number().min(8).max(72).optional(),
+    opacity: z.number().min(0).max(1).optional(),
+    blendMode: z
+      .enum([
+        'normal',
+        'multiply',
+        'overlay',
+        'screen',
+        'darken',
+        'lighten',
+        'color-dodge',
+        'color-burn',
+        'hard-light',
+        'soft-light',
+        'difference',
+        'exclusion'
+      ])
+      .optional()
   }),
 
   createText: z.object({
@@ -36,7 +53,24 @@ export const AIToolSchemas = {
     fontSize: z.number().min(8).max(72).default(16),
     fill: ColorSchema.default('#000000'),
     fontFamily: z.string().default('Arial'),
-    fontWeight: z.enum(['normal', 'bold']).default('normal')
+    fontWeight: z.enum(['normal', 'bold']).default('normal'),
+    opacity: z.number().min(0).max(1).optional(),
+    blendMode: z
+      .enum([
+        'normal',
+        'multiply',
+        'overlay',
+        'screen',
+        'darken',
+        'lighten',
+        'color-dodge',
+        'color-burn',
+        'hard-light',
+        'soft-light',
+        'difference',
+        'exclusion'
+      ])
+      .optional()
   }),
 
   // Manipulation Commands
@@ -95,6 +129,61 @@ export const AIToolSchemas = {
     shapeIds: z.array(z.string()).min(2),
     spacing: z.number().min(0).default(20),
     alignment: z.enum(['left', 'center', 'right']).default('left')
+  }),
+
+  // NEW: Column Layout (PR #25)
+  arrangeInColumn: z.object({
+    shapeIds: z.array(z.string()).min(2),
+    spacing: z.number().min(0).default(20),
+    alignment: z.enum(['left', 'center', 'right']).default('left')
+  }),
+
+  // NEW: Advanced Alignment (PR #25)
+  alignShapes: z.object({
+    shapeIds: z.array(z.string()).min(2),
+    alignment: z.enum(['left', 'center', 'right', 'top', 'middle', 'bottom']),
+    axis: z.enum(['horizontal', 'vertical']).default('horizontal')
+  }),
+
+  distributeShapes: z.object({
+    shapeIds: z.array(z.string()).min(3),
+    direction: z.enum(['horizontal', 'vertical']),
+    spacing: z.number().min(0).default(20)
+  }),
+
+  // NEW: Style Manipulation (PR #25)
+  changeColor: z.object({
+    shapeId: z.string().min(1),
+    fill: ColorSchema.optional(),
+    stroke: ColorSchema.optional(),
+    opacity: z.number().min(0).max(1).optional(),
+    blendMode: z
+      .enum([
+        'normal',
+        'multiply',
+        'overlay',
+        'screen',
+        'darken',
+        'lighten',
+        'color-dodge',
+        'color-burn',
+        'hard-light',
+        'soft-light',
+        'difference',
+        'exclusion'
+      ])
+      .optional()
+  }),
+
+  copyStyle: z.object({
+    sourceShapeId: z.string().min(1),
+    targetShapeIds: z.array(z.string()).min(1)
+  }),
+
+  // NEW: Duplication (PR #25)
+  duplicateShape: z.object({
+    shapeId: z.string().min(1),
+    offset: PositionSchema.optional()
   }),
 
   spaceEvenly: z.object({
@@ -257,11 +346,11 @@ export function createAITools(queryClient: any) {
           },
           context.userId
         )
-        
+
         // Automatically select the newly created shape
         const { useSelectionStore } = await import('../../store/selection')
         useSelectionStore.getState().selectShape(shape.id)
-        
+
         return { success: true, shapeId: shape.id, shape }
       }
     },
@@ -701,6 +790,118 @@ export function createAITools(queryClient: any) {
         return { success: true }
       }
     },
+    // NEW: Column Layout (PR #25)
+    arrangeInColumn: {
+      name: 'arrangeInColumn',
+      description: 'Arrange shapes in a vertical column',
+      parameters: AIToolSchemas.arrangeInColumn,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.arrangeInColumn>,
+        context: AIContext
+      ) => {
+        await objectSync.arrangeShapesInColumn(
+          context.canvasId,
+          params.shapeIds,
+          params.spacing,
+          context.userId
+        )
+        return { success: true }
+      }
+    },
+    // NEW: Advanced Alignment (PR #25)
+    alignShapes: {
+      name: 'alignShapes',
+      description:
+        'Align shapes to left, center, right, top, middle, or bottom',
+      parameters: AIToolSchemas.alignShapes,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.alignShapes>,
+        context: AIContext
+      ) => {
+        await objectSync.alignShapes(
+          context.canvasId,
+          params.shapeIds,
+          params.alignment,
+          params.axis,
+          context.userId
+        )
+        return { success: true }
+      }
+    },
+    distributeShapes: {
+      name: 'distributeShapes',
+      description: 'Distribute shapes evenly with specified spacing',
+      parameters: AIToolSchemas.distributeShapes,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.distributeShapes>,
+        context: AIContext
+      ) => {
+        await objectSync.distributeShapes(
+          context.canvasId,
+          params.shapeIds,
+          params.direction,
+          params.spacing,
+          context.userId
+        )
+        return { success: true }
+      }
+    },
+    // NEW: Style Manipulation (PR #25)
+    changeColor: {
+      name: 'changeColor',
+      description: 'Change the color, opacity, or blend mode of a shape',
+      parameters: AIToolSchemas.changeColor,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.changeColor>,
+        context: AIContext
+      ) => {
+        await objectSync.changeShapeColor(
+          context.canvasId,
+          params.shapeId,
+          params.fill,
+          params.stroke,
+          context.userId,
+          params.opacity,
+          params.blendMode
+        )
+        return { success: true }
+      }
+    },
+    copyStyle: {
+      name: 'copyStyle',
+      description: 'Copy style from one shape to others',
+      parameters: AIToolSchemas.copyStyle,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.copyStyle>,
+        context: AIContext
+      ) => {
+        await objectSync.copyShapeStyle(
+          context.canvasId,
+          params.sourceShapeId,
+          params.targetShapeIds,
+          context.userId
+        )
+        return { success: true }
+      }
+    },
+    // NEW: Duplication (PR #25)
+    duplicateShape: {
+      name: 'duplicateShape',
+      description: 'Duplicate a shape with optional offset positioning',
+      parameters: AIToolSchemas.duplicateShape,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.duplicateShape>,
+        context: AIContext
+      ) => {
+        const newShapeId = await objectSync.duplicateShape(
+          context.canvasId,
+          params.shapeId,
+          params.offset,
+          context.userId
+        )
+        return { success: true, newShapeId }
+      }
+    },
 
     deleteAllShapes: {
       name: 'deleteAllShapes',
@@ -757,12 +958,12 @@ export function createAITools(queryClient: any) {
           },
           context.userId
         )
-        
+
         // Automatically select the newly created shapes
         const { useSelectionStore } = await import('../../store/selection')
         const shapeIds = shapes.map(s => s.id)
         useSelectionStore.getState().selectMultiple(shapeIds)
-        
+
         return { success: true, shapeIds: shapeIds, shapes }
       }
     },
@@ -783,12 +984,12 @@ export function createAITools(queryClient: any) {
           },
           context.userId
         )
-        
+
         // Automatically select the newly created shapes
         const { useSelectionStore } = await import('../../store/selection')
         const shapeIds = shapes.map(s => s.id)
         useSelectionStore.getState().selectMultiple(shapeIds)
-        
+
         return { success: true, shapeIds: shapeIds, shapes }
       }
     },
@@ -809,12 +1010,12 @@ export function createAITools(queryClient: any) {
           },
           context.userId
         )
-        
+
         // Automatically select the newly created shapes
         const { useSelectionStore } = await import('../../store/selection')
         const shapeIds = shapes.map(s => s.id)
         useSelectionStore.getState().selectMultiple(shapeIds)
-        
+
         return { success: true, shapeIds: shapeIds, shapes }
       }
     },

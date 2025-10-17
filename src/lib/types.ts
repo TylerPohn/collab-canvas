@@ -1,3 +1,5 @@
+import type { SupportedBlendMode } from './blendModes'
+
 // Core shape types
 export type ShapeType =
   | 'rect'
@@ -35,6 +37,8 @@ export interface ShapeBase {
   lineHeight?: number
   cornerRadius?: number
   zIndex?: number
+  opacity?: number
+  blendMode?: SupportedBlendMode
   createdAt: number
   createdBy: string
   updatedAt: number
@@ -160,6 +164,32 @@ export interface ApiResponse<T = unknown> {
   success: boolean
   data?: T
   error?: string
+}
+
+// Clipboard types
+export interface CanvasClipboardData {
+  shapes: ShapeWithOriginalPosition[]
+  relativePositions: RelativePositions
+  copiedAt: number
+  version: string
+}
+
+export type ShapeWithOriginalPosition = Shape & {
+  originalX: number
+  originalY: number
+}
+
+export interface RelativePositions {
+  centerX: number
+  centerY: number
+  offsets: Array<{ x: number; y: number }>
+}
+
+export interface PastePosition {
+  x: number
+  y: number
+  offsetX?: number
+  offsetY?: number
 }
 
 // Selection state (UI-only, not synced)

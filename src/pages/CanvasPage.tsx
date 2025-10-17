@@ -3,11 +3,13 @@ import AIPanel from '../components/AIPanel'
 import AIThinkingIndicator from '../components/AIThinkingIndicator'
 import CanvasStage from '../components/CanvasStage'
 import DesignPaletteMUI from '../components/DesignPaletteMUI'
+import LayersPanel from '../components/LayersPanel'
 import PresenceList from '../components/PresenceList'
 import ToolbarMUI from '../components/ToolbarMUI'
 import { useAIAgent } from '../hooks/useAIAgent'
 import { useAIExecutionState } from '../hooks/useAIExecutionState'
 import { useAuth } from '../hooks/useAuth'
+import { useCanvasShortcuts } from '../hooks/useCanvasShortcuts'
 import { usePresence } from '../hooks/usePresence'
 import {
   useCanvasMeta,
@@ -26,6 +28,7 @@ const CanvasPage: React.FC = () => {
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   const [isDesignPaletteOpen, setIsDesignPaletteOpen] = useState(true)
   const [isAIOpen, setIsAIOpen] = useState(false)
+  const [isLayersOpen, setIsLayersOpen] = useState(false)
 
   const { selectedIds, hasSelection, clearSelection, selectShape } =
     useSelectionStore()
@@ -66,6 +69,7 @@ const CanvasPage: React.FC = () => {
     updateShape,
     deleteShape,
     batchCreateShapes,
+    batchUpdateShapes,
     batchDeleteShapes
   } = useShapeMutations(canvasId, user?.uid || '')
 
@@ -84,6 +88,8 @@ const CanvasPage: React.FC = () => {
     canvasId,
     enabled: !!user
   })
+
+  // Keyboard shortcuts will be added after function declarations
 
   // PR #8: Initialize canvas on mount
   useEffect(() => {
@@ -158,6 +164,89 @@ const CanvasPage: React.FC = () => {
   const handleToggleDesignPalette = () => {
     setIsDesignPaletteOpen(!isDesignPaletteOpen)
   }
+
+  const handleToggleLayers = () => {
+    setIsLayersOpen(!isLayersOpen)
+  }
+
+  // Handle layer ordering
+  const handleBringForward = useCallback(() => {
+    if (!hasSelection()) return
+
+    const selectedShapes = shapes.filter(shape =>
+      selectedIds.includes(shape.id)
+    )
+    if (selectedShapes.length === 0) return
+
+    // Get all shapes sorted by zIndex (ascending)
+    const sortedShapes = [...shapes].sort(
+      (a, b) => (a.zIndex || 0) - (b.zIndex || 0)
+    )
+
+    const updates = selectedShapes
+      .map(selectedShape => {
+        const currentIndex = sortedShapes.findIndex(
+          s => s.id === selectedShape.id
+        )
+        if (currentIndex < sortedShapes.length - 1) {
+          // Find the next shape's zIndex
+          const nextShape = sortedShapes[currentIndex + 1]
+          const newZIndex = (nextShape.zIndex || 0) + 1
+          return {
+            objectId: selectedShape.id,
+            updates: { zIndex: newZIndex }
+          }
+        }
+        return null
+      })
+      .filter(
+        (update): update is { objectId: string; updates: { zIndex: number } } =>
+          update !== null
+      )
+
+    if (updates.length > 0) {
+      batchUpdateShapes(updates)
+    }
+  }, [shapes, selectedIds, hasSelection, batchUpdateShapes])
+
+  const handleSendBackward = useCallback(() => {
+    if (!hasSelection()) return
+
+    const selectedShapes = shapes.filter(shape =>
+      selectedIds.includes(shape.id)
+    )
+    if (selectedShapes.length === 0) return
+
+    // Get all shapes sorted by zIndex (ascending)
+    const sortedShapes = [...shapes].sort(
+      (a, b) => (a.zIndex || 0) - (b.zIndex || 0)
+    )
+
+    const updates = selectedShapes
+      .map(selectedShape => {
+        const currentIndex = sortedShapes.findIndex(
+          s => s.id === selectedShape.id
+        )
+        if (currentIndex > 0) {
+          // Find the previous shape's zIndex
+          const prevShape = sortedShapes[currentIndex - 1]
+          const newZIndex = Math.max(0, (prevShape.zIndex || 0) - 1)
+          return {
+            objectId: selectedShape.id,
+            updates: { zIndex: newZIndex }
+          }
+        }
+        return null
+      })
+      .filter(
+        (update): update is { objectId: string; updates: { zIndex: number } } =>
+          update !== null
+      )
+
+    if (updates.length > 0) {
+      batchUpdateShapes(updates)
+    }
+  }, [shapes, selectedIds, hasSelection, batchUpdateShapes])
 
   // PR #7: Handle shape creation with React Query
   const handleShapeCreate = useCallback(
@@ -290,6 +379,42 @@ const CanvasPage: React.FC = () => {
     }
   }
 
+  // Keyboard shortcuts
+  useCanvasShortcuts({
+    onDelete: handleDelete,
+    onDuplicate: handleDuplicate,
+    onNudge: direction => {
+      // Handle nudge functionality if needed
+      console.log('Nudge:', direction)
+    },
+    onToggleLayers: handleToggleLayers,
+    onBringForward: handleBringForward,
+    onSendBackward: handleSendBackward
+  })
+
+  // Handle batch shape creation (for paste operations)
+  const handleShapeBatchCreate = useCallback(
+    async (
+      shapes: Omit<
+        Shape,
+        'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'
+      >[]
+    ) => {
+      try {
+        const createdShapes = await batchCreateShapes(shapes)
+        // Automatically select the newly created shapes
+        const newShapeIds = createdShapes.map(shape => shape.id)
+        useSelectionStore.getState().selectMultiple(newShapeIds)
+        return createdShapes
+      } catch (error) {
+        console.error('Failed to create shapes:', error)
+        showError('Failed to create shapes', 'Please try again')
+        throw error
+      }
+    },
+    [batchCreateShapes, showError]
+  )
+
   // Handle Mermaid import
   const handleImportMermaid = useCallback(
     async (mermaidCode: string, diagramType: string) => {
@@ -374,6 +499,8 @@ const CanvasPage: React.FC = () => {
         isDesignPaletteOpen={isDesignPaletteOpen}
         onToggleAI={() => setIsAIOpen(!isAIOpen)}
         isAIOpen={isAIOpen}
+        onToggleLayers={handleToggleLayers}
+        isLayersOpen={isLayersOpen}
         onImportMermaid={handleImportMermaid}
       />
 
@@ -432,6 +559,7 @@ const CanvasPage: React.FC = () => {
               onShapeBatchUpdateDebounced={handleShapeBatchUpdateDebounced}
               onShapeDelete={handleShapeDelete}
               onShapeDuplicate={handleShapeDuplicate}
+              onShapeBatchCreate={handleShapeBatchCreate}
               onCursorMove={updateCursor}
               onViewportChange={saveViewport}
               initialViewport={restoreViewport()}
@@ -456,6 +584,17 @@ const CanvasPage: React.FC = () => {
           canvasId={canvasId}
           isOpen={isAIOpen}
           onClose={() => setIsAIOpen(false)}
+        />
+
+        {/* Layers Panel */}
+        <LayersPanel
+          isOpen={isLayersOpen}
+          onClose={() => setIsLayersOpen(false)}
+          shapes={shapes}
+          selectedIds={selectedIds}
+          onShapeSelect={selectShape}
+          onShapeUpdate={handleShapeUpdate}
+          onShapesReorder={batchUpdateShapes}
         />
 
         {/* AI Thinking Indicator */}

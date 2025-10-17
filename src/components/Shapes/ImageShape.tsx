@@ -1,6 +1,7 @@
 import type Konva from 'konva'
 import React, { memo, useEffect, useState } from 'react'
 import { Image as KonvaImage, Rect } from 'react-konva'
+import { getCanvasBlendMode } from '../../lib/blendModes'
 import type { ImageShape as ImageShapeType } from '../../lib/types'
 
 interface ImageShapeProps {
@@ -39,6 +40,10 @@ const ImageShape: React.FC<ImageShapeProps> = memo(
           fill="#e5e7eb"
           stroke="#9ca3af"
           strokeWidth={1}
+          opacity={shape.opacity ?? 1}
+          globalCompositeOperation={getCanvasBlendMode(
+            shape.blendMode || 'normal'
+          )}
           draggable
           onClick={onSelect}
           onTap={onSelect}
@@ -59,6 +64,10 @@ const ImageShape: React.FC<ImageShapeProps> = memo(
         height={shape.height}
         image={image}
         rotation={shape.rotation || 0}
+        opacity={shape.opacity ?? 1}
+        globalCompositeOperation={getCanvasBlendMode(
+          shape.blendMode || 'normal'
+        )}
         draggable
         onClick={onSelect}
         onTap={onSelect}

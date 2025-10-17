@@ -1,6 +1,7 @@
 import type Konva from 'konva'
 import React, { memo } from 'react'
 import { Line } from 'react-konva'
+import { getCanvasBlendMode } from '../../lib/blendModes'
 import type { LineShape as LineShapeType } from '../../lib/types'
 
 interface LineShapeProps {
@@ -23,6 +24,10 @@ const LineShape: React.FC<LineShapeProps> = memo(
         stroke={shape.stroke || '#3b82f6'}
         strokeWidth={shape.strokeWidth || 2}
         rotation={shape.rotation || 0}
+        opacity={shape.opacity ?? 1}
+        globalCompositeOperation={getCanvasBlendMode(
+          shape.blendMode || 'normal'
+        )}
         draggable
         onClick={onSelect}
         onTap={onSelect}

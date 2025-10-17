@@ -22,6 +22,8 @@ import {
 } from 'react-konva'
 import { useCanvasShortcuts } from '../hooks/useCanvasShortcuts'
 import { usePanZoom } from '../hooks/usePanZoom'
+import { useToast } from '../hooks/useToast'
+import { getClipboardService } from '../lib/clipboard'
 import {
   createImageShape,
   handleClipboardImage,
@@ -78,6 +80,12 @@ interface CanvasStageProps {
   ) => void
   onShapeDelete: (ids: string[]) => void
   onShapeDuplicate: (ids: string[]) => void
+  onShapeBatchCreate?: (
+    shapes: Omit<
+      Shape,
+      'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'
+    >[]
+  ) => Promise<Shape[]>
   onCursorMove: (cursor: { x: number; y: number }) => void
   onViewportChange?: (viewport: ViewportState) => void
   initialViewport?: ViewportState
@@ -98,6 +106,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
     onShapeBatchUpdateDebounced,
     onShapeDelete,
     onShapeDuplicate,
+    onShapeBatchCreate,
     onCursorMove,
     onViewportChange,
     initialViewport,
@@ -105,6 +114,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
   }) => {
     const stageRef = useRef<Konva.Stage>(null)
     const transformerRef = useRef<Konva.Transformer>(null)
+    const { showSuccess, showError } = useToast()
     const [isDrawing, setIsDrawing] = useState(false)
     const [drawingStart, setDrawingStart] = useState<{
       x: number
@@ -246,10 +256,136 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
       [selectedIds, shapes, onShapeUpdate]
     )
 
+    // Copy functionality
+    const handleCopy = useCallback(async () => {
+      if (selectedIds.length === 0) return
+
+      try {
+        const clipboardService = getClipboardService()
+        const selectedShapes = shapes.filter(shape =>
+          selectedIds.includes(shape.id)
+        )
+        await clipboardService.copyShapes(selectedShapes)
+
+        // Show success feedback
+        showSuccess(
+          'Objects copied',
+          `${selectedShapes.length} object${selectedShapes.length > 1 ? 's' : ''} copied to clipboard`
+        )
+      } catch (error) {
+        console.error('Failed to copy objects:', error)
+        showError('Copy failed', 'Failed to copy objects to clipboard')
+      }
+    }, [selectedIds, shapes, showSuccess, showError])
+
+    // Paste functionality
+    const handlePaste = useCallback(async () => {
+      try {
+        const clipboardService = getClipboardService()
+        const clipboardData = await clipboardService.pasteShapes()
+
+        if (!clipboardData) {
+          console.log('No objects to paste')
+          return
+        }
+
+        // Calculate paste position (viewport center with 50px offset)
+        const viewportCenterX = width / 2
+        const viewportCenterY = height / 2
+        const offsetX = 50
+        const offsetY = 50
+
+        // Create new shapes with updated positions
+        const newShapes = clipboardData.shapes.map((shape, index) => {
+          const relativeOffset = clipboardData.relativePositions.offsets[index]
+
+          // Cast to Shape type to access properties
+          const shapeData = shape as unknown as Shape
+
+          // Create base shape object with required fields
+          const newShape = {
+            type: shapeData.type,
+            x: viewportCenterX + offsetX + relativeOffset.x,
+            y: viewportCenterY + offsetY + relativeOffset.y,
+            id: `${shapeData.type}-${Date.now()}-${index}`,
+            createdAt: Date.now(),
+            createdBy: currentUserId,
+            updatedAt: Date.now(),
+            updatedBy: currentUserId
+          }
+
+          // Add optional properties only if they exist and are not undefined
+          const optionalProps: (keyof Shape)[] = [
+            'width',
+            'height',
+            'radius',
+            'rotation',
+            'scaleX',
+            'scaleY',
+            'fill',
+            'stroke',
+            'strokeWidth',
+            'text',
+            'fontSize',
+            'fontFamily',
+            'fontWeight',
+            'fontStyle',
+            'textDecoration',
+            'textAlign',
+            'lineHeight',
+            'cornerRadius',
+            'zIndex',
+            'opacity',
+            'blendMode'
+          ]
+
+          optionalProps.forEach(prop => {
+            if (shapeData[prop] !== undefined) {
+              ;(newShape as any)[prop] = shapeData[prop]
+            }
+          })
+
+          return newShape
+        })
+
+        // Create the new shapes using batch create
+        if (onShapeBatchCreate) {
+          await onShapeBatchCreate(newShapes)
+        } else {
+          console.warn(
+            'Batch create not available, falling back to individual creation'
+          )
+          // Fallback to individual creation if batch create not available
+          for (const shape of newShapes) {
+            await onShapeCreate(shape)
+          }
+        }
+
+        // Show success feedback
+        showSuccess(
+          'Objects pasted',
+          `${newShapes.length} object${newShapes.length > 1 ? 's' : ''} pasted from clipboard`
+        )
+      } catch (error) {
+        console.error('Failed to paste objects:', error)
+        showError('Paste failed', 'Failed to paste objects from clipboard')
+      }
+    }, [
+      width,
+      height,
+      currentUserId,
+      onShapeCreate,
+      onShapeBatchCreate,
+      showSuccess,
+      showError
+    ])
+
     useCanvasShortcuts({
       onDelete: handleDelete,
       onDuplicate: handleDuplicate,
       onNudge: handleNudge,
+      onCopy: handleCopy,
+      onPaste: handlePaste,
       onToolSelect: onToolSelect
         ? (tool: string) => onToolSelect(tool as ToolType)
         : undefined

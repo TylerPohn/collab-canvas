@@ -1,6 +1,7 @@
 import type Konva from 'konva'
 import React, { memo } from 'react'
 import { Arrow } from 'react-konva'
+import { getCanvasBlendMode } from '../../lib/blendModes'
 import type { ArrowShape as ArrowShapeType } from '../../lib/types'
 
 interface ArrowShapeProps {
@@ -23,6 +24,10 @@ const ArrowShape: React.FC<ArrowShapeProps> = memo(
         stroke={shape.stroke || '#3b82f6'}
         strokeWidth={shape.strokeWidth || 2}
         rotation={shape.rotation || 0}
+        opacity={shape.opacity ?? 1}
+        globalCompositeOperation={getCanvasBlendMode(
+          shape.blendMode || 'normal'
+        )}
         pointerLength={10}
         pointerWidth={10}
         pointerAtBeginning={

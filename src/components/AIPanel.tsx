@@ -110,6 +110,30 @@ const AIPanel: React.FC<AIPanelProps> = ({ canvasId, isOpen, onClose }) => {
     ) {
       tooltip = 'Rotate selected shape 45 degrees counterclockwise (cumulative)'
     }
+
+    // Add info for new PR #25 commands
+    if (cmd.command === 'arrangeInColumn' && selectedIds.length > 0) {
+      tooltip = `Arrange ${selectedIds.length} shapes in a vertical column`
+    }
+    if (cmd.command === 'alignShapes' && selectedIds.length > 0) {
+      const alignment = cmd.parameters.alignment || 'left'
+      const axis = cmd.parameters.axis || 'horizontal'
+      tooltip = `Align ${selectedIds.length} shapes to ${alignment} (${axis})`
+    }
+    if (cmd.command === 'distributeShapes' && selectedIds.length > 0) {
+      const direction = cmd.parameters.direction || 'horizontal'
+      tooltip = `Distribute ${selectedIds.length} shapes evenly ${direction}ly`
+    }
+    if (cmd.command === 'changeColor' && selectedIds.length > 0) {
+      const color = cmd.parameters.fill || 'color'
+      tooltip = `Change selected shape color to ${color}`
+    }
+    if (cmd.command === 'copyStyle' && selectedIds.length > 1) {
+      tooltip = `Copy style from first shape to ${selectedIds.length - 1} other shapes`
+    }
+    if (cmd.command === 'duplicateShape' && selectedIds.length > 0) {
+      tooltip = 'Duplicate selected shape with offset positioning'
+    }
     if (cmd.command === 'moveShapeByOthers' && selectedIds.length > 0) {
       tooltip = 'Move selected shape to center of other shapes on canvas'
     }
@@ -159,6 +183,13 @@ const AIPanel: React.FC<AIPanelProps> = ({ canvasId, isOpen, onClose }) => {
         parameters.rows = rows
         parameters.cols = cols
       }
+    }
+
+    // Handle new PR #25 commands with special parameter substitution
+    if (cmd.command === 'copyStyle' && selectedIds.length > 1) {
+      // For copyStyle, use first selected as source, rest as targets
+      parameters.sourceShapeId = selectedIds[0]
+      parameters.targetShapeIds = selectedIds.slice(1)
     }
 
     return parameters
@@ -382,6 +413,63 @@ const AIPanel: React.FC<AIPanelProps> = ({ canvasId, isOpen, onClose }) => {
       description:
         'Rotate selected shape 45 degrees counterclockwise (cumulative)'
     },
+    // NEW: Style Manipulation (PR #25)
+    {
+      name: 'Change to Red',
+      command: 'changeColor',
+      parameters: {
+        shapeId: 'selected-shape-id',
+        fill: '#EF4444'
+      },
+      category: 'Manipulate',
+      requiresSelection: true,
+      description: 'Change selected shape color to red'
+    },
+    {
+      name: 'Change to Blue',
+      command: 'changeColor',
+      parameters: {
+        shapeId: 'selected-shape-id',
+        fill: '#3B82F6'
+      },
+      category: 'Manipulate',
+      requiresSelection: true,
+      description: 'Change selected shape color to blue'
+    },
+    {
+      name: 'Change to Green',
+      command: 'changeColor',
+      parameters: {
+        shapeId: 'selected-shape-id',
+        fill: '#10B981'
+      },
+      category: 'Manipulate',
+      requiresSelection: true,
+      description: 'Change selected shape color to green'
+    },
+    {
+      name: 'Copy Style',
+      command: 'copyStyle',
+      parameters: {
+        sourceShapeId: 'selected-shape-id',
+        targetShapeIds: ['other-selected-shapes']
+      },
+      category: 'Manipulate',
+      requiresMultipleSelection: true,
+      description: 'Copy style from first selected shape to others'
+    },
+    // NEW: Duplication (PR #25)
+    {
+      name: 'Duplicate Shape',
+      command: 'duplicateShape',
+      parameters: {
+        shapeId: 'selected-shape-id',
+        offset: { x: 50, y: 50 }
+      },
+      category: 'Manipulate',
+      requiresSelection: true,
+      description: 'Duplicate selected shape with 50px offset'
+    },
     // Layout Commands
     {
       name: 'Arrange in Grid',
@@ -419,6 +507,68 @@ const AIPanel: React.FC<AIPanelProps> = ({ canvasId, isOpen, onClose }) => {
       category: 'Layout',
       requiresMultipleSelection: true,
       description: 'Space selected shapes evenly with equal gaps'
+    },
+    // NEW: Column Layout (PR #25)
+    {
+      name: 'Arrange in Column',
+      command: 'arrangeInColumn',
+      parameters: {
+        shapeIds: ['selected-shapes'],
+        spacing: 30,
+        alignment: 'left'
+      },
+      category: 'Layout',
+      requiresMultipleSelection: true,
+      description: 'Arrange selected shapes in a vertical column'
+    },
+    // NEW: Advanced Alignment (PR #25)
+    {
+      name: 'Align Left',
+      command: 'alignShapes',
+      parameters: {
+        shapeIds: ['selected-shapes'],
+        alignment: 'left',
+        axis: 'horizontal'
+      },
+      category: 'Layout',
+      requiresMultipleSelection: true,
+      description: 'Align selected shapes to the left'
+    },
+    {
+      name: 'Align Center',
+      command: 'alignShapes',
+      parameters: {
+        shapeIds: ['selected-shapes'],
+        alignment: 'center',
+        axis: 'horizontal'
+      },
+      category: 'Layout',
+      requiresMultipleSelection: true,
+      description: 'Align selected shapes to the center'
+    },
+    {
+      name: 'Align Top',
+      command: 'alignShapes',
+      parameters: {
+        shapeIds: ['selected-shapes'],
+        alignment: 'top',
+        axis: 'vertical'
+      },
+      category: 'Layout',
+      requiresMultipleSelection: true,
+      description: 'Align selected shapes to the top'
+    },
+    {
+      name: 'Distribute Horizontally',
+      command: 'distributeShapes',
+      parameters: {
+        shapeIds: ['selected-shapes'],
+        direction: 'horizontal',
+        spacing: 40
+      },
+      category: 'Layout',
+      requiresMultipleSelection: true,
+      description: 'Distribute selected shapes evenly horizontally'
     },
     // Context Commands
     {

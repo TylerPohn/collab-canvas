@@ -72,8 +72,8 @@ const handleCreateForm = async () => {
 
 ### Creation Commands
 
-- `createShape` - Create rectangles, circles, or text
-- `createText` - Create text elements
+- `createShape` - Create rectangles, circles, or text with full styling support
+- `createText` - Create text elements with typography controls
 - `createLoginForm` - Create a login form with fields
 - `createNavigationBar` - Create a navigation bar
 
@@ -82,16 +82,71 @@ const handleCreateForm = async () => {
 - `moveShape` - Move shapes to new positions
 - `resizeShape` - Resize shapes
 - `rotateShape` - Rotate shapes by degrees
+- `changeColor` - Change fill or stroke colors
+- `copyStyle` - Copy style properties between shapes
+- `duplicateShape` - Duplicate shapes with offset positioning
 
 ### Layout Commands
 
 - `arrangeInGrid` - Arrange shapes in a grid layout
 - `arrangeInRow` - Arrange shapes in a horizontal row
+- `arrangeInColumn` - Arrange shapes in a vertical column
+- `alignShapes` - Align shapes to left/center/right or top/middle/bottom
+- `distributeShapes` - Distribute shapes evenly with specified spacing
 
 ### Context Commands
 
 - `getCanvasState` - Get current canvas state
 - `findShapes` - Find shapes by criteria
+
+## Visual Effects Support
+
+The AI agent supports advanced visual effects for enhanced design capabilities:
+
+### Blend Modes
+
+All shapes support 12 Canvas 2D blend modes for advanced layering effects:
+
+- `normal` (default) - Standard blending
+- `multiply` - Darkens overlapping areas
+- `overlay` - Combines multiply and screen
+- `screen` - Lightens overlapping areas
+- `darken` - Keeps darker pixels
+- `lighten` - Keeps lighter pixels
+- `color-dodge` - Brightens base color
+- `color-burn` - Darkens base color
+- `hard-light` - Strong overlay effect
+- `soft-light` - Gentle overlay effect
+- `difference` - Inverts overlapping areas
+- `exclusion` - Softer difference effect
+
+### Opacity Control
+
+- Full opacity control from 0 (transparent) to 1 (opaque)
+- Real-time opacity changes with visual feedback
+- Opacity affects all shape properties (fill, stroke, text)
+
+### Usage Examples
+
+```typescript
+// Create shape with blend mode and opacity
+await executeCommand('createShape', {
+  type: 'rect',
+  position: { x: 100, y: 100 },
+  size: { width: 150, height: 80 },
+  fill: '#3B82F6',
+  blendMode: 'multiply',
+  opacity: 0.7
+})
+
+// Create text with opacity
+await executeCommand('createText', {
+  text: 'Hello World',
+  position: { x: 200, y: 200 },
+  fill: '#000000',
+  opacity: 0.8
+})
+```
 
 ## Security Features
 

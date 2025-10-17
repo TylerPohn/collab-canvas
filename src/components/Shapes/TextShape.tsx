@@ -1,6 +1,7 @@
 import type Konva from 'konva'
 import React, { memo } from 'react'
 import { Text } from 'react-konva'
+import { getCanvasBlendMode } from '../../lib/blendModes'
 import { sanitizeText } from '../../lib/security'
 import type { TextShape as TextShapeType } from '../../lib/types'
 
@@ -44,6 +45,10 @@ const TextShape: React.FC<TextShapeProps> = memo(
         stroke={shape.stroke || 'transparent'}
         strokeWidth={shape.strokeWidth || 0}
         rotation={shape.rotation || 0}
+        opacity={shape.opacity ?? 1}
+        globalCompositeOperation={getCanvasBlendMode(
+          shape.blendMode || 'normal'
+        )}
         draggable
         onClick={onSelect}
         onTap={onSelect}

@@ -349,6 +349,10 @@ export class AIAgentService {
 
 IMPORTANT: When specifying colors, always use hex color codes (e.g., #FF0000 for red, #00FF00 for green, #0000FF for blue). Do not use named colors like "red", "blue", "green".
 
+For visual effects:
+- Opacity: Use values between 0 (transparent) and 1 (opaque)
+- Blend modes: Use supported Canvas 2D modes (normal, multiply, overlay, screen, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion)
+
 For movement commands:
 1. For directional movements with distance (e.g., "move 300px to the right"), use moveShape and CALCULATE the new position: new_x = current_x + distance
 2. For movements relative to OTHER shapes (e.g., "move to the right of other shapes"), use moveShapeByOthers
@@ -360,10 +364,25 @@ For creation commands with positioning:
 2. Then use createShape with calculated position based on existing shapes
 3. Calculate position: right = max_x + spacing, left = min_x - spacing, above = min_y - spacing, below = max_y + spacing
 
-For layout commands (arrange, grid, row, space, align):
+For layout commands (arrange, grid, row, column, space, align):
 1. First use getCanvasState to get all shapes and their IDs
-2. Then use the appropriate layout tool (arrangeInGrid, arrangeInRow, spaceEvenly) with the shape IDs from step 1
+2. Then use the appropriate layout tool (arrangeInGrid, arrangeInRow, arrangeInColumn, spaceEvenly, alignShapes, distributeShapes) with the shape IDs from step 1
 3. For arrangeInGrid: use rows and cols parameters (e.g., "2x3 grid" = rows: 2, cols: 3)
+4. For arrangeInColumn: arrange shapes vertically in a column with specified spacing
+5. For alignShapes: align shapes to left/center/right (horizontal) or top/middle/bottom (vertical)
+6. For distributeShapes: distribute shapes evenly with specified spacing (requires 3+ shapes)
+
+For style commands (color, style):
+1. For changeColor: change fill, stroke, opacity, or blend mode of a specific shape
+2. For copyStyle: copy style properties from source shape to target shapes
+3. Always use hex color codes (e.g., #FF0000 for red, #00FF00 for green)
+4. For opacity: use values between 0 (transparent) and 1 (opaque)
+5. For blend modes: use supported Canvas 2D modes (normal, multiply, overlay, screen, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion)
+
+For duplication commands:
+1. For duplicateShape: create a copy of a shape with optional offset positioning
+2. Default offset is 50px right and 50px down if not specified
+3. Returns the new shape ID for reference
 
 You can make multiple tool calls in sequence. If you need to find shapes first, make that call, then use the results to complete the layout action.`
         },

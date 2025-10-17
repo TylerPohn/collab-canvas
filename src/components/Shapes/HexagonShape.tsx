@@ -1,6 +1,7 @@
 import type Konva from 'konva'
 import React, { memo } from 'react'
 import { RegularPolygon } from 'react-konva'
+import { getCanvasBlendMode } from '../../lib/blendModes'
 import type { HexagonShape as HexagonShapeType } from '../../lib/types'
 
 interface HexagonShapeProps {
@@ -27,6 +28,10 @@ const HexagonShape: React.FC<HexagonShapeProps> = memo(
         stroke={shape.stroke || 'transparent'}
         strokeWidth={shape.strokeWidth || 0}
         rotation={shape.rotation || 0}
+        opacity={shape.opacity ?? 1}
+        globalCompositeOperation={getCanvasBlendMode(
+          shape.blendMode || 'normal'
+        )}
         draggable
         onClick={onSelect}
         onTap={onSelect}

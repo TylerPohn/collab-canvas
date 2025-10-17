@@ -1,6 +1,7 @@
 import type Konva from 'konva'
 import React, { memo } from 'react'
 import { Circle } from 'react-konva'
+import { getCanvasBlendMode } from '../../lib/blendModes'
 import type { CircleShape as CircleShapeType } from '../../lib/types'
 
 interface CircleShapeProps {
@@ -24,6 +25,10 @@ const CircleShape: React.FC<CircleShapeProps> = memo(
         stroke={shape.stroke || 'transparent'}
         strokeWidth={shape.strokeWidth || 0}
         rotation={shape.rotation || 0}
+        opacity={shape.opacity ?? 1}
+        globalCompositeOperation={getCanvasBlendMode(
+          shape.blendMode || 'normal'
+        )}
         draggable
         onClick={onSelect}
         onTap={onSelect}

@@ -1,6 +1,7 @@
 import type Konva from 'konva'
 import React, { memo } from 'react'
 import { Star } from 'react-konva'
+import { getCanvasBlendMode } from '../../lib/blendModes'
 import type { StarShape as StarShapeType } from '../../lib/types'
 
 interface StarShapeProps {
@@ -28,6 +29,10 @@ const StarShape: React.FC<StarShapeProps> = memo(
         stroke={shape.stroke || 'transparent'}
         strokeWidth={shape.strokeWidth || 0}
         rotation={shape.rotation || 0}
+        opacity={shape.opacity ?? 1}
+        globalCompositeOperation={getCanvasBlendMode(
+          shape.blendMode || 'normal'
+        )}
         draggable
         onClick={onSelect}
         onTap={onSelect}
