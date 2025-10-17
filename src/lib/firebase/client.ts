@@ -1,5 +1,6 @@
 import { getApps, initializeApp, type FirebaseApp } from 'firebase/app'
 import { getAuth, type Auth } from 'firebase/auth'
+import { getDatabase, type Database } from 'firebase/database'
 import { getFirestore, type Firestore } from 'firebase/firestore'
 
 // Firebase configuration
@@ -19,7 +20,8 @@ const requiredEnvVars = [
   'VITE_FIREBASE_PROJECT_ID',
   'VITE_FIREBASE_STORAGE_BUCKET',
   'VITE_FIREBASE_MESSAGING_SENDER_ID',
-  'VITE_FIREBASE_APP_ID'
+  'VITE_FIREBASE_APP_ID',
+  'VITE_FIREBASE_RTDB_URL'
 ]
 
 const missingVars = requiredEnvVars.filter(varName => !import.meta.env[varName])
@@ -41,6 +43,10 @@ if (getApps().length === 0) {
 // Initialize Firebase services
 export const auth: Auth = getAuth(app)
 export const db: Firestore = getFirestore(app)
+export const rtdb: Database = getDatabase(
+  app,
+  import.meta.env.VITE_FIREBASE_RTDB_URL
+)
 
 // Export the app instance for advanced usage
 export { app }

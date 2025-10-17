@@ -1,8 +1,15 @@
 import {
-  removePresence,
-  subscribeToPresence,
-  updatePresence
-} from '../firebase/firestore'
+  off,
+  onDisconnect,
+  onValue,
+  ref,
+  remove,
+  set,
+  type DatabaseReference,
+  type OnDisconnect,
+  type Unsubscribe
+} from 'firebase/database'
+import { rtdb } from '../firebase/client'
 import { presenceRateLimiter, securityLogger } from '../security'
 import type { UserPresence } from '../types'
 
@@ -41,6 +48,8 @@ class PresenceServiceImpl implements PresenceService {
   >()
   private currentCanvasId: string | null = null
   private currentUserId: string | null = null
+  private presenceRefs = new Map<string, DatabaseReference>()
+  private onDisconnectRefs = new Map<string, OnDisconnect>()
 
   async joinRoom(
     canvasId: string,
@@ -54,17 +63,33 @@ class PresenceServiceImpl implements PresenceService {
     this.currentCanvasId = canvasId
     this.currentUserId = user.uid
 
-    // Set initial presence
+    // Create RTDB reference for this user's presence
+    const presenceRef = ref(rtdb, `presence/${canvasId}/${user.uid}`)
+    this.presenceRefs.set(`${canvasId}-${user.uid}`, presenceRef)
+
+    // Set initial presence data
     const initialPresence = {
-      userId: user.uid,
-      displayName: user.displayName || 'Anonymous',
-      avatar: user.photoURL || undefined,
-      cursor: { x: 0, y: 0 },
+      userInfo: {
+        displayName: user.displayName || 'Anonymous',
+        email: user.uid, // Using uid as email fallback
+        avatar: user.photoURL || undefined
+      },
+      cursor: {
+        x: 0,
+        y: 0,
+        timestamp: Date.now()
+      },
       lastSeen: Date.now(),
-      isActive: true
+      isOnline: true
     }
 
-    await updatePresence(canvasId, user.uid, initialPresence)
+    // Set presence data
+    await set(presenceRef, initialPresence)
+
+    // Set up onDisconnect handler to automatically remove presence when user disconnects
+    const onDisconnectRef = onDisconnect(presenceRef)
+    this.onDisconnectRefs.set(`${canvasId}-${user.uid}`, onDisconnectRef)
+    await onDisconnectRef.remove()
 
     // Start heartbeat
     this.startHeartbeat(canvasId, user.uid)
@@ -88,8 +113,19 @@ class PresenceServiceImpl implements PresenceService {
       this.cursorThrottleTimeouts.delete(cursorThrottleKey)
     }
 
-    // Remove presence from Firestore
-    await removePresence(canvasId, userId)
+    // Remove presence from RTDB
+    const presenceRef = this.presenceRefs.get(`${canvasId}-${userId}`)
+    if (presenceRef) {
+      await remove(presenceRef)
+      this.presenceRefs.delete(`${canvasId}-${userId}`)
+    }
+
+    // Cancel onDisconnect handler
+    const onDisconnectRef = this.onDisconnectRefs.get(`${canvasId}-${userId}`)
+    if (onDisconnectRef) {
+      await onDisconnectRef.cancel()
+      this.onDisconnectRefs.delete(`${canvasId}-${userId}`)
+    }
 
     // Reset current state
     if (this.currentCanvasId === canvasId && this.currentUserId === userId) {
@@ -124,11 +160,19 @@ class PresenceServiceImpl implements PresenceService {
 
     // Set new throttle timeout
     const timeout = setTimeout(async () => {
-      await updatePresence(canvasId, userId, {
-        cursor,
-        lastSeen: Date.now(),
-        isActive: true
-      })
+      const presenceRef = this.presenceRefs.get(`${canvasId}-${userId}`)
+      if (presenceRef) {
+        const cursorRef = ref(rtdb, `presence/${canvasId}/${userId}/cursor`)
+        await set(cursorRef, {
+          x: cursor.x,
+          y: cursor.y,
+          timestamp: Date.now()
+        })
+
+        // Update lastSeen
+        const lastSeenRef = ref(rtdb, `presence/${canvasId}/${userId}/lastSeen`)
+        await set(lastSeenRef, Date.now())
+      }
       this.cursorThrottleTimeouts.delete(throttleKey)
     }, CURSOR_THROTTLE_INTERVAL)
 
@@ -139,14 +183,43 @@ class PresenceServiceImpl implements PresenceService {
     canvasId: string,
     callback: (presence: UserPresence[]) => void
   ): () => void {
-    return subscribeToPresence(canvasId, presence => {
-      // Filter out stale presence (users who haven't been seen recently)
-      const now = Date.now()
-      const activePresence = presence.filter(
-        p => p.isActive && now - p.lastSeen < PRESENCE_TIMEOUT
-      )
-      callback(activePresence)
+    const presenceRef = ref(rtdb, `presence/${canvasId}`)
+
+    const unsubscribe: Unsubscribe = onValue(presenceRef, snapshot => {
+      const data = snapshot.val()
+      if (!data) {
+        callback([])
+        return
+      }
+
+      // Convert RTDB data to UserPresence format
+      const presence: UserPresence[] = Object.entries(data)
+        .map(([userId, userData]: [string, any]) => {
+          // Filter out stale presence (users who haven't been seen recently)
+          const now = Date.now()
+          const isActive =
+            userData.isOnline && now - userData.lastSeen < PRESENCE_TIMEOUT
+
+          return {
+            userId,
+            displayName: userData.userInfo?.displayName || 'Anonymous',
+            avatar: userData.userInfo?.avatar,
+            cursor: {
+              x: userData.cursor?.x || 0,
+              y: userData.cursor?.y || 0
+            },
+            lastSeen: userData.lastSeen || now,
+            isActive
+          }
+        })
+        .filter(p => p.isActive)
+
+      callback(presence)
     })
+
+    return () => {
+      off(presenceRef, 'value', unsubscribe)
+    }
   }
 
   cleanup(): void {
@@ -158,6 +231,15 @@ class PresenceServiceImpl implements PresenceService {
     this.cursorThrottleTimeouts.forEach(timeout => clearTimeout(timeout))
     this.cursorThrottleTimeouts.clear()
 
+    // Cancel all onDisconnect handlers
+    this.onDisconnectRefs.forEach(onDisconnectRef => {
+      onDisconnectRef.cancel().catch(console.error)
+    })
+    this.onDisconnectRefs.clear()
+
+    // Clear presence refs
+    this.presenceRefs.clear()
+
     // Reset state
     this.currentCanvasId = null
     this.currentUserId = null
@@ -168,10 +250,14 @@ class PresenceServiceImpl implements PresenceService {
 
     const interval = setInterval(async () => {
       try {
-        await updatePresence(canvasId, userId, {
-          lastSeen: Date.now(),
-          isActive: true
-        })
+        const presenceRef = this.presenceRefs.get(`${canvasId}-${userId}`)
+        if (presenceRef) {
+          const lastSeenRef = ref(
+            rtdb,
+            `presence/${canvasId}/${userId}/lastSeen`
+          )
+          await set(lastSeenRef, Date.now())
+        }
       } catch (error) {
         console.error('Failed to send heartbeat:', error)
       }

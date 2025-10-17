@@ -9,18 +9,16 @@ import {
   query,
   setDoc,
   updateDoc,
-  where,
   writeBatch,
   type Unsubscribe
 } from 'firebase/firestore'
-import type { CanvasDocument, CanvasMeta, Shape, UserPresence } from '../types'
+import type { CanvasDocument, CanvasMeta, Shape } from '../types'
 import { db } from './client'
 
 // Collection references - PR #7: Firestore data model
 // Structure: canvases/{canvasId} and canvases/{canvasId}/objects/{objectId}
 const CANVASES_COLLECTION = 'canvases'
 const OBJECTS_COLLECTION = 'objects'
-const PRESENCE_COLLECTION = 'presence'
 
 // Canvas operations
 export const canvasCollection = () => collection(db, CANVASES_COLLECTION)
@@ -32,12 +30,6 @@ export const objectsCollection = (canvasId: string) =>
   collection(db, CANVASES_COLLECTION, canvasId, OBJECTS_COLLECTION)
 export const objectDoc = (canvasId: string, objectId: string) =>
   doc(db, CANVASES_COLLECTION, canvasId, OBJECTS_COLLECTION, objectId)
-
-// Presence operations
-export const presenceCollection = (canvasId: string) =>
-  collection(db, CANVASES_COLLECTION, canvasId, PRESENCE_COLLECTION)
-export const presenceDoc = (canvasId: string, userId: string) =>
-  doc(db, CANVASES_COLLECTION, canvasId, PRESENCE_COLLECTION, userId)
 
 // Canvas CRUD operations
 export async function createCanvas(
@@ -260,10 +252,10 @@ export function subscribeToObjects(
       const shape = { id: doc.id, ...data } as Shape
       return shape
     })
-      console.log(
-        `[Firestore] Received ${objects.length} objects update (${snapshot.docChanges().length} changes)`
-      )
-    
+    console.log(
+      `[Firestore] Received ${objects.length} objects update (${snapshot.docChanges().length} changes)`
+    )
+
     callback(objects)
   })
 }
@@ -281,47 +273,6 @@ export function subscribeToObject(
     } else {
       callback(null)
     }
-  })
-}
-
-// Presence operations
-export async function updatePresence(
-  canvasId: string,
-  userId: string,
-  presence: Partial<UserPresence>
-): Promise<void> {
-  const presenceRef = presenceDoc(canvasId, userId)
-
-  const presenceData = {
-    ...presence,
-    lastSeen: Date.now()
-  }
-
-  await setDoc(presenceRef, presenceData, { merge: true })
-}
-
-export async function removePresence(
-  canvasId: string,
-  userId: string
-): Promise<void> {
-  const presenceRef = presenceDoc(canvasId, userId)
-  await deleteDoc(presenceRef)
-}
-
-export function subscribeToPresence(
-  canvasId: string,
-  callback: (presence: UserPresence[]) => void
-): Unsubscribe {
-  const presenceRef = presenceCollection(canvasId)
-  const q = query(presenceRef, where('isActive', '==', true))
-
-  return onSnapshot(q, snapshot => {
-    const presence = snapshot.docs.map(doc => {
-      const data = doc.data()
-      const presenceItem = { id: doc.id, ...data } as unknown as UserPresence
-      return presenceItem
-    })
-    callback(presence)
   })
 }
 
