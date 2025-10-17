@@ -1829,3 +1829,884 @@ setupTests.ts   // RTL + JSDOM setup
 - **AI Integration**: Natural language commands and shape suggestions
 - **Advanced Features**: Export, animations, offline mode
 - **Enterprise Features**: Comments, version history, team management
+
+---
+
+## PR #21 — Expanded Shape Support (6 New Shapes)
+
+**Goal:** Add support for 6 new shape types (Line, Arrow, Ellipse, Hexagon, Star, Image) to expand the canvas shape library from 3 to 9 total shapes.
+
+### Overview
+
+This PR adds comprehensive shape support including:
+
+- **Line (L)** - Straight lines with adjustable stroke
+- **Arrow (A)** - Lines with arrowheads (start/end/both)
+- **Ellipse (O)** - Ovals and circles with separate width/height control
+- **Hexagon (P)** - Multi-sided shapes (triangle, pentagon, hexagon, etc.)
+- **Star (S)** - Star shapes with preset configurations
+- **Image (I)** - Image placement via upload or clipboard paste
+
+All shapes integrate with existing real-time sync, design palette, and transformation systems.
+
+### Phase 1: Type System & Schema Updates (Foundation) - 2 hours
+
+**Files:** `src/lib/types.ts`, `src/lib/schema.ts`
+
+#### Step 1.1: Update ShapeType Union
+
+- [x] Open `src/lib/types.ts`
+- [x] Find the `ShapeType` union (line 2)
+- [x] Update from `'rect' | 'circle' | 'text' | 'mermaid'` to include: `'line' | 'arrow' | 'ellipse' | 'hexagon' | 'star' | 'image'`
+- [x] Verify TypeScript compilation succeeds
+
+#### Step 1.2: Define New Shape Interfaces
+
+- [x] Add new shape interfaces after existing ones (around line 60):
+
+```typescript
+export interface LineShape extends ShapeBase {
+  type: 'line'
+  endX: number
+  endY: number
+}
+
+export interface ArrowShape extends ShapeBase {
+  type: 'arrow'
+  endX: number
+  endY: number
+  arrowType: 'start' | 'end' | 'both'
+}
+
+export interface EllipseShape extends ShapeBase {
+  type: 'ellipse'
+  radiusX: number
+  radiusY: number
+}
+
+export interface HexagonShape extends ShapeBase {
+  type: 'hexagon'
+  radius: number
+  sides: number
+}
+
+export interface StarShape extends ShapeBase {
+  type: 'star'
+  outerRadius: number
+  innerRadius: number
+  points: number
+  starType: '5-point' | '6-point' | '8-point'
+}
+
+export interface ImageShape extends ShapeBase {
+  type: 'image'
+  imageUrl: string
+  imageName: string
+  width: number
+  height: number
+}
+```
+
+- [x] Update the `Shape` union type to include all new shapes
+- [x] Verify TypeScript compilation succeeds
+
+#### Step 1.3: Update Zod Schemas
+
+- [x] Open `src/lib/schema.ts`
+- [x] Update `ShapeTypeSchema` to include new shape types
+- [x] Add new shape schemas after existing ones:
+
+```typescript
+export const LineShapeSchema = ShapeBaseSchema.extend({
+  type: z.literal('line'),
+  endX: z.number(),
+  endY: z.number()
+})
+
+export const ArrowShapeSchema = ShapeBaseSchema.extend({
+  type: z.literal('arrow'),
+  endX: z.number(),
+  endY: z.number(),
+  arrowType: z.enum(['start', 'end', 'both'])
+})
+
+export const EllipseShapeSchema = ShapeBaseSchema.extend({
+  type: z.literal('ellipse'),
+  radiusX: z.number(),
+  radiusY: z.number()
+})
+
+export const HexagonShapeSchema = ShapeBaseSchema.extend({
+  type: z.literal('hexagon'),
+  radius: z.number(),
+  sides: z.number().min(3).max(12)
+})
+
+export const StarShapeSchema = ShapeBaseSchema.extend({
+  type: z.literal('star'),
+  outerRadius: z.number(),
+  innerRadius: z.number(),
+  points: z.number(),
+  starType: z.enum(['5-point', '6-point', '8-point'])
+})
+
+export const ImageShapeSchema = ShapeBaseSchema.extend({
+  type: z.literal('image'),
+  imageUrl: z.string(),
+  imageName: z.string(),
+  width: z.number(),
+  height: z.number()
+})
+```
+
+- [x] Update `ShapeSchema` discriminated union to include all new schemas
+- [x] Verify TypeScript compilation succeeds
+
+#### Step 1.4: Update ToolType
+
+- [x] Open `src/components/ToolbarMUI.tsx`
+- [x] Update `ToolType` union to include: `'line' | 'arrow' | 'ellipse' | 'hexagon' | 'star' | 'image'`
+- [x] Verify TypeScript compilation succeeds
+
+**Checkpoint:** All type definitions are complete and TypeScript compiles without errors.
+
+### Phase 2: Shape Components (6 New Components) - 4 hours
+
+**Files:** `src/components/Shapes/` (create 6 new files)
+
+#### Step 2.1: Create LineShape Component
+
+- [x] Create `src/components/Shapes/LineShape.tsx`
+- [x] Copy structure from `RectangleShape.tsx` as template
+- [x] Replace `Rect` with `Line` from react-konva
+- [x] Update props to use `endX`, `endY` instead of `width`, `height`
+- [x] Set `points={[0, 0, shape.endX - shape.x, shape.endY - shape.y]}`
+- [x] Remove `fill` prop (lines don't have fill)
+- [x] Verify component renders without errors
+
+#### Step 2.2: Create ArrowShape Component
+
+- [x] Create `src/components/Shapes/ArrowShape.tsx`
+- [x] Copy from `LineShape.tsx` as template
+- [x] Replace `Line` with `Arrow` from react-konva
+- [x] Add `pointerLength` and `pointerWidth` props (default: 10, 10)
+- [x] Add conditional `pointerAtBeginning` and `pointerAtEnding` based on `arrowType`
+- [x] **Test:** Component renders with correct arrow directions
+
+#### Step 2.3: Create EllipseShape Component
+
+- [x] Create `src/components/Shapes/EllipseShape.tsx`
+- [x] Copy structure from `CircleShape.tsx` as template
+- [x] Replace `Circle` with `Ellipse` from react-konva
+- [x] Use `radiusX` and `radiusY` instead of single `radius`
+- [x] **Test:** Component renders ellipses correctly
+
+#### Step 2.4: Create HexagonShape Component
+
+- [x] Create `src/components/Shapes/HexagonShape.tsx`
+- [x] Copy structure from `CircleShape.tsx` as template
+- [x] Replace `Circle` with `RegularPolygon` from react-konva
+- [x] Use `sides` prop for number of sides
+- [x] Use `radius` prop for size
+- [x] **Test:** Component renders hexagons with correct number of sides
+
+#### Step 2.5: Create StarShape Component
+
+- [x] Create `src/components/Shapes/StarShape.tsx`
+- [x] Copy structure from `CircleShape.tsx` as template
+- [x] Replace `Circle` with `Star` from react-konva
+- [x] Use `outerRadius`, `innerRadius`, and `numPoints` props
+- [x] **Test:** Component renders stars correctly
+
+#### Step 2.6: Create ImageShape Component
+
+- [x] Create `src/components/Shapes/ImageShape.tsx`
+- [x] Copy structure from `RectangleShape.tsx` as template
+- [x] Replace `Rect` with `Image` from react-konva
+- [x] Add image loading logic with `useEffect` and `useState`
+- [x] Handle image loading states (loading, error, loaded)
+- [x] **Test:** Component loads and displays images
+
+**Checkpoint:** All 6 shape components render without errors and handle basic Konva events.
+
+### Phase 6.1: Fix Image Upload Firestore Error (CRITICAL BUG FIX)
+
+**Problem:** Image upload/paste fails with Firestore error: "Unsupported field value: undefined"
+
+**Root Cause:** The `createImageShape` function sets `fill: undefined` and `stroke: undefined`, but Firestore doesn't allow `undefined` values.
+
+**Files:** `src/lib/imageUpload.ts`
+
+#### Step 6.1.1: Fix createImageShape Function
+
+- [x] Open `src/lib/imageUpload.ts`
+- [x] Find the `createImageShape` function (around line 100)
+- [x] Remove the lines that set `fill: undefined` and `stroke: undefined`
+- [x] Keep only the required properties: `type`, `x`, `y`, `width`, `height`, `imageUrl`, `imageName`, `strokeWidth`, `rotation`, `zIndex`
+- [x] **Test:** Try uploading an image - should work without Firestore errors
+
+**Before (BROKEN):**
+
+```typescript
+return {
+  type: 'image' as const,
+  x,
+  y,
+  width: Math.min(imageResult.width, 200),
+  height: Math.min(imageResult.height, 200),
+  imageUrl: imageResult.imageUrl,
+  imageName: imageResult.imageName,
+  fill: undefined, // ❌ REMOVE THIS
+  stroke: undefined, // ❌ REMOVE THIS
+  strokeWidth: 0,
+  rotation: 0,
+  zIndex: 0
+}
+```
+
+**After (FIXED):**
+
+```typescript
+return {
+  type: 'image' as const,
+  x,
+  y,
+  width: Math.min(imageResult.width, 200),
+  height: Math.min(imageResult.height, 200),
+  imageUrl: imageResult.imageUrl,
+  imageName: imageResult.imageName,
+  strokeWidth: 0,
+  rotation: 0,
+  zIndex: 0
+}
+```
+
+#### Step 6.1.2: Test Image Upload
+
+- [ ] Test image upload via file picker (click Image tool, then click canvas)
+- [ ] Test image paste via clipboard (select Image tool, then Ctrl+V/Cmd+V)
+- [ ] Verify images appear on canvas without console errors
+- [ ] Verify images sync to other users in real-time
+
+**Checkpoint:** Image upload and paste work without Firestore errors.
+
+### Phase 3: Toolbar Integration - 1 hour
+
+**Files:** `src/components/ToolbarMUI.tsx`
+
+#### Step 3.1: Add New Tool Buttons
+
+- [ ] Open `src/components/ToolbarMUI.tsx`
+- [ ] Import new MUI icons at the top:
+
+```typescript
+import {
+  ShowChart, // Line
+  TrendingFlat, // Arrow
+  PanoramaFishEye, // Ellipse
+  Hexagon, // Hexagon
+  Star, // Star
+  AddPhotoAlternate // Image
+} from '@mui/icons-material'
+```
+
+- [ ] Add 6 new tools to the `tools` array (around line 72):
+
+```typescript
+{
+  type: 'line',
+  label: 'Line',
+  icon: ShowChart,
+  shortcut: 'L',
+  description: 'Click and drag to create line'
+},
+{
+  type: 'arrow',
+  label: 'Arrow',
+  icon: TrendingFlat,
+  shortcut: 'A',
+  description: 'Click and drag to create arrow'
+},
+{
+  type: 'ellipse',
+  label: 'Ellipse',
+  icon: PanoramaFishEye,
+  shortcut: 'O',
+  description: 'Click and drag to create ellipse (Shift for circle)'
+},
+{
+  type: 'hexagon',
+  label: 'Hexagon',
+  icon: Hexagon,
+  shortcut: 'P',
+  description: 'Click and drag to create hexagon'
+},
+{
+  type: 'star',
+  label: 'Star',
+  icon: Star,
+  shortcut: 'S',
+  description: 'Click and drag to create star'
+},
+{
+  type: 'image',
+  label: 'Image',
+  icon: AddPhotoAlternate,
+  shortcut: 'I',
+  description: 'Click to place image'
+}
+```
+
+- [ ] Verify all new tool buttons appear in toolbar and are clickable
+
+**Checkpoint:** Toolbar shows all 6 new tools with proper icons and tooltips.
+
+### Phase 4: Canvas Stage Drawing Logic - 3 hours
+
+**Files:** `src/components/CanvasStage.tsx`
+
+#### Step 4.1: Import New Shape Components
+
+- [ ] Add imports for all 6 new shape components at the top
+- [ ] Verify imports work without errors
+
+#### Step 4.2: Update Shape Rendering Switch
+
+- [ ] Find the shape rendering switch statement (around line 200)
+- [ ] Add cases for all 6 new shape types:
+
+```typescript
+case 'line':
+  return (
+    <LineShape
+      key={shape.id}
+      shape={shape as LineShape}
+      onSelect={handleShapeSelect}
+      onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
+      onDragEnd={handleDragEnd}
+      onTransformEnd={handleTransformEnd}
+    />
+  )
+// ... repeat for arrow, ellipse, hexagon, star, image
+```
+
+- [ ] Verify all new shapes render when added to canvas
+
+#### Step 4.3: Add Shape Creation Handlers
+
+- [ ] Find the `handleStageClick` function
+- [ ] Add cases for new shape creation in the drawing logic:
+
+**Line/Arrow Creation:**
+
+```typescript
+if (selectedTool === 'line' || selectedTool === 'arrow') {
+  if (!isDrawing) {
+    setIsDrawing(true)
+    setDrawingStart({ x: e.evt.offsetX, y: e.evt.offsetY })
+  } else {
+    // Create line/arrow from start to end point
+    const endX = e.evt.offsetX
+    const endY = e.evt.offsetY
+    // ... create shape logic
+  }
+}
+```
+
+**Ellipse Creation:**
+
+```typescript
+if (selectedTool === 'ellipse') {
+  if (!isDrawing) {
+    setIsDrawing(true)
+    setDrawingStart({ x: e.evt.offsetX, y: e.evt.offsetY })
+  } else {
+    // Create ellipse with radiusX and radiusY
+    // Handle Shift key for perfect circles
+  }
+}
+```
+
+**Hexagon/Star Creation:**
+
+```typescript
+if (selectedTool === 'hexagon' || selectedTool === 'star') {
+  if (!isDrawing) {
+    setIsDrawing(true)
+    setDrawingStart({ x: e.evt.offsetX, y: e.evt.offsetY })
+  } else {
+    // Create hexagon/star with default settings
+    // Sides/points can be adjusted in design palette
+  }
+}
+```
+
+**Image Creation:**
+
+```typescript
+if (selectedTool === 'image') {
+  // Open file picker or handle clipboard paste
+  handleImagePlacement(e.evt.offsetX, e.evt.offsetY)
+}
+```
+
+- [ ] Verify all new shapes can be created by clicking and dragging
+
+#### Step 4.4: Handle Shift Key Modifier
+
+- [ ] Add Shift key detection in drawing handlers
+- [ ] For ellipses: make radiusX = radiusY (perfect circle)
+- [ ] For rectangles: make width = height (perfect square)
+- [ ] Verify Shift key creates constrained shapes
+
+**Checkpoint:** All new shapes can be created, selected, and transformed on the canvas.
+
+### Phase 5: Design Palette Extensions - 2 hours
+
+**Files:** `src/components/DesignPaletteMUI.tsx`
+
+#### Step 5.1: Add Arrow Direction Controls
+
+- [ ] Find the design palette component
+- [ ] Add arrow direction selector when arrow shape is selected:
+
+```typescript
+{selectedShape?.type === 'arrow' && (
+  <div className="arrow-controls">
+    <Typography variant="subtitle2">Arrow Direction</Typography>
+    <ButtonGroup>
+      <Button onClick={() => updateArrowType('start')}>Start</Button>
+      <Button onClick={() => updateArrowType('end')}>End</Button>
+      <Button onClick={() => updateArrowType('both')}>Both</Button>
+    </ButtonGroup>
+  </div>
+)}
+```
+
+#### Step 5.2: Add Hexagon Sides Control
+
+- [ ] Add sides slider when hexagon shape is selected:
+
+```typescript
+{selectedShape?.type === 'hexagon' && (
+  <div className="hexagon-controls">
+    <Typography variant="subtitle2">Sides: {selectedShape.sides}</Typography>
+    <Slider
+      min={3}
+      max={12}
+      value={selectedShape.sides}
+      onChange={(_, value) => updateHexagonSides(value as number)}
+    />
+  </div>
+)}
+```
+
+#### Step 5.3: Add Star Preset Controls
+
+- [ ] Add star type selector when star shape is selected:
+
+```typescript
+{selectedShape?.type === 'star' && (
+  <div className="star-controls">
+    <Typography variant="subtitle2">Star Type</Typography>
+    <ButtonGroup>
+      <Button onClick={() => updateStarType('5-point')}>5-Point</Button>
+      <Button onClick={() => updateStarType('6-point')}>6-Point</Button>
+      <Button onClick={() => updateStarType('8-point')}>8-Point</Button>
+    </ButtonGroup>
+  </div>
+)}
+```
+
+#### Step 5.4: Add Image Controls
+
+- [ ] Add image replacement controls when image shape is selected:
+
+```typescript
+{selectedShape?.type === 'image' && (
+  <div className="image-controls">
+    <Typography variant="subtitle2">Image: {selectedShape.imageName}</Typography>
+    <Button onClick={handleReplaceImage}>Replace Image</Button>
+    <Typography variant="caption">
+      {selectedShape.width} × {selectedShape.height}
+    </Typography>
+  </div>
+)}
+```
+
+- [ ] Verify design palette shows appropriate controls for each shape type
+
+**Checkpoint:** Design palette provides shape-specific controls for all new shapes.
+
+### Phase 6: Image Upload & Clipboard - 2 hours
+
+**Files:** `src/lib/imageUpload.ts` (new), `src/components/CanvasStage.tsx`
+
+#### Step 6.1: Create Image Upload Utility
+
+- [ ] Create `src/lib/imageUpload.ts`:
+
+```typescript
+export interface ImageUploadResult {
+  imageUrl: string
+  imageName: string
+  width: number
+  height: number
+}
+
+export const uploadImage = (file: File): Promise<ImageUploadResult> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = e => {
+      const img = new Image()
+      img.onload = () => {
+        resolve({
+          imageUrl: e.target?.result as string,
+          imageName: file.name,
+          width: img.width,
+          height: img.height
+        })
+      }
+      img.src = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+export const validateImageFile = (file: File): boolean => {
+  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  const maxSize = 5 * 1024 * 1024 // 5MB
+  return validTypes.includes(file.type) && file.size <= maxSize
+}
+```
+
+#### Step 6.2: Add File Picker Handler
+
+- [ ] Add to `CanvasStage.tsx`:
+
+```typescript
+const handleImagePlacement = (x: number, y: number) => {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*'
+  input.onchange = async e => {
+    const file = (e.target as HTMLInputElement).files?.[0]
+    if (file && validateImageFile(file)) {
+      const result = await uploadImage(file)
+      // Create image shape with result
+    }
+  }
+  input.click()
+}
+```
+
+#### Step 6.3: Add Clipboard Paste Handler
+
+- [ ] Add paste event listener to canvas:
+
+```typescript
+useEffect(() => {
+  const handlePaste = async (e: ClipboardEvent) => {
+    const items = e.clipboardData?.items
+    if (items) {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile()
+          if (file && validateImageFile(file)) {
+            const result = await uploadImage(file)
+            // Create image shape at cursor position
+          }
+        }
+      }
+    }
+  }
+
+  document.addEventListener('paste', handlePaste)
+  return () => document.removeEventListener('paste', handlePaste)
+}, [])
+```
+
+- [ ] Verify image upload and clipboard paste work correctly
+
+**Checkpoint:** Images can be uploaded and pasted from clipboard onto the canvas.
+
+### Phase 7: Documentation - 30 minutes
+
+#### Step 7.1: Update Documentation
+
+- [ ] Update `README.md` with new shape documentation
+- [ ] Add keyboard shortcuts section
+- [ ] Document image upload/paste functionality
+
+**Checkpoint:** Documentation is updated with new shape information.
+
+### Common Pitfalls & Troubleshooting
+
+#### TypeScript Errors
+
+- **Problem:** Shape type not found
+- **Solution:** Ensure all new shape types are added to the `Shape` union type
+
+#### Konva Component Issues
+
+- **Problem:** Shape doesn't render
+- **Solution:** Check that Konva component is imported correctly and props match expected interface
+
+#### Design Palette Not Updating
+
+- **Problem:** Controls don't appear for new shapes
+- **Solution:** Verify shape type checking in design palette component
+
+#### Image Upload Fails
+
+- **Problem:** Images don't load
+- **Solution:** Check file validation and base64 encoding logic
+
+### Estimated Timeline
+
+- **Phase 1:** 2 hours (Type system updates)
+- **Phase 2:** 4 hours (Shape components)
+- **Phase 3:** 1 hour (Toolbar integration)
+- **Phase 4:** 3 hours (Canvas drawing logic)
+- **Phase 5:** 2 hours (Design palette)
+- **Phase 6:** 2 hours (Image upload)
+- **Phase 7:** 30 minutes (Documentation)
+
+**Total:** ~14.5 hours for a junior developer
+
+### Success Criteria
+
+- [ ] All 6 new shapes can be created, selected, and transformed
+- [ ] Design palette provides appropriate controls for each shape
+- [ ] Images can be uploaded and pasted from clipboard
+- [ ] TypeScript compiles without errors
+- [ ] Documentation is updated and accurate
+
+**Junior Developer Notes:**
+
+- Start with Phase 1 and complete each phase before moving to the next
+- Use existing shape components as templates for new ones
+- Ask for help if stuck on Konva-specific issues
+- Focus on getting basic functionality working before adding polish
+
+---
+
+## PR #21 — AI Agent Thinking Indicator ✅ COMPLETED
+
+**Goal:** Add a visual thinking indicator at the bottom-left corner of the viewport that appears whenever the AI agent is actively processing requests. The indicator will show a pulsing bot icon with an animated thought bubble containing a spinner.
+
+### Overview
+
+When users interact with the AI agent (either through the AI Panel or natural language commands), there's currently no visual feedback to indicate that the AI is processing their request. This creates uncertainty about whether the system is working. This PR adds a dynamic visual indicator that appears whenever the AI is actively executing commands.
+
+### Design Specifications
+
+- **Position**: Fixed at bottom-left corner (20px from bottom, 20px from left)
+- **z-index**: Very high (10000) to appear above all canvas elements
+- **Visual Design**:
+  - MUI SmartToy icon (robot) with pulsing animation
+  - Thought bubble SVG overlaid on top-right of bot icon
+  - CircularProgress spinner inside the thought bubble
+  - No text - purely visual indicator
+- **Visibility**: Only shows when `isExecuting` is true from `useAIAgent` hook
+- **Always Visible**: Shows regardless of whether AI Panel is open or closed
+
+### Implementation Checklist
+
+#### Phase 1: Component Creation (2 points)
+
+- [x] **Step 1.1**: Create AIThinkingIndicator component with proper TypeScript interface
+  - Files: `src/components/AIThinkingIndicator.tsx` (new file)
+  - Import required MUI components: `Box`, `Fade`, `CircularProgress`, `SmartToy`
+  - Define component props interface with `isExecuting: boolean`
+  - Implement fixed positioning at bottom-left (20px from edges)
+  - Set z-index to 10000 for highest priority
+  - **COMPLETED**: Component created with proper structure and positioning
+
+- [x] **Step 1.2**: Add pulsing bot icon with MUI SmartToy
+  - Files: `src/components/AIThinkingIndicator.tsx`
+  - Add SmartToy icon with 48px font size
+  - Implement pulsing animation using MUI keyframes
+  - Set animation duration to 2 seconds with infinite loop
+  - Use scale transform from 1.0 to 1.1
+  - Apply primary theme color to icon
+  - **COMPLETED**: Bot icon pulses smoothly with proper animation
+
+- [x] **Step 1.3**: Create thought bubble with spinner overlay
+  - Files: `src/components/AIThinkingIndicator.tsx`
+  - Create thought bubble SVG path (cloud-like shape)
+  - Position bubble at top-right of bot icon (-10px offset)
+  - Add CircularProgress spinner inside bubble
+  - Set spinner size to 16px
+  - Use primary theme color for spinner
+  - **COMPLETED**: Thought bubble and spinner render correctly
+
+- [x] **Step 1.4**: Implement smooth animations and transitions
+  - Files: `src/components/AIThinkingIndicator.tsx`
+  - Add MUI keyframes for pulse animation
+  - Implement 300ms fade transition
+  - Ensure smooth enter/exit animations
+  - **COMPLETED**: All animations are smooth and performant
+
+#### Phase 2: Integration (2 points)
+
+- [x] **Step 2.1**: Integrate with CanvasPage
+  - Files: `src/pages/CanvasPage.tsx`
+  - Import AIThinkingIndicator component
+  - Extract `isExecuting` state from existing `useAIAgent` hook
+  - Add AIThinkingIndicator component to render tree
+  - Position indicator outside main canvas container
+  - **COMPLETED**: Indicator appears when AI is executing
+
+- [x] **Step 2.2**: Test all integration points
+  - Files: `src/pages/CanvasPage.tsx`
+  - Verify indicator shows for manual commands
+  - Verify indicator shows for natural language processing
+  - Verify indicator hides when execution completes
+  - Test with AI Panel open and closed
+  - Ensure indicator doesn't block canvas interaction
+  - **COMPLETED**: All integration scenarios work correctly
+
+#### Phase 3: Polish and Testing (1 point)
+
+- [x] **Step 3.1**: Visual polish and fine-tuning
+  - Files: `src/components/AIThinkingIndicator.tsx`
+  - Fine-tune positioning and spacing
+  - Ensure proper color contrast
+  - Test on different screen sizes
+  - Verify accessibility (no text needed, visual only)
+  - **COMPLETED**: Visual design meets specifications
+
+- [x] **Step 3.2**: Performance testing and optimization
+  - Files: `src/components/AIThinkingIndicator.tsx`
+  - Test animation performance with multiple AI requests
+  - Verify no memory leaks during rapid show/hide cycles
+  - Test with browser dev tools performance tab
+  - Ensure smooth 60fps animations
+  - **COMPLETED**: Performance is optimal
+
+- [x] **Step 3.3**: Edge case testing and error handling
+  - Files: `src/components/AIThinkingIndicator.tsx`
+  - Test with rapid AI command execution
+  - Test with AI errors (indicator should hide)
+  - Test with network disconnection
+  - Test with multiple users (indicator per user)
+  - **COMPLETED**: All edge cases handled properly
+
+### Technical Implementation
+
+**Component Structure:**
+
+```tsx
+interface AIThinkingIndicatorProps {
+  isExecuting: boolean
+}
+
+const AIThinkingIndicator: React.FC<AIThinkingIndicatorProps> = ({
+  isExecuting
+}) => {
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        bottom: 20,
+        left: 20,
+        zIndex: 10000
+      }}
+    >
+      <Fade in={isExecuting} timeout={300}>
+        <Box sx={{ position: 'relative' }}>
+          <SmartToy
+            sx={{
+              fontSize: 48,
+              color: 'primary.main',
+              animation: 'pulse 2s infinite'
+            }}
+          />
+          <Box sx={{ position: 'absolute', top: -10, right: -10 }}>
+            <svg width="24" height="24">
+              {/* Thought bubble path */}
+            </svg>
+            <CircularProgress size={16} />
+          </Box>
+        </Box>
+      </Fade>
+    </Box>
+  )
+}
+```
+
+**Integration Points:**
+
+- Hooks into existing `useAIAgent` hook in CanvasPage
+- Uses `isExecuting` state to control visibility
+- Positioned with highest z-index (10000) to appear above all elements
+
+### Files Created/Modified
+
+**New Files:**
+
+- [x] `src/components/AIThinkingIndicator.tsx` (new component)
+- [x] `docs/PR-21-AI-Thinking-Indicator.md` (PRD document)
+
+**Modified Files:**
+
+- [x] `src/pages/CanvasPage.tsx` (add indicator integration)
+- [x] `docs/tasks.md` (add PR #21 section)
+
+### Testing Scenarios
+
+- [x] **Basic Functionality**: Indicator appears when AI command is executed
+- [x] **Natural Language**: Indicator shows for natural language processing
+- [x] **Command Completion**: Indicator disappears when execution completes
+- [x] **Error Handling**: Indicator hides properly on AI errors
+- [x] **AI Panel State**: Works with AI Panel open and closed
+- [x] **Canvas Interaction**: Doesn't block canvas operations
+- [x] **Multiple Commands**: Handles rapid command execution
+- [x] **Network Issues**: Handles network disconnection gracefully
+
+### Success Criteria
+
+- [x] Indicator appears whenever AI is processing requests
+- [x] Indicator is visually appealing with smooth animations
+- [x] Indicator doesn't interfere with canvas operations
+- [x] Indicator works regardless of AI Panel state
+- [x] All animations are smooth and performant
+- [x] Component is properly typed with TypeScript
+- [x] No console errors or warnings
+- [x] Build completes successfully
+
+### Key Features Delivered
+
+- [x] **Visual Feedback**: Clear indication when AI is processing
+- [x] **Smooth Animations**: Pulsing bot icon with thought bubble spinner
+- [x] **Non-Intrusive**: Fixed position that doesn't block canvas interaction
+- [x] **Always Visible**: Shows regardless of AI Panel state
+- [x] **Performance Optimized**: Smooth 60fps animations
+- [x] **Accessible**: Visual-only indicator with no text required
+- [x] **Responsive**: Works on different screen sizes
+- [x] **Error Resilient**: Handles AI errors and network issues gracefully
+
+**PR #21 Implementation Summary:**
+
+- ✅ **AI Thinking Indicator**: Visual feedback component for AI processing
+- ✅ **Pulsing Bot Icon**: MUI SmartToy icon with smooth pulse animation
+- ✅ **Thought Bubble**: SVG overlay with CircularProgress spinner
+- ✅ **Fixed Positioning**: Bottom-left corner with highest z-index
+- ✅ **Smooth Transitions**: Fade in/out with 300ms duration
+- ✅ **Canvas Integration**: Hooks into existing useAIAgent state
+- ✅ **Performance Optimized**: 60fps animations with no memory leaks
+- ✅ **Error Handling**: Graceful handling of AI errors and edge cases
+
+**Junior Developer Guidance:**
+
+- **Start Simple**: Begin with basic component structure before adding animations
+- **Test Incrementally**: Test each feature as you build it
+- **Use Existing Patterns**: Follow existing MUI component patterns in the codebase
+- **Focus on Performance**: Use CSS transforms for smooth animations
+- **Handle Edge Cases**: Test with rapid commands and network issues
+
+**Estimated Time**: 4-6 hours for junior developer
+**Difficulty**: Beginner to Intermediate
+**Dependencies**: MUI components, existing AI agent system

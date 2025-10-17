@@ -1,5 +1,15 @@
 // Core shape types
-export type ShapeType = 'rect' | 'circle' | 'text' | 'mermaid'
+export type ShapeType =
+  | 'rect'
+  | 'circle'
+  | 'text'
+  | 'mermaid'
+  | 'line'
+  | 'arrow'
+  | 'ellipse'
+  | 'hexagon'
+  | 'star'
+  | 'image'
 
 export interface ShapeBase {
   id: string
@@ -56,7 +66,58 @@ export interface MermaidShape extends ShapeBase {
   height: number
 }
 
-export type Shape = RectangleShape | CircleShape | TextShape | MermaidShape
+export interface LineShape extends ShapeBase {
+  type: 'line'
+  endX: number
+  endY: number
+}
+
+export interface ArrowShape extends ShapeBase {
+  type: 'arrow'
+  endX: number
+  endY: number
+  arrowType: 'start' | 'end' | 'both'
+}
+
+export interface EllipseShape extends ShapeBase {
+  type: 'ellipse'
+  radiusX: number
+  radiusY: number
+}
+
+export interface HexagonShape extends ShapeBase {
+  type: 'hexagon'
+  radius: number
+  sides: number
+}
+
+export interface StarShape extends ShapeBase {
+  type: 'star'
+  outerRadius: number
+  innerRadius: number
+  points: number
+  starType: '5-point' | '6-point' | '8-point'
+}
+
+export interface ImageShape extends ShapeBase {
+  type: 'image'
+  imageUrl: string
+  imageName: string
+  width: number
+  height: number
+}
+
+export type Shape =
+  | RectangleShape
+  | CircleShape
+  | TextShape
+  | MermaidShape
+  | LineShape
+  | ArrowShape
+  | EllipseShape
+  | HexagonShape
+  | StarShape
+  | ImageShape
 
 // Canvas metadata
 export interface CanvasMeta {
@@ -113,6 +174,12 @@ export type ToolType =
   | 'circle'
   | 'text'
   | 'mermaid'
+  | 'line'
+  | 'arrow'
+  | 'ellipse'
+  | 'hexagon'
+  | 'star'
+  | 'image'
 
 // Viewport state
 export interface ViewportState {

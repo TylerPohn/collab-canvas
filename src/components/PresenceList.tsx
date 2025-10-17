@@ -247,10 +247,10 @@ const PresenceList: React.FC<PresenceListProps> = ({
                       <Box
                         sx={{
                           position: 'absolute',
-                          bottom: -1,
-                          right: -1,
-                          width: 8,
-                          height: 8,
+                          bottom: -2,
+                          right: -2,
+                          width: 12,
+                          height: 12,
                           bgcolor: theme.palette.success.main,
                           border: `2px solid ${theme.palette.background.paper}`,
                           borderRadius: '50%',

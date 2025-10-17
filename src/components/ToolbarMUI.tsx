@@ -1,15 +1,21 @@
 import {
   AccountTree,
+  AddPhotoAlternate,
   ContentCopy,
   Delete,
+  Hexagon,
   Info,
   OpenWith,
   Palette,
+  PanoramaFishEye,
   RadioButtonUnchecked,
   Rectangle,
+  ShowChart,
   SmartToy,
+  Star,
   TextFields,
-  TouchApp
+  TouchApp,
+  TrendingFlat
 } from '@mui/icons-material'
 import {
   AppBar,
@@ -23,15 +29,8 @@ import {
   useTheme
 } from '@mui/material'
 import React, { useState } from 'react'
+import type { ToolType } from '../lib/types'
 import MermaidImportDialog from './MermaidImportDialog'
-
-export type ToolType =
-  | 'select'
-  | 'pan'
-  | 'rectangle'
-  | 'circle'
-  | 'text'
-  | 'mermaid'
 
 interface ToolbarMUIProps {
   selectedTool: ToolType
@@ -67,43 +66,73 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
     type: ToolType
     label: string
     icon: React.ComponentType<{ sx?: any }>
-    shortcut: string
     description: string
   }[] = [
     {
       type: 'select',
       label: 'Select',
       icon: TouchApp,
-      shortcut: 'V',
       description: 'Click to select objects'
     },
     {
       type: 'pan',
       label: 'Pan',
       icon: OpenWith,
-      shortcut: 'H',
       description: 'Click and drag to pan the canvas'
     },
     {
       type: 'rectangle',
       label: 'Rectangle',
       icon: Rectangle,
-      shortcut: 'R',
       description: 'Click and drag to create rectangle'
     },
     {
       type: 'circle',
       label: 'Circle',
       icon: RadioButtonUnchecked,
-      shortcut: 'C',
       description: 'Click and drag to create circle'
     },
     {
       type: 'text',
       label: 'Text',
       icon: TextFields,
-      shortcut: 'T',
       description: 'Click to add text'
+    },
+    {
+      type: 'line',
+      label: 'Line',
+      icon: ShowChart,
+      description: 'Click and drag to create line'
+    },
+    {
+      type: 'arrow',
+      label: 'Arrow',
+      icon: TrendingFlat,
+      description: 'Click and drag to create arrow'
+    },
+    {
+      type: 'ellipse',
+      label: 'Ellipse',
+      icon: PanoramaFishEye,
+      description: 'Click and drag to create ellipse (Shift for circle)'
+    },
+    {
+      type: 'hexagon',
+      label: 'Hexagon',
+      icon: Hexagon,
+      description: 'Click and drag to create hexagon'
+    },
+    {
+      type: 'star',
+      label: 'Star',
+      icon: Star,
+      description: 'Click and drag to create star'
+    },
+    {
+      type: 'image',
+      label: 'Image',
+      icon: AddPhotoAlternate,
+      description: 'Click to place image'
     }
   ]
 
@@ -155,11 +184,7 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
             const IconComponent = tool.icon
             const isSelected = selectedTool === tool.type
             return (
-              <Tooltip
-                key={tool.type}
-                title={`${tool.label} (${tool.shortcut})`}
-                arrow
-              >
+              <Tooltip key={tool.type} title={tool.label} arrow>
                 <IconButton
                   onClick={() => onToolSelect(tool.type)}
                   sx={{
@@ -208,7 +233,7 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
           >
             Actions
           </Typography>
-          <Tooltip title="Duplicate (⌘D)" arrow>
+          <Tooltip title="Duplicate" arrow>
             <IconButton
               onClick={onDuplicate}
               disabled={!canDuplicate}
@@ -233,7 +258,7 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Delete (Del)" arrow>
+          <Tooltip title="Delete" arrow>
             <IconButton
               onClick={onDelete}
               disabled={!canDelete}

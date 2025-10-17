@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import AIPanel from '../components/AIPanel'
+import AIThinkingIndicator from '../components/AIThinkingIndicator'
 import CanvasStage from '../components/CanvasStage'
 import DesignPaletteMUI from '../components/DesignPaletteMUI'
 import PresenceList from '../components/PresenceList'
 import ToolbarMUI from '../components/ToolbarMUI'
+import { useAIAgent } from '../hooks/useAIAgent'
+import { useAIExecutionState } from '../hooks/useAIExecutionState'
 import { useAuth } from '../hooks/useAuth'
 import { usePresence } from '../hooks/usePresence'
 import {
@@ -44,6 +47,12 @@ const CanvasPage: React.FC = () => {
     canvasId,
     user?.uid || ''
   )
+
+  // AI Agent hook
+  useAIAgent(canvasId, user?.uid || '')
+
+  // Shared AI execution state for thinking indicator
+  const { isExecuting } = useAIExecutionState()
 
   // PR #7: Use React Query hooks for shape management
   const {
@@ -443,6 +452,9 @@ const CanvasPage: React.FC = () => {
           isOpen={isAIOpen}
           onClose={() => setIsAIOpen(false)}
         />
+
+        {/* AI Thinking Indicator */}
+        <AIThinkingIndicator isExecuting={isExecuting} />
       </div>
     </div>
   )

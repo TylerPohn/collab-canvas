@@ -1,7 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { AIAgentService } from '../lib/ai/agent'
 import type { AICommand } from '../lib/ai/types'
+import { useAIExecutionState } from './useAIExecutionState'
 
 interface CommandParameters {
   [key: string]: string | number | boolean | object | undefined
@@ -9,11 +10,11 @@ interface CommandParameters {
 
 export function useAIAgent(canvasId: string, userId: string) {
   const queryClient = useQueryClient()
-  const [isExecuting, setIsExecuting] = useState(false)
+  const { isExecuting, setIsExecuting } = useAIExecutionState()
   const [lastCommand, setLastCommand] = useState<AICommand | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const aiAgent = new AIAgentService(queryClient)
+  const aiAgent = useMemo(() => new AIAgentService(queryClient), [queryClient])
 
   const executeCommand = useCallback(
     async (command: string, parameters: CommandParameters) => {
@@ -37,7 +38,7 @@ export function useAIAgent(canvasId: string, userId: string) {
         setIsExecuting(false)
       }
     },
-    [aiAgent, canvasId, userId]
+    [aiAgent, canvasId, userId, setIsExecuting]
   )
 
   const executeComplexCommand = useCallback(
@@ -62,7 +63,7 @@ export function useAIAgent(canvasId: string, userId: string) {
         setIsExecuting(false)
       }
     },
-    [aiAgent, canvasId, userId]
+    [aiAgent, canvasId, userId, setIsExecuting]
   )
 
   const getCanvasState = useCallback(async () => {
@@ -96,7 +97,7 @@ export function useAIAgent(canvasId: string, userId: string) {
         setIsExecuting(false)
       }
     },
-    [aiAgent, canvasId, userId]
+    [aiAgent, canvasId, userId, setIsExecuting]
   )
 
   const clearError = useCallback(() => {

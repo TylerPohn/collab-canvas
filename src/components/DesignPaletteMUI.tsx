@@ -370,8 +370,8 @@ const DesignPaletteMUI: React.FC<DesignPaletteMUIProps> = ({
       <Box
         sx={{
           position: 'fixed',
-          top: 80,
-          right: 16,
+          top: 120,
+          right: 8,
           zIndex: 8
         }}
       >
@@ -395,8 +395,8 @@ const DesignPaletteMUI: React.FC<DesignPaletteMUIProps> = ({
         elevation={8}
         sx={{
           position: 'fixed',
-          top: 80,
-          right: 64,
+          top: 120,
+          right: 0,
           width: 320,
           height: 500,
           zIndex: 9,
@@ -762,6 +762,163 @@ const DesignPaletteMUI: React.FC<DesignPaletteMUIProps> = ({
                   )}
                 </Stack>
               </Box>
+
+              <Divider />
+
+              {/* Shape-Specific Controls */}
+              {selectedShapes.length === 1 && (
+                <>
+                  {/* Arrow Direction Controls */}
+                  {selectedShapes[0].type === 'arrow' && (
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 1 }}
+                      >
+                        Arrow Direction
+                      </Typography>
+                      <ToggleButtonGroup
+                        value={(selectedShapes[0] as any).arrowType || 'end'}
+                        exclusive
+                        onChange={(_, value) => {
+                          if (value) {
+                            updateSelectedShapes({ arrowType: value })
+                          }
+                        }}
+                        size="small"
+                        sx={{ width: '100%' }}
+                      >
+                        <ToggleButton value="start" sx={{ flex: 1 }}>
+                          Start
+                        </ToggleButton>
+                        <ToggleButton value="end" sx={{ flex: 1 }}>
+                          End
+                        </ToggleButton>
+                        <ToggleButton value="both" sx={{ flex: 1 }}>
+                          Both
+                        </ToggleButton>
+                      </ToggleButtonGroup>
+                    </Box>
+                  )}
+
+                  {/* Hexagon Sides Control */}
+                  {selectedShapes[0].type === 'hexagon' && (
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 1 }}
+                      >
+                        Sides: {(selectedShapes[0] as any).sides || 6}
+                      </Typography>
+                      <Slider
+                        value={(selectedShapes[0] as any).sides || 6}
+                        onChange={(_, value) => {
+                          updateSelectedShapes({ sides: value as number })
+                        }}
+                        min={3}
+                        max={12}
+                        step={1}
+                        size="small"
+                        sx={{ height: 24 }}
+                      />
+                    </Box>
+                  )}
+
+                  {/* Star Preset Controls */}
+                  {selectedShapes[0].type === 'star' && (
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 1 }}
+                      >
+                        Star Type
+                      </Typography>
+                      <ToggleButtonGroup
+                        value={(selectedShapes[0] as any).starType || '5-point'}
+                        exclusive
+                        onChange={(_, value) => {
+                          if (value) {
+                            const starConfigs = {
+                              '5-point': {
+                                points: 5,
+                                innerRadius:
+                                  (selectedShapes[0] as any).outerRadius / 2
+                              },
+                              '6-point': {
+                                points: 6,
+                                innerRadius:
+                                  (selectedShapes[0] as any).outerRadius / 2
+                              },
+                              '8-point': {
+                                points: 8,
+                                innerRadius:
+                                  (selectedShapes[0] as any).outerRadius / 2
+                              }
+                            }
+                            const config =
+                              starConfigs[value as keyof typeof starConfigs]
+                            updateSelectedShapes({
+                              starType: value,
+                              points: config.points,
+                              innerRadius: config.innerRadius
+                            })
+                          }
+                        }}
+                        size="small"
+                        sx={{ width: '100%' }}
+                      >
+                        <ToggleButton value="5-point" sx={{ flex: 1 }}>
+                          5-Point
+                        </ToggleButton>
+                        <ToggleButton value="6-point" sx={{ flex: 1 }}>
+                          6-Point
+                        </ToggleButton>
+                        <ToggleButton value="8-point" sx={{ flex: 1 }}>
+                          8-Point
+                        </ToggleButton>
+                      </ToggleButtonGroup>
+                    </Box>
+                  )}
+
+                  {/* Image Controls */}
+                  {selectedShapes[0].type === 'image' && (
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 1 }}
+                      >
+                        Image:{' '}
+                        {(selectedShapes[0] as any).imageName || 'Unknown'}
+                      </Typography>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        onClick={() => {
+                          // TODO: Implement image replacement
+                          console.log(
+                            'Replace image functionality not yet implemented'
+                          )
+                        }}
+                      >
+                        Replace Image
+                      </Button>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mt: 1, display: 'block' }}
+                      >
+                        {(selectedShapes[0] as any).width} ×{' '}
+                        {(selectedShapes[0] as any).height}
+                      </Typography>
+                    </Box>
+                  )}
+                </>
+              )}
 
               <Divider />
 

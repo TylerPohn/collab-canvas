@@ -7,14 +7,37 @@ import React, {
   useRef,
   useState
 } from 'react'
-import { Circle, Layer, Rect, Stage, Text, Transformer } from 'react-konva'
+import {
+  Arrow,
+  Circle,
+  Ellipse,
+  Layer,
+  Line,
+  Rect,
+  RegularPolygon,
+  Stage,
+  Star,
+  Text,
+  Transformer
+} from 'react-konva'
 import { useCanvasShortcuts } from '../hooks/useCanvasShortcuts'
 import { usePanZoom } from '../hooks/usePanZoom'
+import {
+  createImageShape,
+  handleClipboardImage,
+  uploadImage
+} from '../lib/imageUpload'
 import type {
+  ArrowShape as ArrowShapeType,
   CircleShape as CircleShapeType,
+  EllipseShape as EllipseShapeType,
+  HexagonShape as HexagonShapeType,
+  ImageShape as ImageShapeType,
+  LineShape as LineShapeType,
   MermaidShape as MermaidShapeType,
   RectangleShape as RectangleShapeType,
   Shape,
+  StarShape as StarShapeType,
   TextShape as TextShapeType,
   ToolType,
   UserPresence,
@@ -23,9 +46,15 @@ import type {
 import { useDesignPaletteStore } from '../store/designPalette'
 import { useSelectionStore } from '../store/selection'
 import CursorLayer from './CursorLayer'
+import ArrowShape from './Shapes/ArrowShape'
 import CircleShape from './Shapes/CircleShape'
+import EllipseShape from './Shapes/EllipseShape'
+import HexagonShape from './Shapes/HexagonShape'
+import ImageShape from './Shapes/ImageShape'
+import LineShape from './Shapes/LineShape'
 import MermaidShape from './Shapes/MermaidShape'
 import RectangleShape from './Shapes/RectangleShape'
+import StarShape from './Shapes/StarShape'
 import TextShape from './Shapes/TextShape'
 import TextEditor from './TextEditor'
 
@@ -82,7 +111,16 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
       y: number
     } | null>(null)
     const [previewShape, setPreviewShape] = useState<{
-      type: 'rect' | 'circle' | 'text' | 'mermaid'
+      type:
+        | 'rect'
+        | 'circle'
+        | 'text'
+        | 'mermaid'
+        | 'line'
+        | 'arrow'
+        | 'ellipse'
+        | 'hexagon'
+        | 'star'
       x: number
       y: number
       width?: number
@@ -90,6 +128,14 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
       radius?: number
       text?: string
       fontSize?: number
+      endX?: number
+      endY?: number
+      radiusX?: number
+      radiusY?: number
+      sides?: number
+      outerRadius?: number
+      innerRadius?: number
+      points?: number
     } | null>(null)
     const [editingTextId, setEditingTextId] = useState<string | null>(null)
     const [isSelecting, setIsSelecting] = useState(false)
@@ -209,6 +255,28 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         : undefined
     })
 
+    // Handle clipboard paste for images
+    useEffect(() => {
+      const handlePaste = async (e: ClipboardEvent) => {
+        if (selectedTool === 'image') {
+          e.preventDefault()
+          try {
+            const imageResult = await handleClipboardImage()
+            const imageShape = createImageShape(imageResult, 100, 100) // Default position
+            await onShapeCreate(imageShape)
+          } catch (error) {
+            console.error('Failed to paste image:', error)
+            // TODO: Show error toast
+          }
+        }
+      }
+
+      document.addEventListener('paste', handlePaste)
+      return () => {
+        document.removeEventListener('paste', handlePaste)
+      }
+    }, [selectedTool, onShapeCreate])
+
     // Handle stage mouse events
     const handleStageMouseDown = useCallback(
       (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -232,8 +300,40 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
               setSelectionRect({ x: worldX, y: worldY, width: 0, height: 0 })
               // Don't clear selection immediately - let user drag to select multiple
             }
+          } else if (selectedTool === 'image') {
+            // Handle image tool - open file picker
+            clearSelection()
+            const pointer = stage.getPointerPosition()
+            if (pointer) {
+              // Transform to world coordinates
+              const worldX = (pointer.x - viewport.x) / viewport.scale
+              const worldY = (pointer.y - viewport.y) / viewport.scale
+
+              // Create file input
+              const input = document.createElement('input')
+              input.type = 'file'
+              input.accept = 'image/*'
+              input.onchange = async e => {
+                const file = (e.target as HTMLInputElement).files?.[0]
+                if (file) {
+                  try {
+                    const imageResult = await uploadImage(file)
+                    const imageShape = createImageShape(
+                      imageResult,
+                      worldX,
+                      worldY
+                    )
+                    await onShapeCreate(imageShape)
+                  } catch (error) {
+                    console.error('Failed to upload image:', error)
+                    // TODO: Show error toast
+                  }
+                }
+              }
+              input.click()
+            }
           } else {
-            // Handle drawing tools (rectangle, circle, text)
+            // Handle drawing tools (rectangle, circle, text, line, arrow, ellipse, hexagon, star)
             clearSelection()
             const pointer = stage.getPointerPosition()
             if (pointer) {
@@ -252,7 +352,8 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         handlePanMouseDown,
         viewport.x,
         viewport.y,
-        viewport.scale
+        viewport.scale,
+        onShapeCreate
       ]
     )
 
@@ -301,7 +402,16 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
 
               // Create preview shape based on tool
               let previewData: {
-                type: 'rect' | 'circle' | 'text' | 'mermaid'
+                type:
+                  | 'rect'
+                  | 'circle'
+                  | 'text'
+                  | 'mermaid'
+                  | 'line'
+                  | 'arrow'
+                  | 'ellipse'
+                  | 'hexagon'
+                  | 'star'
                 x: number
                 y: number
                 width?: number
@@ -309,6 +419,14 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 radius?: number
                 text?: string
                 fontSize?: number
+                endX?: number
+                endY?: number
+                radiusX?: number
+                radiusY?: number
+                sides?: number
+                outerRadius?: number
+                innerRadius?: number
+                points?: number
               }
 
               if (selectedTool === 'rectangle') {
@@ -334,6 +452,47 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                   y: Math.min(drawingStart.y, worldY),
                   text: 'Text',
                   fontSize: textDefaults.fontSize
+                }
+              } else if (selectedTool === 'line') {
+                previewData = {
+                  type: 'line',
+                  x: drawingStart.x,
+                  y: drawingStart.y,
+                  endX: worldX,
+                  endY: worldY
+                }
+              } else if (selectedTool === 'arrow') {
+                previewData = {
+                  type: 'arrow',
+                  x: drawingStart.x,
+                  y: drawingStart.y,
+                  endX: worldX,
+                  endY: worldY
+                }
+              } else if (selectedTool === 'ellipse') {
+                previewData = {
+                  type: 'ellipse',
+                  x: (drawingStart.x + worldX) / 2,
+                  y: (drawingStart.y + worldY) / 2,
+                  radiusX: Math.abs(worldX - drawingStart.x) / 2,
+                  radiusY: Math.abs(worldY - drawingStart.y) / 2
+                }
+              } else if (selectedTool === 'hexagon') {
+                previewData = {
+                  type: 'hexagon',
+                  x: (drawingStart.x + worldX) / 2,
+                  y: (drawingStart.y + worldY) / 2,
+                  radius: Math.abs(worldX - drawingStart.x) / 2,
+                  sides: 6
+                }
+              } else if (selectedTool === 'star') {
+                previewData = {
+                  type: 'star',
+                  x: (drawingStart.x + worldX) / 2,
+                  y: (drawingStart.y + worldY) / 2,
+                  outerRadius: Math.abs(worldX - drawingStart.x) / 2,
+                  innerRadius: Math.abs(worldX - drawingStart.x) / 4,
+                  points: 5
                 }
               } else {
                 // Fallback for select tool (shouldn't happen)
@@ -481,6 +640,77 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                   rotation: shapeDefaults.rotation,
                   zIndex: newZIndex
                 }
+              } else if (selectedTool === 'line') {
+                const shapeDefaults = getDefaultShapeProperties()
+                shapeData = {
+                  type: 'line',
+                  x: drawingStart.x,
+                  y: drawingStart.y,
+                  endX: worldX,
+                  endY: worldY,
+                  stroke: shapeDefaults.stroke,
+                  strokeWidth: shapeDefaults.strokeWidth,
+                  rotation: shapeDefaults.rotation,
+                  zIndex: newZIndex
+                } as LineShapeType
+              } else if (selectedTool === 'arrow') {
+                const shapeDefaults = getDefaultShapeProperties()
+                shapeData = {
+                  type: 'arrow',
+                  x: drawingStart.x,
+                  y: drawingStart.y,
+                  endX: worldX,
+                  endY: worldY,
+                  arrowType: 'end',
+                  stroke: shapeDefaults.stroke,
+                  strokeWidth: shapeDefaults.strokeWidth,
+                  rotation: shapeDefaults.rotation,
+                  zIndex: newZIndex
+                } as ArrowShapeType
+              } else if (selectedTool === 'ellipse') {
+                const shapeDefaults = getDefaultShapeProperties()
+                shapeData = {
+                  type: 'ellipse',
+                  x: (drawingStart.x + worldX) / 2,
+                  y: (drawingStart.y + worldY) / 2,
+                  radiusX: Math.abs(worldX - drawingStart.x) / 2,
+                  radiusY: Math.abs(worldY - drawingStart.y) / 2,
+                  fill: shapeDefaults.fill,
+                  stroke: shapeDefaults.stroke,
+                  strokeWidth: shapeDefaults.strokeWidth,
+                  rotation: shapeDefaults.rotation,
+                  zIndex: newZIndex
+                } as EllipseShapeType
+              } else if (selectedTool === 'hexagon') {
+                const shapeDefaults = getDefaultShapeProperties()
+                shapeData = {
+                  type: 'hexagon',
+                  x: (drawingStart.x + worldX) / 2,
+                  y: (drawingStart.y + worldY) / 2,
+                  radius: Math.abs(worldX - drawingStart.x) / 2,
+                  sides: 6,
+                  fill: shapeDefaults.fill,
+                  stroke: shapeDefaults.stroke,
+                  strokeWidth: shapeDefaults.strokeWidth,
+                  rotation: shapeDefaults.rotation,
+                  zIndex: newZIndex
+                } as HexagonShapeType
+              } else if (selectedTool === 'star') {
+                const shapeDefaults = getDefaultShapeProperties()
+                shapeData = {
+                  type: 'star',
+                  x: (drawingStart.x + worldX) / 2,
+                  y: (drawingStart.y + worldY) / 2,
+                  outerRadius: Math.abs(worldX - drawingStart.x) / 2,
+                  innerRadius: Math.abs(worldX - drawingStart.x) / 4,
+                  points: 5,
+                  starType: '5-point',
+                  fill: shapeDefaults.fill,
+                  stroke: shapeDefaults.stroke,
+                  strokeWidth: shapeDefaults.strokeWidth,
+                  rotation: shapeDefaults.rotation,
+                  zIndex: newZIndex
+                } as StarShapeType
               } else {
                 // Fallback for select tool (shouldn't happen)
                 const shapeDefaults = getDefaultShapeProperties()
@@ -990,6 +1220,48 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                         shape={shape as MermaidShapeType}
                       />
                     )
+                  case 'line':
+                    return (
+                      <LineShape
+                        {...commonProps}
+                        shape={shape as LineShapeType}
+                      />
+                    )
+                  case 'arrow':
+                    return (
+                      <ArrowShape
+                        {...commonProps}
+                        shape={shape as ArrowShapeType}
+                      />
+                    )
+                  case 'ellipse':
+                    return (
+                      <EllipseShape
+                        {...commonProps}
+                        shape={shape as EllipseShapeType}
+                      />
+                    )
+                  case 'hexagon':
+                    return (
+                      <HexagonShape
+                        {...commonProps}
+                        shape={shape as HexagonShapeType}
+                      />
+                    )
+                  case 'star':
+                    return (
+                      <StarShape
+                        {...commonProps}
+                        shape={shape as StarShapeType}
+                      />
+                    )
+                  case 'image':
+                    return (
+                      <ImageShape
+                        {...commonProps}
+                        shape={shape as ImageShapeType}
+                      />
+                    )
                   default:
                     return null
                 }
@@ -1045,6 +1317,81 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                     height={previewShape.height || 0}
                     fill="rgba(168, 85, 247, 0.3)"
                     stroke="#a855f7"
+                    strokeWidth={2}
+                    dash={[5, 5]}
+                    listening={false}
+                  />
+                )}
+                {previewShape.type === 'line' && (
+                  <Line
+                    x={previewShape.x}
+                    y={previewShape.y}
+                    points={[
+                      0,
+                      0,
+                      (previewShape.endX || 0) - previewShape.x,
+                      (previewShape.endY || 0) - previewShape.y
+                    ]}
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dash={[5, 5]}
+                    listening={false}
+                  />
+                )}
+                {previewShape.type === 'arrow' && (
+                  <Arrow
+                    x={previewShape.x}
+                    y={previewShape.y}
+                    points={[
+                      0,
+                      0,
+                      (previewShape.endX || 0) - previewShape.x,
+                      (previewShape.endY || 0) - previewShape.y
+                    ]}
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    pointerLength={10}
+                    pointerWidth={10}
+                    pointerAtEnding={true}
+                    dash={[5, 5]}
+                    listening={false}
+                  />
+                )}
+                {previewShape.type === 'ellipse' && (
+                  <Ellipse
+                    x={previewShape.x}
+                    y={previewShape.y}
+                    radiusX={previewShape.radiusX || 0}
+                    radiusY={previewShape.radiusY || 0}
+                    fill="rgba(16, 185, 129, 0.3)"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    dash={[5, 5]}
+                    listening={false}
+                  />
+                )}
+                {previewShape.type === 'hexagon' && (
+                  <RegularPolygon
+                    x={previewShape.x}
+                    y={previewShape.y}
+                    sides={previewShape.sides || 6}
+                    radius={previewShape.radius || 0}
+                    fill="rgba(139, 92, 246, 0.3)"
+                    stroke="#8b5cf6"
+                    strokeWidth={2}
+                    dash={[5, 5]}
+                    listening={false}
+                  />
+                )}
+                {previewShape.type === 'star' && (
+                  <Star
+                    x={previewShape.x}
+                    y={previewShape.y}
+                    numPoints={previewShape.points || 5}
+                    outerRadius={previewShape.outerRadius || 0}
+                    innerRadius={previewShape.innerRadius || 0}
+                    fill="rgba(245, 158, 11, 0.3)"
+                    stroke="#f59e0b"
                     strokeWidth={2}
                     dash={[5, 5]}
                     listening={false}
