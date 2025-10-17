@@ -210,6 +210,8 @@ export const CSP_CONFIG = {
   'connect-src': [
     "'self'",
     'https://*.firebaseapp.com',
+    'https://*.firebaseio.com', // Allow Firebase Realtime Database
+    'wss://*.firebaseio.com', // Allow Firebase Realtime Database WebSocket connections
     'https://*.googleapis.com',
     'https://accounts.google.com/gsi/',
     'https://securetoken.googleapis.com',
