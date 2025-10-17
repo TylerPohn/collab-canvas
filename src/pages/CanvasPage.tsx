@@ -173,6 +173,8 @@ const CanvasPage: React.FC = () => {
 
       try {
         const createdShape = await createShape(shapeData)
+        // Automatically select the newly created shape
+        selectShape(createdShape.id)
         showSuccess('Shape created', 'Your shape has been added to the canvas')
         return createdShape
       } catch (error) {
@@ -181,7 +183,7 @@ const CanvasPage: React.FC = () => {
         throw error
       }
     },
-    [createShape, user?.uid, showSuccess, showError]
+    [createShape, user?.uid, showSuccess, showError, selectShape]
   )
 
   // PR #7: Handle shape updates with React Query
@@ -260,7 +262,10 @@ const CanvasPage: React.FC = () => {
       }))
 
       try {
-        await batchCreateShapes(duplicatedShapes)
+        const createdShapes = await batchCreateShapes(duplicatedShapes)
+        // Automatically select the newly duplicated shapes
+        const newShapeIds = createdShapes.map(shape => shape.id)
+        useSelectionStore.getState().selectMultiple(newShapeIds)
         showSuccess(
           'Shapes duplicated',
           `${ids.length} shape${ids.length > 1 ? 's' : ''} duplicated`

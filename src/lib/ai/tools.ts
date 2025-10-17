@@ -228,6 +228,10 @@ export function createAITools(queryClient: any) {
           context.userId
         )
 
+        // Automatically select the newly created shape
+        const { useSelectionStore } = await import('../../store/selection')
+        useSelectionStore.getState().selectShape(shape.id)
+
         console.log('🤖 createShape tool created shape:', shape)
         return { success: true, shapeId: shape.id, shape }
       }
@@ -253,6 +257,11 @@ export function createAITools(queryClient: any) {
           },
           context.userId
         )
+        
+        // Automatically select the newly created shape
+        const { useSelectionStore } = await import('../../store/selection')
+        useSelectionStore.getState().selectShape(shape.id)
+        
         return { success: true, shapeId: shape.id, shape }
       }
     },
@@ -748,7 +757,13 @@ export function createAITools(queryClient: any) {
           },
           context.userId
         )
-        return { success: true, shapeIds: shapes.map(s => s.id), shapes }
+        
+        // Automatically select the newly created shapes
+        const { useSelectionStore } = await import('../../store/selection')
+        const shapeIds = shapes.map(s => s.id)
+        useSelectionStore.getState().selectMultiple(shapeIds)
+        
+        return { success: true, shapeIds: shapeIds, shapes }
       }
     },
     createNavigationBar: {
@@ -768,7 +783,13 @@ export function createAITools(queryClient: any) {
           },
           context.userId
         )
-        return { success: true, shapeIds: shapes.map(s => s.id), shapes }
+        
+        // Automatically select the newly created shapes
+        const { useSelectionStore } = await import('../../store/selection')
+        const shapeIds = shapes.map(s => s.id)
+        useSelectionStore.getState().selectMultiple(shapeIds)
+        
+        return { success: true, shapeIds: shapeIds, shapes }
       }
     },
     createCardLayout: {
@@ -788,7 +809,13 @@ export function createAITools(queryClient: any) {
           },
           context.userId
         )
-        return { success: true, shapeIds: shapes.map(s => s.id), shapes }
+        
+        // Automatically select the newly created shapes
+        const { useSelectionStore } = await import('../../store/selection')
+        const shapeIds = shapes.map(s => s.id)
+        useSelectionStore.getState().selectMultiple(shapeIds)
+        
+        return { success: true, shapeIds: shapeIds, shapes }
       }
     },
     getCanvasState: {

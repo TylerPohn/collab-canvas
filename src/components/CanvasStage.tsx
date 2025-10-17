@@ -1004,19 +1004,17 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
             rotation: node.rotation()
           })
         } else if (shape.type === 'text') {
-          // For text shapes, scale affects fontSize
-          const currentFontSize = shape.fontSize || 16
-          const newFontSize = Math.max(
-            8,
-            currentFontSize * Math.max(scaleX, scaleY)
-          )
-
+          // For text shapes, save scale values to database
           onShapeUpdate(id, {
             x: node.x(),
             y: node.y(),
-            fontSize: newFontSize,
-            rotation: node.rotation()
+            rotation: node.rotation(),
+            scaleX: scaleX,
+            scaleY: scaleY
           })
+          // Reset scale after saving to database
+          node.scaleX(1)
+          node.scaleY(1)
         } else if (shape.type === 'mermaid') {
           // For mermaid shapes, scale affects width and height
           onShapeUpdate(id, {
@@ -1026,6 +1024,66 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
             height: Math.max(50, node.height() * scaleY),
             rotation: node.rotation()
           })
+        } else if (shape.type === 'image') {
+          // For image shapes, scale affects width and height
+          onShapeUpdate(id, {
+            x: node.x(),
+            y: node.y(),
+            width: Math.max(5, node.width() * scaleX),
+            height: Math.max(5, node.height() * scaleY),
+            rotation: node.rotation()
+          })
+        } else if (shape.type === 'line') {
+          // For line shapes, scale affects endX and endY
+          onShapeUpdate(id, {
+            x: node.x(),
+            y: node.y(),
+            endX: shape.x + (shape.endX - shape.x) * scaleX,
+            endY: shape.y + (shape.endY - shape.y) * scaleY,
+            rotation: node.rotation()
+          })
+        } else if (shape.type === 'arrow') {
+          // For arrow shapes, scale affects endX and endY
+          onShapeUpdate(id, {
+            x: node.x(),
+            y: node.y(),
+            endX: shape.x + (shape.endX - shape.x) * scaleX,
+            endY: shape.y + (shape.endY - shape.y) * scaleY,
+            rotation: node.rotation()
+          })
+        } else if (shape.type === 'ellipse') {
+          // For ellipse shapes, scale affects radiusX and radiusY
+          onShapeUpdate(id, {
+            x: node.x(),
+            y: node.y(),
+            radiusX: Math.max(5, shape.radiusX * scaleX),
+            radiusY: Math.max(5, shape.radiusY * scaleY),
+            rotation: node.rotation()
+          })
+        } else if (shape.type === 'hexagon') {
+          // For hexagon shapes, save scale values to database
+          onShapeUpdate(id, {
+            x: node.x(),
+            y: node.y(),
+            rotation: node.rotation(),
+            scaleX: scaleX,
+            scaleY: scaleY
+          })
+          // Reset scale after saving to database
+          node.scaleX(1)
+          node.scaleY(1)
+        } else if (shape.type === 'star') {
+          // For star shapes, save scale values to database
+          onShapeUpdate(id, {
+            x: node.x(),
+            y: node.y(),
+            rotation: node.rotation(),
+            scaleX: scaleX,
+            scaleY: scaleY
+          })
+          // Reset scale after saving to database
+          node.scaleX(1)
+          node.scaleY(1)
         }
       },
       [shapes, onShapeUpdate]
@@ -1075,15 +1133,62 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
               )
             }
           } else if (shape.type === 'text') {
-            const currentFontSize = shape.fontSize || 16
-            const newFontSize = Math.max(
-              8,
-              currentFontSize * Math.max(scaleX, scaleY)
-            )
+            // For text shapes, save scale values to database
             updates = {
               ...updates,
-              fontSize: newFontSize
+              scaleX: scaleX,
+              scaleY: scaleY
             }
+            node.scaleX(1)
+            node.scaleY(1)
+          } else if (shape.type === 'mermaid') {
+            updates = {
+              ...updates,
+              width: Math.max(50, node.width() * scaleX),
+              height: Math.max(50, node.height() * scaleY)
+            }
+          } else if (shape.type === 'image') {
+            updates = {
+              ...updates,
+              width: Math.max(5, node.width() * scaleX),
+              height: Math.max(5, node.height() * scaleY)
+            }
+          } else if (shape.type === 'line') {
+            updates = {
+              ...updates,
+              endX: shape.x + (shape.endX - shape.x) * scaleX,
+              endY: shape.y + (shape.endY - shape.y) * scaleY
+            }
+          } else if (shape.type === 'arrow') {
+            updates = {
+              ...updates,
+              endX: shape.x + (shape.endX - shape.x) * scaleX,
+              endY: shape.y + (shape.endY - shape.y) * scaleY
+            }
+          } else if (shape.type === 'ellipse') {
+            updates = {
+              ...updates,
+              radiusX: Math.max(5, shape.radiusX * scaleX),
+              radiusY: Math.max(5, shape.radiusY * scaleY)
+            }
+          } else if (shape.type === 'hexagon') {
+            // For hexagon shapes, save scale values to database
+            updates = {
+              ...updates,
+              scaleX: scaleX,
+              scaleY: scaleY
+            }
+            node.scaleX(1)
+            node.scaleY(1)
+          } else if (shape.type === 'star') {
+            // For star shapes, save scale values to database
+            updates = {
+              ...updates,
+              scaleX: scaleX,
+              scaleY: scaleY
+            }
+            node.scaleX(1)
+            node.scaleY(1)
           }
 
           return {

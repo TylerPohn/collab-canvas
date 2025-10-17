@@ -20,6 +20,8 @@ export interface ShapeBase {
   height?: number
   radius?: number
   rotation?: number
+  scaleX?: number
+  scaleY?: number
   fill?: string
   stroke?: string
   strokeWidth?: number

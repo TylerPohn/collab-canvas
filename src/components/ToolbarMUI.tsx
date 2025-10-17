@@ -7,7 +7,6 @@ import {
   Info,
   OpenWith,
   Palette,
-  PanoramaFishEye,
   RadioButtonUnchecked,
   Rectangle,
   ShowChart,
@@ -31,6 +30,7 @@ import {
 import React, { useState } from 'react'
 import type { ToolType } from '../lib/types'
 import MermaidImportDialog from './MermaidImportDialog'
+import EllipseIcon from './icons/EllipseIcon'
 
 interface ToolbarMUIProps {
   selectedTool: ToolType
@@ -113,7 +113,7 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
     {
       type: 'ellipse',
       label: 'Ellipse',
-      icon: PanoramaFishEye,
+      icon: EllipseIcon,
       description: 'Click and drag to create ellipse (Shift for circle)'
     },
     {
