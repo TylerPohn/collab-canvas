@@ -75,7 +75,8 @@ export const useCanvasShortcuts = ({
       ].includes(e.key)
 
       // Handle paste first (doesn't require selection)
-      if (isPaste && onPaste) {
+      // But only if user is not typing in a text input
+      if (isPaste && onPaste && !isTextInput) {
         e.preventDefault()
         onPaste()
         return
