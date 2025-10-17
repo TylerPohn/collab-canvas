@@ -9,6 +9,11 @@ export interface AICommand {
   userId: string
 }
 
+export interface AICommandResult {
+  command: AICommand
+  result: any
+}
+
 export interface AIOperation {
   id: string
   commandId: string

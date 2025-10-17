@@ -122,7 +122,6 @@ The AI agent functionality is available through the `useAIAgent` hook and can be
 
 ## Future Enhancements
 
-- Integration with OpenAI/LangChain for natural language processing
 - Advanced layout algorithms
 - Template system for common UI patterns
 - Learning system based on user preferences

@@ -4,7 +4,13 @@ import { getAIContextManager } from './context'
 import { openaiService } from './openai'
 import { aiRateLimiter, validateAIParameters } from './security'
 import { createAITools } from './tools'
-import type { AICanvasState, AICommand, AIContext, AIOperation } from './types'
+import type {
+  AICanvasState,
+  AICommand,
+  AICommandResult,
+  AIContext,
+  AIOperation
+} from './types'
 import { validateAICommand } from './validation'
 
 export class AIAgentService {
@@ -23,7 +29,7 @@ export class AIAgentService {
     userId: string,
     command: string,
     parameters: Record<string, any>
-  ): Promise<AICommand> {
+  ): Promise<AICommandResult> {
     console.log('🤖 AIAgentService.executeCommand called:', {
       canvasId,
       userId,
@@ -62,13 +68,16 @@ export class AIAgentService {
       userId
     }
 
-    // Execute command
-    await this.executeCommandWithContext(aiCommand, context)
+    // Execute command and capture result
+    const result = await this.executeCommandWithContext(aiCommand, context)
 
     // Record the request for rate limiting
     aiRateLimiter.recordRequest(userId)
 
-    return aiCommand
+    return {
+      command: aiCommand,
+      result
+    }
   }
 
   // Execute multi-step complex commands
@@ -77,7 +86,7 @@ export class AIAgentService {
     userId: string,
     command: string,
     parameters: Record<string, any>
-  ): Promise<AICommand> {
+  ): Promise<AICommandResult> {
     // Check rate limiting
     if (!aiRateLimiter.isAllowed(userId)) {
       throw new Error('Rate limit exceeded. Please slow down your AI requests.')
@@ -97,12 +106,15 @@ export class AIAgentService {
     aiRateLimiter.recordRequest(userId)
 
     return {
-      id: `cmd-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      type: 'complex',
-      description: command,
-      parameters,
-      timestamp: Date.now(),
-      userId
+      command: {
+        id: `cmd-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: 'complex',
+        description: command,
+        parameters,
+        timestamp: Date.now(),
+        userId
+      },
+      result: { success: true, message: 'Complex command completed' }
     }
   }
 
@@ -202,7 +214,7 @@ export class AIAgentService {
   private async executeCommandWithContext(
     command: AICommand,
     context: AIContext
-  ): Promise<void> {
+  ): Promise<any> {
     console.log('🤖 executeCommandWithContext:', {
       command: command.description,
       availableTools: Object.keys(this.aiTools)
@@ -242,6 +254,8 @@ export class AIAgentService {
         context.userId,
         operation
       )
+
+      return result
     } catch (error) {
       // Update operation status
       operation.status = 'failed'
@@ -327,79 +341,172 @@ export class AIAgentService {
         JSON.stringify(tools, null, 2)
       )
 
-      // Use OpenAI to understand the user's intent
-      const openaiResponse = await openaiService.generateResponse(
-        `User wants to: ${userInput}. 
-         You must use one of the available tools to execute this request. Available tools: ${tools.map(t => t.name).join(', ')}. 
-         Execute the appropriate tool with the correct parameters.`,
-        tools
-      )
+      // Initialize conversation history for tool chaining
+      const messages = [
+        {
+          role: 'system',
+          content: `You are an AI assistant that helps users create and manipulate shapes on a collaborative canvas. You must use the provided tools to execute commands. Always call the appropriate function when a user requests an action. Do not just describe what to do - actually execute the function call.
 
-      console.log('🤖 OpenAI response:', openaiResponse)
+IMPORTANT: When specifying colors, always use hex color codes (e.g., #FF0000 for red, #00FF00 for green, #0000FF for blue). Do not use named colors like "red", "blue", "green".
 
-      // Extract the function call from OpenAI response
-      const functionCall = openaiResponse.choices?.[0]?.message?.tool_calls?.[0]
+For movement commands:
+1. For directional movements with distance (e.g., "move 300px to the right"), use moveShape and CALCULATE the new position: new_x = current_x + distance
+2. For movements relative to OTHER shapes (e.g., "move to the right of other shapes"), use moveShapeByOthers
+3. Always find the shape first using getCanvasState or findShapes to get current position and shapeId
+4. Do the math: right = +x, left = -x, down = +y, up = -y
 
-      if (functionCall) {
-        const command = functionCall.function.name
-        const parameters = JSON.parse(functionCall.function.arguments)
+For creation commands with positioning:
+1. For "create X to the right/left/above/below of other shapes", first use getCanvasState or findShapes to locate existing shapes
+2. Then use createShape with calculated position based on existing shapes
+3. Calculate position: right = max_x + spacing, left = min_x - spacing, above = min_y - spacing, below = max_y + spacing
 
+For layout commands (arrange, grid, row, space, align):
+1. First use getCanvasState to get all shapes and their IDs
+2. Then use the appropriate layout tool (arrangeInGrid, arrangeInRow, spaceEvenly) with the shape IDs from step 1
+3. For arrangeInGrid: use rows and cols parameters (e.g., "2x3 grid" = rows: 2, cols: 3)
+
+You can make multiple tool calls in sequence. If you need to find shapes first, make that call, then use the results to complete the layout action.`
+        },
+        {
+          role: 'user',
+          content: `User wants to: ${userInput}. 
+           You must use one of the available tools to execute this request. Available tools: ${tools.map(t => t.name).join(', ')}. 
+           Execute the appropriate tool with the correct parameters. If you need to find a shape first, do that, then use the results to complete the action.`
+        }
+      ]
+
+      // Tool chaining loop - allow up to 3 tool calls
+      const maxIterations = 3
+      let currentIteration = 0
+      let lastCommand: AICommand | null = null
+
+      while (currentIteration < maxIterations) {
+        currentIteration++
         console.log(
-          '🤖 OpenAI determined command:',
-          command,
-          'with parameters:',
-          parameters
+          `🤖 Tool chaining iteration ${currentIteration}/${maxIterations}`
         )
 
-        // Execute the determined command
-        return await this.executeCommand(canvasId, userId, command, parameters)
-      } else {
-        // If no function call, try to map common phrases to commands
-        console.log('🤖 No function call from OpenAI, trying simple mapping...')
+        // Use OpenAI to understand the user's intent
+        const openaiResponse = await openaiService.generateResponseWithMessages(
+          messages,
+          tools
+        )
 
-        const lowerInput = userInput.toLowerCase()
-        let command = ''
-        let parameters: any = {}
+        console.log('🤖 OpenAI response:', openaiResponse)
 
-        if (lowerInput.includes('rectangle') || lowerInput.includes('rect')) {
-          command = 'createShape'
-          parameters = {
-            type: 'rect',
-            position: { x: 200, y: 200 },
-            size: { width: 150, height: 80 },
-            fill: '#3B82F6'
-          }
-        } else if (lowerInput.includes('circle')) {
-          command = 'createShape'
-          parameters = {
-            type: 'circle',
-            position: { x: 200, y: 200 },
-            radius: 50,
-            fill: '#10B981'
-          }
-        } else if (lowerInput.includes('text')) {
-          command = 'createShape'
-          parameters = {
-            type: 'text',
-            position: { x: 200, y: 200 },
-            text: 'Hello World',
-            fontSize: 16,
-            fill: '#000000'
+        // Extract the function call from OpenAI response
+        const functionCall =
+          openaiResponse.choices?.[0]?.message?.tool_calls?.[0]
+
+        if (functionCall) {
+          const command = functionCall.function.name
+          const parameters = JSON.parse(functionCall.function.arguments)
+
+          console.log(
+            '🤖 OpenAI determined command:',
+            command,
+            'with parameters:',
+            parameters
+          )
+
+          // Execute the determined command
+          const { command: executedCommand, result: toolResult } =
+            await this.executeCommand(canvasId, userId, command, parameters)
+          lastCommand = executedCommand
+
+          // Add the tool call and result to conversation history
+          messages.push({
+            role: 'assistant',
+            content: '',
+            tool_calls: [functionCall]
+          } as any)
+
+          // Add the tool result to conversation history
+          messages.push({
+            role: 'tool',
+            content: JSON.stringify(toolResult),
+            tool_call_id: functionCall.id
+          } as any)
+
+          // Check if this was a "find" operation that needs follow-up
+          if (
+            this.isFindOperation(command) &&
+            this.needsFollowUp(userInput, command)
+          ) {
+            console.log(
+              '🤖 Find operation detected, checking if follow-up needed'
+            )
+            // Continue to next iteration to allow follow-up tool call
+            continue
+          } else {
+            // Single operation or completed workflow
+            console.log('🤖 Operation completed, returning result')
+            return executedCommand
           }
         } else {
-          throw new Error(
-            'Could not determine appropriate command from user input. Try: "create a rectangle", "create a circle", or "create text"'
+          // If no function call, try to map common phrases to commands
+          console.log(
+            '🤖 No function call from OpenAI, trying simple mapping...'
           )
-        }
 
-        console.log(
-          '🤖 Mapped to command:',
-          command,
-          'with parameters:',
-          parameters
-        )
-        return await this.executeCommand(canvasId, userId, command, parameters)
+          const lowerInput = userInput.toLowerCase()
+          let command = ''
+          let parameters: any = {}
+
+          if (lowerInput.includes('rectangle') || lowerInput.includes('rect')) {
+            command = 'createShape'
+            parameters = {
+              type: 'rect',
+              position: { x: 200, y: 200 },
+              size: { width: 150, height: 80 },
+              fill: '#3B82F6'
+            }
+          } else if (lowerInput.includes('circle')) {
+            command = 'createShape'
+            parameters = {
+              type: 'circle',
+              position: { x: 200, y: 200 },
+              radius: 50,
+              fill: '#10B981'
+            }
+          } else if (lowerInput.includes('text')) {
+            command = 'createShape'
+            parameters = {
+              type: 'text',
+              position: { x: 200, y: 200 },
+              text: 'Hello World',
+              fontSize: 16,
+              fill: '#000000'
+            }
+          } else {
+            throw new Error(
+              'Could not determine appropriate command from user input. Try: "create a rectangle", "create a circle", or "create text"'
+            )
+          }
+
+          console.log(
+            '🤖 Mapped to command:',
+            command,
+            'with parameters:',
+            parameters
+          )
+          const { command: executedCommand } = await this.executeCommand(
+            canvasId,
+            userId,
+            command,
+            parameters
+          )
+          return executedCommand
+        }
       }
+
+      // If we've reached max iterations, return the last command
+      if (lastCommand) {
+        console.log('🤖 Reached max iterations, returning last command')
+        return lastCommand
+      }
+
+      throw new Error('Could not complete the requested operation')
     } catch (error) {
       console.error('❌ Natural language processing failed:', error)
       throw new Error(
@@ -408,32 +515,58 @@ export class AIAgentService {
     }
   }
 
+  // Helper method to check if a command is a "find" operation
+  private isFindOperation(command: string): boolean {
+    return command === 'findShapes' || command === 'getCanvasState'
+  }
+
+  // Helper method to check if a find operation needs follow-up
+  private needsFollowUp(userInput: string, command: string): boolean {
+    const lowerInput = userInput.toLowerCase()
+    const isMovementCommand =
+      lowerInput.includes('move') ||
+      lowerInput.includes('resize') ||
+      lowerInput.includes('rotate')
+    const isPositionalCreation =
+      lowerInput.includes('create') &&
+      (lowerInput.includes('to the right of') ||
+        lowerInput.includes('to the left of') ||
+        lowerInput.includes('above') ||
+        lowerInput.includes('below') ||
+        lowerInput.includes('next to') ||
+        lowerInput.includes('beside'))
+    const isLayoutCommand =
+      lowerInput.includes('arrange') ||
+      lowerInput.includes('grid') ||
+      lowerInput.includes('row') ||
+      lowerInput.includes('space') ||
+      lowerInput.includes('align') ||
+      lowerInput.includes('layout') ||
+      lowerInput.includes('organize') ||
+      lowerInput.includes('distribute') ||
+      lowerInput.includes('line up') ||
+      lowerInput.includes('position')
+    return (
+      this.isFindOperation(command) &&
+      (isMovementCommand || isPositionalCreation || isLayoutCommand)
+    )
+  }
+
   // Convert Zod schema to JSON Schema format for OpenAI
   private convertZodToJsonSchema(zodSchema: any): any {
-    console.log('🤖 Converting Zod schema:', zodSchema)
-
     if (!zodSchema || !zodSchema._def) {
-      console.log('🤖 No schema or _def found')
       return { type: 'object', properties: {} }
     }
 
     const def = zodSchema._def
-    console.log('🤖 Schema def:', def)
-    console.log('🤖 def.typeName:', def.typeName)
-    console.log('🤖 def.typeName type:', typeof def.typeName)
-    console.log('🤖 def keys:', Object.keys(def))
-    console.log('🤖 def.type:', def.type)
 
     // Handle ZodObject
     if (def.typeName === 'ZodObject') {
-      console.log('🤖 ✅ Processing ZodObject')
       const properties: any = {}
       const required: string[] = []
 
       // Get the shape object
       const shape = def.shape()
-      console.log('🤖 Schema shape:', shape)
-      console.log('🤖 Shape keys:', Object.keys(shape))
 
       for (const [key, value] of Object.entries(shape)) {
         const fieldSchema = this.convertZodFieldToJsonSchema(value as any)
@@ -450,30 +583,22 @@ export class AIAgentService {
         }
       }
 
-      const result = {
+      return {
         type: 'object',
         properties,
         required: required.length > 0 ? required : undefined
       }
-      console.log('🤖 Converted schema result:', result)
-      return result
     }
 
-    console.log('🤖 Not a ZodObject, returning empty schema')
     return { type: 'object', properties: {} }
   }
 
   private convertZodFieldToJsonSchema(zodField: any): any {
-    console.log('🤖 Converting field:', zodField)
-
     if (!zodField || !zodField._def) {
-      console.log('🤖 No field or _def found')
       return { type: 'string' }
     }
 
     const def = zodField._def
-    console.log('🤖 Field def:', def)
-    console.log('🤖 Field def.typeName:', def.typeName)
 
     // Handle different Zod field types based on def.typeName
     switch (def.typeName) {

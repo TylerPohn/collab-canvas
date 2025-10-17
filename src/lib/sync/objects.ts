@@ -899,16 +899,63 @@ export class ObjectSyncService {
 
     if (targetShapes.length === 0) return
 
-    const updates = []
     const { rows, cols, spacing } = gridConfig
 
-    // Calculate grid positions
+    // Helper function to get shape dimensions
+    const getShapeDimensions = (
+      shape: any
+    ): { width: number; height: number } => {
+      switch (shape.type) {
+        case 'rect':
+          return {
+            width: shape.width || 100,
+            height: shape.height || 60
+          }
+        case 'circle':
+          const diameter = (shape.radius || 50) * 2
+          return {
+            width: diameter,
+            height: diameter
+          }
+        case 'text':
+          const fontSize = shape.fontSize || 16
+          const textLength = shape.text?.length || 10
+          return {
+            width: textLength * fontSize * 0.6,
+            height: fontSize * 1.2
+          }
+        case 'mermaid':
+          return {
+            width: shape.width || 200,
+            height: shape.height || 150
+          }
+        default:
+          return { width: 100, height: 60 }
+      }
+    }
+
+    // Calculate dimensions for all shapes
+    const shapeDimensions = targetShapes.map(shape => getShapeDimensions(shape))
+
+    // Find the maximum width and height across ALL shapes for uniform grid cells
+    const maxWidth = Math.max(...shapeDimensions.map(dim => dim.width))
+    const maxHeight = Math.max(...shapeDimensions.map(dim => dim.height))
+
+    // Position shapes using uniform grid cells with center-point alignment
+    const updates = []
     for (let i = 0; i < targetShapes.length && i < rows * cols; i++) {
       const row = Math.floor(i / cols)
       const col = i % cols
+      const shapeDim = shapeDimensions[i]
 
-      const x = col * (100 + spacing) // Assuming average width of 100
-      const y = row * (60 + spacing) // Assuming average height of 60
+      // Calculate cell center position
+      // The spacing should be between shape edges, so we need to account for the shape's own dimensions
+      const cellCenterX = col * (maxWidth + spacing) + maxWidth / 2
+      const cellCenterY = row * (maxHeight + spacing) + maxHeight / 2
+
+      // Position shape so its center aligns with cell center
+      const x = cellCenterX - shapeDim.width / 2
+      const y = cellCenterY - shapeDim.height / 2
 
       updates.push({
         objectId: targetShapes[i].id,

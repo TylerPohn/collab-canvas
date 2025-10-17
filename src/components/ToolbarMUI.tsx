@@ -5,7 +5,6 @@ import {
   Info,
   OpenWith,
   Palette,
-  Psychology,
   RadioButtonUnchecked,
   Rectangle,
   SmartToy,
@@ -45,8 +44,6 @@ interface ToolbarMUIProps {
   isDesignPaletteOpen?: boolean
   onToggleAI?: () => void
   isAIOpen?: boolean
-  onToggleLangChainAI?: () => void
-  isLangChainAIOpen?: boolean
   onImportMermaid?: (mermaidCode: string, diagramType: string) => void
 }
 
@@ -61,8 +58,6 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
   isDesignPaletteOpen = false,
   onToggleAI,
   isAIOpen = false,
-  onToggleLangChainAI,
-  isLangChainAIOpen = false,
   onImportMermaid
 }) => {
   const theme = useTheme()
@@ -359,43 +354,6 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
                 }}
               >
                 <SmartToy sx={{ fontSize: 18 }} />
-              </IconButton>
-            </Tooltip>
-          </>
-        )}
-
-        {/* LangChain AI Agent Toggle */}
-        {onToggleLangChainAI && (
-          <>
-            <Divider orientation="vertical" flexItem />
-            <Tooltip title="LangChain AI Agent (v2.0)" arrow>
-              <IconButton
-                onClick={onToggleLangChainAI}
-                sx={{
-                  width: 36,
-                  height: 36,
-                  backgroundColor: isLangChainAIOpen
-                    ? theme.palette.secondary.main
-                    : 'transparent',
-                  color: isLangChainAIOpen
-                    ? theme.palette.secondary.contrastText
-                    : theme.palette.text.secondary,
-                  border: isLangChainAIOpen
-                    ? `1px solid ${theme.palette.secondary.main}`
-                    : `1px solid ${theme.palette.divider}`,
-                  borderRadius: 1,
-                  '&:hover': {
-                    backgroundColor: isLangChainAIOpen
-                      ? theme.palette.secondary.dark
-                      : theme.palette.action.hover,
-                    borderColor: isLangChainAIOpen
-                      ? theme.palette.secondary.dark
-                      : theme.palette.secondary.main
-                  },
-                  transition: 'all 0.2s ease-in-out'
-                }}
-              >
-                <Psychology sx={{ fontSize: 18 }} />
               </IconButton>
             </Tooltip>
           </>

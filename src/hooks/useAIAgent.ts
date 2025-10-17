@@ -26,7 +26,7 @@ export function useAIAgent(canvasId: string, userId: string) {
           command,
           parameters
         )
-        setLastCommand(result)
+        setLastCommand(result.command)
         return result
       } catch (err) {
         const errorMessage =
@@ -51,7 +51,7 @@ export function useAIAgent(canvasId: string, userId: string) {
           command,
           parameters
         )
-        setLastCommand(result)
+        setLastCommand(result.command)
         return result
       } catch (err) {
         const errorMessage =

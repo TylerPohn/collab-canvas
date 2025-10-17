@@ -183,7 +183,7 @@ const AIPanel: React.FC<AIPanelProps> = ({ canvasId, isOpen, onClose }) => {
 
       console.log('🤖 AI Agent returned:', result)
 
-      if (result && result.id) {
+      if (result && result.command && result.command.id) {
         const successMessage = `✅ Successfully executed ${command} with parameters: ${JSON.stringify(parameters)}`
         setLastResult(successMessage)
       } else {
@@ -464,10 +464,10 @@ const AIPanel: React.FC<AIPanelProps> = ({ canvasId, isOpen, onClose }) => {
           elevation={12}
           sx={{
             position: 'fixed',
-            top: 80,
+            top: 120,
             left: 20,
             width: 420,
-            maxHeight: 'calc(100vh - 100px)',
+            maxHeight: 'calc(100vh - 140px)',
             borderRadius: 3,
             background: `rgba(255, 255, 255, 0.95)`,
             backdropFilter: 'blur(20px)',

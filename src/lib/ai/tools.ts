@@ -4,8 +4,8 @@ import type { AIContext } from './types'
 
 // Base schemas
 const PositionSchema = z.object({
-  x: z.number().min(0),
-  y: z.number().min(0)
+  x: z.number(),
+  y: z.number()
 })
 
 const SizeSchema = z.object({
@@ -258,7 +258,8 @@ export function createAITools(queryClient: any) {
     },
     moveShape: {
       name: 'moveShape',
-      description: 'Move a shape to a new position',
+      description:
+        "Move a shape to a new absolute position. Use this tool for directional movements (e.g., 'move 300px to the right'): calculate the new position by adding/subtracting from the current position. You need the shapeId to use this tool. If you don't have the shapeId, first use getCanvasState or findShapes to locate the shape.",
       parameters: AIToolSchemas.moveShape,
       execute: async (
         params: z.infer<typeof AIToolSchemas.moveShape>,
@@ -276,7 +277,8 @@ export function createAITools(queryClient: any) {
 
     moveShapeByOthers: {
       name: 'moveShapeByOthers',
-      description: 'Move a shape relative to other shapes on the canvas',
+      description:
+        "Move a shape relative to OTHER shapes on the canvas (e.g., 'move to the right of other shapes'). ONLY use this tool when positioning relative to OTHER shapes. For simple directional movements by pixel amounts, use moveShape instead. You need the shapeId to use this tool. If you don't have the shapeId, first use getCanvasState or findShapes to locate the shape.",
       parameters: AIToolSchemas.moveShapeByOthers,
       execute: async (
         params: z.infer<typeof AIToolSchemas.moveShapeByOthers>,
@@ -299,7 +301,44 @@ export function createAITools(queryClient: any) {
         )
 
         if (otherShapes.length === 0) {
-          throw new Error('No other shapes found on canvas to move relative to')
+          // Fallback: if no other shapes, move by distance from current position
+          console.log(
+            '🤖 No other shapes found, using relative movement from current position'
+          )
+          let newX = targetShape.x
+          let newY = targetShape.y
+
+          switch (params.direction) {
+            case 'left':
+              newX = targetShape.x - params.distance
+              break
+            case 'right':
+              newX = targetShape.x + params.distance
+              break
+            case 'up':
+              newY = targetShape.y - params.distance
+              break
+            case 'down':
+              newY = targetShape.y + params.distance
+              break
+            case 'center':
+              // No-op for center when no other shapes
+              console.log(
+                '🤖 Cannot center relative to other shapes when none exist'
+              )
+              break
+          }
+
+          await objectSync.updateObject(
+            context.canvasId,
+            params.shapeId,
+            { x: newX, y: newY },
+            context.userId
+          )
+          return {
+            success: true,
+            message: 'Moved shape by distance from current position'
+          }
         }
 
         let newX = targetShape.x
@@ -754,7 +793,8 @@ export function createAITools(queryClient: any) {
     },
     getCanvasState: {
       name: 'getCanvasState',
-      description: 'Get the current state of the canvas',
+      description:
+        'Get the current state of the canvas including all shapes. Use this tool first when you need to locate shapes before manipulating them. Returns shape information including shapeId which you can use with other tools.',
       parameters: AIToolSchemas.getCanvasState,
       execute: async (
         params: z.infer<typeof AIToolSchemas.getCanvasState>,
@@ -768,13 +808,15 @@ export function createAITools(queryClient: any) {
             viewport: params.includeViewport
               ? context.currentState.viewport
               : null
-          }
+          },
+          message: `Canvas has ${shapes.length} shapes. Use the shapeId from these results with moveShape, resizeShape, or other manipulation tools.`
         }
       }
     },
     findShapes: {
       name: 'findShapes',
-      description: 'Find shapes matching specified criteria',
+      description:
+        'Find shapes matching specified criteria. Use this tool first when you need to locate a shape before moving, resizing, or manipulating it. Returns shape information including shapeId which you can use with other tools.',
       parameters: AIToolSchemas.findShapes,
       execute: async (
         params: z.infer<typeof AIToolSchemas.findShapes>,
@@ -819,7 +861,11 @@ export function createAITools(queryClient: any) {
           })
         }
 
-        return { success: true, shapes: filteredShapes }
+        return {
+          success: true,
+          shapes: filteredShapes,
+          message: `Found ${filteredShapes.length} shapes matching criteria. Use the shapeId from these results with moveShape, resizeShape, or other manipulation tools.`
+        }
       }
     }
   }
