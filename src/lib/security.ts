@@ -199,7 +199,8 @@ export const CSP_CONFIG = {
     "'unsafe-eval'", // Note: unsafe-eval needed for Konva
     'https://accounts.google.com/gsi/client',
     'https://apis.google.com',
-    'https://*.googleapis.com'
+    'https://*.googleapis.com',
+    'https://*.firebaseio.com' // Allow Firebase Realtime Database scripts
   ],
   'style-src': [
     "'self'",
