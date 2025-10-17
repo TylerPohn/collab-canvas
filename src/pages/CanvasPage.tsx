@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import AIPanel from '../components/AIPanel'
 import CanvasStage from '../components/CanvasStage'
 import DesignPaletteMUI from '../components/DesignPaletteMUI'
+import LangChainAIPanel from '../components/LangChainAIPanel'
 import PresenceList from '../components/PresenceList'
 import ToolbarMUI from '../components/ToolbarMUI'
 import { useAuth } from '../hooks/useAuth'
@@ -23,6 +24,7 @@ const CanvasPage: React.FC = () => {
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   const [isDesignPaletteOpen, setIsDesignPaletteOpen] = useState(true)
   const [isAIOpen, setIsAIOpen] = useState(false)
+  const [isLangChainAIOpen, setIsLangChainAIOpen] = useState(false)
 
   const { selectedIds, hasSelection, clearSelection, selectShape } =
     useSelectionStore()
@@ -360,6 +362,8 @@ const CanvasPage: React.FC = () => {
         isDesignPaletteOpen={isDesignPaletteOpen}
         onToggleAI={() => setIsAIOpen(!isAIOpen)}
         isAIOpen={isAIOpen}
+        onToggleLangChainAI={() => setIsLangChainAIOpen(!isLangChainAIOpen)}
+        isLangChainAIOpen={isLangChainAIOpen}
         onImportMermaid={handleImportMermaid}
       />
 
@@ -442,6 +446,13 @@ const CanvasPage: React.FC = () => {
           canvasId={canvasId}
           isOpen={isAIOpen}
           onClose={() => setIsAIOpen(false)}
+        />
+
+        {/* LangChain AI Panel */}
+        <LangChainAIPanel
+          canvasId={canvasId}
+          isOpen={isLangChainAIOpen}
+          onClose={() => setIsLangChainAIOpen(false)}
         />
       </div>
     </div>

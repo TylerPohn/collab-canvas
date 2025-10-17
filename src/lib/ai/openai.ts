@@ -32,6 +32,39 @@ export class OpenAIService {
     }
 
     try {
+      const requestBody = {
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are an AI assistant that helps users create and manipulate shapes on a collaborative canvas. You must use the provided tools to execute commands. Always call the appropriate function when a user requests an action. Do not just describe what to do - actually execute the function call.\n\nIMPORTANT: When specifying colors, always use hex color codes (e.g., #FF0000 for red, #00FF00 for green, #0000FF for blue). Do not use named colors like "red", "blue", "green".'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        tools: tools
+          ? tools.map(tool => ({
+              type: 'function',
+              function: {
+                name: tool.name,
+                description: tool.description,
+                parameters: tool.parameters
+              }
+            }))
+          : undefined,
+        tool_choice: tools ? 'auto' : undefined,
+        temperature: 0.7,
+        max_tokens: 1000
+      }
+
+      console.log(
+        '🤖 OpenAI request body:',
+        JSON.stringify(requestBody, null, 2)
+      )
+
       const response = await fetch(
         'https://api.openai.com/v1/chat/completions',
         {
@@ -40,39 +73,15 @@ export class OpenAIService {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${this.apiKey}`
           },
-          body: JSON.stringify({
-            model: 'gpt-4',
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You are an AI assistant that helps users create and manipulate shapes on a collaborative canvas. You can execute various commands to create shapes, text, forms, and layouts.'
-              },
-              {
-                role: 'user',
-                content: prompt
-              }
-            ],
-            tools: tools
-              ? tools.map(tool => ({
-                  type: 'function',
-                  function: {
-                    name: tool.name,
-                    description: tool.description,
-                    parameters: tool.parameters
-                  }
-                }))
-              : undefined,
-            tool_choice: tools ? 'auto' : undefined,
-            temperature: 0.7,
-            max_tokens: 1000
-          })
+          body: JSON.stringify(requestBody)
         }
       )
 
       if (!response.ok) {
+        const errorText = await response.text()
+        console.error('🤖 OpenAI error response:', errorText)
         throw new Error(
-          `OpenAI API error: ${response.status} ${response.statusText}`
+          `OpenAI API error: ${response.status} ${response.statusText} - ${errorText}`
         )
       }
 

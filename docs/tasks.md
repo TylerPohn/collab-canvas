@@ -1,6 +1,15 @@
 # Collab Canvas — MVP Task & PR Checklist
 
-Below is a proposed sequence of **pull requests (PRs)** to build and ship the Collab Canvas MVP. Each PR has a checklist of subtasks with the **files you’ll create or modify**. Adjust as needed once you begin implementation.
+Below is a proposed sequence of **pull requests (PRs)** to build and ship the Collab Canvas MVP. Each PR has a checklist of subtasks with the **files you'll create or modify**. Adjust as needed once you begin implementation.
+
+## 🚨 Current Issues
+
+### LangChain Agent Issues
+
+- **Status**: ❌ Not Working - Agent returns empty output with no intermediate steps
+- **Issue**: LangChain AgentExecutor not executing tools properly
+- **Error**: `{output: '', intermediateSteps: Array(0)}` for natural language commands
+- **Priority**: Low (OpenAI agent is working as primary solution)
 
 ---
 

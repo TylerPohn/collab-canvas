@@ -200,7 +200,9 @@ export const CSP_CONFIG = {
     'https://accounts.google.com/gsi/client',
     'https://apis.google.com',
     'https://*.googleapis.com',
-    'https://*.firebaseio.com' // Allow Firebase Realtime Database scripts
+    'https://*.firebaseio.com', // Allow Firebase Realtime Database scripts
+    'http://localhost:*', // Allow localhost for development
+    'ws://localhost:*' // Allow WebSocket connections to localhost
   ],
   'style-src': [
     "'self'",
@@ -216,7 +218,10 @@ export const CSP_CONFIG = {
     'https://*.googleapis.com',
     'https://accounts.google.com/gsi/',
     'https://securetoken.googleapis.com',
-    'https://api.openai.com' // Allow OpenAI API calls
+    'https://api.openai.com', // Allow OpenAI API calls
+    'http://localhost:*', // Allow localhost for development
+    'ws://localhost:*', // Allow WebSocket connections to localhost
+    'wss://localhost:*' // Allow secure WebSocket connections to localhost
   ],
   'frame-src': [
     "'self'",

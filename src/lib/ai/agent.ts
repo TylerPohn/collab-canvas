@@ -319,13 +319,19 @@ export class AIAgentService {
       const tools = Object.values(this.aiTools).map((tool: any) => ({
         name: tool.name,
         description: tool.description,
-        parameters: tool.parameters
+        parameters: this.convertZodToJsonSchema(tool.parameters)
       }))
+
+      console.log(
+        '🤖 Tools being sent to OpenAI:',
+        JSON.stringify(tools, null, 2)
+      )
 
       // Use OpenAI to understand the user's intent
       const openaiResponse = await openaiService.generateResponse(
-        `User wants to: ${userInput}. Available commands: ${tools.map(t => t.name).join(', ')}. 
-         Please determine the best command to execute and provide the parameters.`,
+        `User wants to: ${userInput}. 
+         You must use one of the available tools to execute this request. Available tools: ${tools.map(t => t.name).join(', ')}. 
+         Execute the appropriate tool with the correct parameters.`,
         tools
       )
 
@@ -399,6 +405,106 @@ export class AIAgentService {
       throw new Error(
         `Failed to process natural language: ${error instanceof Error ? error.message : 'Unknown error'}`
       )
+    }
+  }
+
+  // Convert Zod schema to JSON Schema format for OpenAI
+  private convertZodToJsonSchema(zodSchema: any): any {
+    console.log('🤖 Converting Zod schema:', zodSchema)
+
+    if (!zodSchema || !zodSchema._def) {
+      console.log('🤖 No schema or _def found')
+      return { type: 'object', properties: {} }
+    }
+
+    const def = zodSchema._def
+    console.log('🤖 Schema def:', def)
+    console.log('🤖 def.typeName:', def.typeName)
+    console.log('🤖 def.typeName type:', typeof def.typeName)
+    console.log('🤖 def keys:', Object.keys(def))
+    console.log('🤖 def.type:', def.type)
+
+    // Handle ZodObject
+    if (def.typeName === 'ZodObject') {
+      console.log('🤖 ✅ Processing ZodObject')
+      const properties: any = {}
+      const required: string[] = []
+
+      // Get the shape object
+      const shape = def.shape()
+      console.log('🤖 Schema shape:', shape)
+      console.log('🤖 Shape keys:', Object.keys(shape))
+
+      for (const [key, value] of Object.entries(shape)) {
+        const fieldSchema = this.convertZodFieldToJsonSchema(value as any)
+        properties[key] = fieldSchema
+
+        // Check if field is required (not optional or default)
+        const fieldDef = (value as any)._def
+        if (
+          fieldDef &&
+          fieldDef.typeName !== 'ZodOptional' &&
+          fieldDef.typeName !== 'ZodDefault'
+        ) {
+          required.push(key)
+        }
+      }
+
+      const result = {
+        type: 'object',
+        properties,
+        required: required.length > 0 ? required : undefined
+      }
+      console.log('🤖 Converted schema result:', result)
+      return result
+    }
+
+    console.log('🤖 Not a ZodObject, returning empty schema')
+    return { type: 'object', properties: {} }
+  }
+
+  private convertZodFieldToJsonSchema(zodField: any): any {
+    console.log('🤖 Converting field:', zodField)
+
+    if (!zodField || !zodField._def) {
+      console.log('🤖 No field or _def found')
+      return { type: 'string' }
+    }
+
+    const def = zodField._def
+    console.log('🤖 Field def:', def)
+    console.log('🤖 Field def.typeName:', def.typeName)
+
+    // Handle different Zod field types based on def.typeName
+    switch (def.typeName) {
+      case 'ZodString':
+        return { type: 'string' }
+      case 'ZodNumber':
+        return { type: 'number' }
+      case 'ZodBoolean':
+        return { type: 'boolean' }
+      case 'ZodArray':
+        return {
+          type: 'array',
+          items: this.convertZodFieldToJsonSchema(def.type)
+        }
+      case 'ZodObject':
+        return this.convertZodToJsonSchema(zodField)
+      case 'ZodEnum':
+        return {
+          type: 'string',
+          enum: Object.values(def.values || {})
+        }
+      case 'ZodOptional':
+        return this.convertZodFieldToJsonSchema(def.innerType)
+      case 'ZodDefault':
+        return {
+          ...this.convertZodFieldToJsonSchema(def.innerType),
+          default: def.defaultValue()
+        }
+      default:
+        console.log('🤖 Unknown field typeName:', def.typeName)
+        return { type: 'string' }
     }
   }
 }

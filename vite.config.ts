@@ -19,13 +19,14 @@ export default defineConfig({
   },
   server: {
     headers: {
-      'Content-Security-Policy': generateCSPHeader(),
-      'X-Frame-Options': 'DENY',
-      'X-Content-Type-Options': 'nosniff',
-      'X-XSS-Protection': '1; mode=block',
-      'Referrer-Policy': 'strict-origin-when-cross-origin',
-      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups'
+      // Temporarily disable security headers for development to avoid RTDb issues
+      // 'Content-Security-Policy': generateCSPHeader(),
+      // 'X-Frame-Options': 'DENY',
+      // 'X-Content-Type-Options': 'nosniff',
+      // 'X-XSS-Protection': '1; mode=block',
+      // 'Referrer-Policy': 'strict-origin-when-cross-origin',
+      // 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+      // 'Cross-Origin-Opener-Policy': 'same-origin-allow-popups'
     }
   },
   preview: {

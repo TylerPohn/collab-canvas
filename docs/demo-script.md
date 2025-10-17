@@ -1,8 +1,8 @@
-# CollabCanvas Demo Script (3-4 minutes)
+# CollabCanvas Demo Script (4-5 minutes)
 
 ## Opening (20 seconds)
 
-"I'm Tyler Pohn and this is my CollabCanvas - a real-time collaborative design tool built with React 19, TypeScript, Konva.js, and Firebase.
+"I'm Tyler Pohn and this is my CollabCanvas - a real-time collaborative design tool with AI-powered canvas manipulation, built with React 19, TypeScript, Konva.js, Firebase, and OpenAI.
 
 ## Authentication & Security (25 seconds)
 
@@ -59,6 +59,22 @@ Cursor tracking is throttled to 25ms via Firebase Realtime Database for smooth r
 
 _[Demonstrate keyboard shortcuts, text editing, multi-selection, refresh to show persistence]_
 
+## AI-Powered Canvas Manipulation (60 seconds)
+
+"Now for the exciting part - our AI agent that can manipulate the canvas through natural language. Let me demonstrate by clicking the AI button in the toolbar.
+
+_[Open AI panel and demonstrate natural language commands]_
+
+Watch this - I can say 'create a red rectangle' and the AI will understand and execute the command, creating a red rectangle that appears for all users in real-time.
+
+_[Demonstrate: "create a red rectangle", "make a blue circle", "add some text"]_
+
+The AI uses OpenAI's gpt-4o-mini with function calling to understand natural language and convert it into precise canvas operations. It supports 19 different commands covering creation, manipulation, layout, and complex operations. (Note: LangChain agent implementation is not working)
+
+_[Show sample command buttons and demonstrate complex commands]_
+
+All AI-generated changes sync across all users instantly, just like manual operations. The AI understands context, uses proper color formats, and maintains the same real-time collaboration experience.
+
 ## Architecture & Performance (45 seconds)
 
 "Under the hood, CollabCanvas uses a sophisticated architecture:
@@ -70,8 +86,9 @@ _[Demonstrate keyboard shortcuts, text editing, multi-selection, refresh to show
 - Zustand for lightweight state management
 - MUI components with Material Design for accessibility
 - DOMPurify for XSS protection and comprehensive input validation
+- OpenAI GPT-4o-mini with function calling for natural language processing (LangChain agent not working)
 - Rate limiting and security audit logging
 - Debounced updates (100ms) and cursor throttling (25ms) via RTDB for optimal performance
 - Last-write-wins conflict resolution with visual feedback in design palette
 
-The system supports 500+ objects and 5+ concurrent users with enterprise-grade security. This foundation is ready to build AI features on top of.
+The system supports 500+ objects and 5+ concurrent users with enterprise-grade security and AI-powered canvas manipulation.

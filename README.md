@@ -6,6 +6,16 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 
 ## ✨ Features
 
+### 🤖 **AI-Powered Canvas Manipulation**
+
+- 🧠 **OpenAI Function Calling** with gpt-4o-mini for natural language processing
+- 🎯 **19 AI Commands** covering creation, manipulation, layout, and complex operations
+- 💬 **Natural Language Interface** - "create a red rectangle" works seamlessly
+- 🔧 **Complete Tool Suite** - createShape, moveShape, arrangeInGrid, createLoginForm, etc.
+- ⚡ **Real-time AI Execution** - AI commands sync across all users instantly
+- 🛡️ **AI Security** - Rate limiting, parameter validation, and content filtering
+- 🎨 **Smart Defaults** - AI uses intelligent positioning and styling
+
 ### 🔒 **Enterprise-Grade Security**
 
 - 🛡️ **Content Security Policy (CSP)** with Google Auth compatibility
@@ -43,6 +53,7 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 - **State Management**: React Query (TanStack Query) + Zustand
 - **Authentication**: Firebase Auth (Google OAuth)
 - **Database**: Firestore for objects + Firebase Realtime Database for presence/cursors
+- **AI Integration**: OpenAI GPT-4o-mini with function calling (LangChain agent not working)
 - **Routing**: React Router v7
 - **Build Tool**: Vite
 - **Linting**: ESLint + Prettier
@@ -97,6 +108,7 @@ A real-time collaborative canvas application built with React, TypeScript, and F
    VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
    VITE_FIREBASE_APP_ID=your_app_id
    VITE_FIREBASE_RTDB_URL=https://your-project-id-default-rtdb.firebaseio.com/
+   VITE_OPENAI_API_KEY=your_openai_api_key_here
    ```
 
 5. Start the development server:
@@ -438,6 +450,7 @@ See `.env.example` for all required environment variables:
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID   | `123456789012`                                    |
 | `VITE_FIREBASE_APP_ID`              | Firebase app ID                | `1:123456789012:web:abcdef123456`                 |
 | `VITE_FIREBASE_RTDB_URL`            | Firebase Realtime Database URL | `https://project-id-default-rtdb.firebaseio.com/` |
+| `VITE_OPENAI_API_KEY`               | OpenAI API key for AI features | `sk-...`                                          |
 
 ## 💻 Development
 
@@ -511,6 +524,7 @@ The app implements sophisticated real-time collaboration:
    VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
    VITE_FIREBASE_APP_ID=your_app_id
    VITE_FIREBASE_RTDB_URL=https://your-project-id-default-rtdb.firebaseio.com/
+   VITE_OPENAI_API_KEY=your_openai_api_key_here
    ```
 
 4. **Configure Firebase for Production**:
@@ -687,7 +701,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🗺️ Roadmap
 
-### Current Status: MVP Complete ✅
+### Current Status: MVP + AI Agent Complete ✅
 
 - ✅ Real-time collaborative canvas
 - ✅ Multi-user presence and cursors
@@ -695,6 +709,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ Firebase authentication
 - ✅ Optimistic updates and conflict resolution
 - ✅ Deployed and publicly accessible
+- ✅ AI Agent with OpenAI function calling
+- ✅ Natural language canvas manipulation
+- ✅ Complete AI tool suite (19 commands)
 
 ### Future Enhancements
 
@@ -716,7 +733,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 #### Long-term
 
-- [ ] **AI-powered features**: Shape suggestions and natural language commands
+- [x] **AI-powered features**: Natural language commands with OpenAI function calling ✅ COMPLETED
 - [ ] **Advanced drawing tools**: Pen, brush, freehand drawing
 - [ ] **Shape animations**: Transitions and animations
 - [ ] **Export functionality**: PNG, SVG, PDF export
