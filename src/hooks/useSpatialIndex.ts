@@ -130,7 +130,5 @@ function getShapeBounds(shape: Shape) {
         width: shape.width || 100,
         height: shape.height || 100
       }
-    default:
-      return { x: shape.x, y: shape.y, width: 100, height: 100 }
   }
 }
