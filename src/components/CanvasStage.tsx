@@ -211,7 +211,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
       }
 
       return queryShapes(viewportBounds)
-    }, [sortedShapes, viewport, width, height, queryShapes])
+    }, [sortedShapes, viewport, width, height, queryShapes, shapes.length])
 
     // Memoize selected nodes to avoid recalculating on every render
     const selectedNodes = useMemo(() => {
@@ -328,7 +328,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
             await onShapeCreate(imageShape)
             showSuccess('Image pasted', 'Image pasted from clipboard')
             return
-          } catch (imageError) {
+          } catch {
             console.log('No objects to paste')
             return
           }
@@ -386,7 +386,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
 
           optionalProps.forEach(prop => {
             if (shapeData[prop] !== undefined) {
-              ;(newShape as any)[prop] = shapeData[prop]
+              ;(newShape as Record<string, unknown>)[prop] = shapeData[prop]
             }
           })
 
@@ -931,7 +931,8 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         viewport.scale,
         clearSelection,
         getDefaultShapeProperties,
-        getDefaultTextProperties
+        getDefaultTextProperties,
+        queryShapes
       ]
     )
 
@@ -1091,7 +1092,8 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         onCursorMove,
         onShapeUpdateDebounced,
         selectedIds,
-        initialShapePositions
+        initialShapePositions,
+        shapes
       ]
     )
 
@@ -1142,7 +1144,8 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         selectedIds,
         initialShapePositions,
         onShapeUpdate,
-        onShapeBatchUpdateDebounced
+        onShapeBatchUpdateDebounced,
+        shapes
       ]
     )
 
