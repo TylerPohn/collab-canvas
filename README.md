@@ -9,12 +9,24 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 ### 🤖 **AI-Powered Canvas Manipulation**
 
 - 🧠 **OpenAI Function Calling** with gpt-4o-mini for natural language processing
-- 🎯 **19 AI Commands** covering creation, manipulation, layout, and complex operations
+- 🎯 **25 AI Commands** covering creation, manipulation, layout, style, and complex operations
 - 💬 **Natural Language Interface** - "create a red rectangle" works seamlessly
 - 🔧 **Complete Tool Suite** - createShape, moveShape, arrangeInGrid, createLoginForm, etc.
 - ⚡ **Real-time AI Execution** - AI commands sync across all users instantly
 - 🛡️ **AI Security** - Rate limiting, parameter validation, and content filtering
 - 🎨 **Smart Defaults** - AI uses intelligent positioning and styling
+- 🎭 **Advanced Layout Tools** - Column layout, alignment, distribution, and multi-shape creation
+- 🎨 **Style Manipulation** - Color changes, style copying, and visual effects
+- 🔄 **Duplication & Batch Operations** - Smart duplication and multi-shape creation
+
+### 🎨 **Advanced Visual Effects & Layer Management**
+
+- 🌈 **12 Canvas 2D Blend Modes** - normal, multiply, overlay, screen, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion
+- 👁️ **Opacity Controls** - Full opacity support from 0 (transparent) to 1 (opaque)
+- 📋 **Layers Panel** - Drag-to-reorder layer management with visibility controls
+- 🎯 **Layer Hierarchy** - Visual layer organization with shape type icons and position indicators
+- 🔄 **Layer Operations** - Bring forward/backward, visibility toggles, and smart reordering
+- 🎨 **Professional Layering** - Advanced visual effects with proper Canvas 2D globalCompositeOperation
 
 ### 📋 **Copy/Paste Functionality**
 
@@ -38,7 +50,7 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 ### 🎨 **Collaborative Canvas**
 
 - 🎨 **Real-time collaborative canvas** with multiple users
-- 🔧 **Shape creation and manipulation** (rectangles, circles, text)
+- 🔧 **Shape creation and manipulation** (rectangles, circles, text, lines, arrows, ellipses, hexagons, stars, images)
 - 👥 **Multi-user presence** with live cursors and user avatars
 - 🔐 **Firebase authentication** with Google OAuth
 - ⚡ **Optimistic updates** with React Query and conflict resolution
@@ -65,6 +77,10 @@ A real-time collaborative canvas application built with React, TypeScript, and F
 - **Authentication**: Firebase Auth (Google OAuth)
 - **Database**: Firestore for objects + Firebase Realtime Database for presence/cursors
 - **AI Integration**: OpenAI GPT-4o-mini with function calling (LangChain agent not working)
+- **AI Agent**: 25 commands with natural language processing, advanced layout tools, style manipulation
+- **Visual Effects**: 12 Canvas 2D blend modes, opacity controls, professional layering
+- **Layer Management**: Drag-to-reorder layers panel with visibility controls
+- **Drag & Drop**: @dnd-kit for layer reordering and advanced interactions
 - **Routing**: React Router v7
 - **Build Tool**: Vite
 - **Linting**: ESLint + Prettier

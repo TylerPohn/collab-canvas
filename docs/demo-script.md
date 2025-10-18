@@ -8,6 +8,23 @@
 
 "We use Google OAuth with enterprise-grade security including Content Security Policy, XSS protection with DOMPurify, and rate limiting. Once you log in, your display name and avatar are immediately visible to other collaborators with secure session management.
 
+// show other computer logging in, discuss conflict last write wins
+// show off overlay
+  // end on normal
+// show bring one all the way to front with palette,
+// then open layers and drag it to back
+// show off paste screenshot
+// show import file
+
+# create alternating grid of circles and rectangles
+# arrange the circles into a row
+# arrange the rectangles into a column
+// show changing all styles at once
+# delete everything
+
+# create 
+
+// mermaid
 _[Show login page, then switch to canvas - highlight security features in browser dev tools]_
 
 ## Core Canvas Features (60 seconds)
@@ -87,8 +104,12 @@ All AI-generated changes sync across all users instantly, just like manual opera
 - MUI components with Material Design for accessibility
 - DOMPurify for XSS protection and comprehensive input validation
 - OpenAI GPT-4o-mini with function calling for natural language processing (LangChain agent not working)
+- **Enhanced AI Agent with 25 commands** - creation, manipulation, layout, style, and complex operations
+- **Advanced Visual Effects** - 12 Canvas 2D blend modes and opacity controls for professional layering
+- **Layers Panel** - drag-to-reorder layer management with visibility controls and hierarchy visualization
+- **AI Thinking Indicator** - real-time visual feedback during AI processing with animated thought bubble
 - Rate limiting and security audit logging
 - Debounced updates (100ms) and cursor throttling (25ms) via RTDB for optimal performance
 - Last-write-wins conflict resolution with visual feedback in design palette
 
-The system supports 500+ objects and 5+ concurrent users with enterprise-grade security and AI-powered canvas manipulation.
+The system supports 500+ objects and 5+ concurrent users with enterprise-grade security, AI-powered canvas manipulation, advanced visual effects, and professional layer management.

@@ -285,8 +285,21 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         const clipboardData = await clipboardService.pasteShapes()
 
         if (!clipboardData) {
-          console.log('No objects to paste')
-          return
+          // No canvas objects found, try to paste image from clipboard
+          try {
+            const imageResult = await handleClipboardImage()
+            const imageShape = createImageShape(
+              imageResult,
+              width / 2,
+              height / 2
+            )
+            await onShapeCreate(imageShape)
+            showSuccess('Image pasted', 'Image pasted from clipboard')
+            return
+          } catch (imageError) {
+            console.log('No objects to paste')
+            return
+          }
         }
 
         // Calculate paste position (viewport center with 50px offset)
