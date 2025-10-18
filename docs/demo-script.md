@@ -2,29 +2,38 @@
 
 ## Opening (20 seconds)
 
-"I'm Tyler Pohn and this is my CollabCanvas - a real-time collaborative design tool with AI-powered canvas manipulation, built with React 19, TypeScript, Konva.js, Firebase, and OpenAI.
+"I'm Tyler Pohn and this is my CollabCanvas - an AI powered real-time collaborative design tool
 
 ## Authentication & Security (25 seconds)
 
-"We use Google OAuth with enterprise-grade security including Content Security Policy, XSS protection with DOMPurify, and rate limiting. Once you log in, your display name and avatar are immediately visible to other collaborators with secure session management.
+"Once you log in with Google OAuth, your display name and avatar are immediately visible to other collaborators with secure session management.
 
 // show other computer logging in, discuss conflict last write wins
+
+// paste 27 circles
+// move all
+// mass style change
+// delete all
 // show off overlay
-  // end on normal
+// end on normal
 // show bring one all the way to front with palette,
 // then open layers and drag it to back
 // show off paste screenshot
 // show import file
 
 // AI
-# change color of circle to black
-# create alternating grid of circles and rectangles
-# arrange the circles into a row
-# arrange the rectangles into a column
-// show changing all styles at once
-# delete everything
 
-# create 
+# change color of circle to black
+
+# create grid of 9 circles
+
+// delete all
+
+# create alternating row of 9 circles and rectangles
+
+# arrange the rectangles into a column
+
+# delete everything
 
 // mermaid
 

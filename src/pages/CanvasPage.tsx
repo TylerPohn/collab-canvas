@@ -9,7 +9,6 @@ import ToolbarMUI from '../components/ToolbarMUI'
 import { useAIAgent } from '../hooks/useAIAgent'
 import { useAIExecutionState } from '../hooks/useAIExecutionState'
 import { useAuth } from '../hooks/useAuth'
-import { useCanvasShortcuts } from '../hooks/useCanvasShortcuts'
 import { usePresence } from '../hooks/usePresence'
 import {
   useCanvasMeta,
@@ -169,85 +168,6 @@ const CanvasPage: React.FC = () => {
     setIsLayersOpen(!isLayersOpen)
   }
 
-  // Handle layer ordering
-  const handleBringForward = useCallback(() => {
-    if (!hasSelection()) return
-
-    const selectedShapes = shapes.filter(shape =>
-      selectedIds.includes(shape.id)
-    )
-    if (selectedShapes.length === 0) return
-
-    // Get all shapes sorted by zIndex (ascending)
-    const sortedShapes = [...shapes].sort(
-      (a, b) => (a.zIndex || 0) - (b.zIndex || 0)
-    )
-
-    const updates = selectedShapes
-      .map(selectedShape => {
-        const currentIndex = sortedShapes.findIndex(
-          s => s.id === selectedShape.id
-        )
-        if (currentIndex < sortedShapes.length - 1) {
-          // Find the next shape's zIndex
-          const nextShape = sortedShapes[currentIndex + 1]
-          const newZIndex = (nextShape.zIndex || 0) + 1
-          return {
-            objectId: selectedShape.id,
-            updates: { zIndex: newZIndex }
-          }
-        }
-        return null
-      })
-      .filter(
-        (update): update is { objectId: string; updates: { zIndex: number } } =>
-          update !== null
-      )
-
-    if (updates.length > 0) {
-      batchUpdateShapes(updates)
-    }
-  }, [shapes, selectedIds, hasSelection, batchUpdateShapes])
-
-  const handleSendBackward = useCallback(() => {
-    if (!hasSelection()) return
-
-    const selectedShapes = shapes.filter(shape =>
-      selectedIds.includes(shape.id)
-    )
-    if (selectedShapes.length === 0) return
-
-    // Get all shapes sorted by zIndex (ascending)
-    const sortedShapes = [...shapes].sort(
-      (a, b) => (a.zIndex || 0) - (b.zIndex || 0)
-    )
-
-    const updates = selectedShapes
-      .map(selectedShape => {
-        const currentIndex = sortedShapes.findIndex(
-          s => s.id === selectedShape.id
-        )
-        if (currentIndex > 0) {
-          // Find the previous shape's zIndex
-          const prevShape = sortedShapes[currentIndex - 1]
-          const newZIndex = Math.max(0, (prevShape.zIndex || 0) - 1)
-          return {
-            objectId: selectedShape.id,
-            updates: { zIndex: newZIndex }
-          }
-        }
-        return null
-      })
-      .filter(
-        (update): update is { objectId: string; updates: { zIndex: number } } =>
-          update !== null
-      )
-
-    if (updates.length > 0) {
-      batchUpdateShapes(updates)
-    }
-  }, [shapes, selectedIds, hasSelection, batchUpdateShapes])
-
   // PR #7: Handle shape creation with React Query
   const handleShapeCreate = useCallback(
     async (
@@ -367,30 +287,18 @@ const CanvasPage: React.FC = () => {
     [shapes, batchCreateShapes, user?.uid, showSuccess, showError]
   )
 
-  const handleDelete = () => {
+  // Toolbar handlers
+  const handleToolbarDelete = useCallback(() => {
     if (selectedIds.length > 0) {
       handleShapeDelete(selectedIds)
     }
-  }
+  }, [selectedIds, handleShapeDelete])
 
-  const handleDuplicate = () => {
+  const handleToolbarDuplicate = useCallback(() => {
     if (selectedIds.length > 0) {
       handleShapeDuplicate(selectedIds)
     }
-  }
-
-  // Keyboard shortcuts
-  useCanvasShortcuts({
-    onDelete: handleDelete,
-    onDuplicate: handleDuplicate,
-    onNudge: direction => {
-      // Handle nudge functionality if needed
-      console.log('Nudge:', direction)
-    },
-    onToggleLayers: handleToggleLayers,
-    onBringForward: handleBringForward,
-    onSendBackward: handleSendBackward
-  })
+  }, [selectedIds, handleShapeDuplicate])
 
   // Handle batch shape creation (for paste operations)
   const handleShapeBatchCreate = useCallback(
@@ -491,8 +399,8 @@ const CanvasPage: React.FC = () => {
       <ToolbarMUI
         selectedTool={selectedTool}
         onToolSelect={handleToolSelect}
-        onDelete={handleDelete}
-        onDuplicate={handleDuplicate}
+        onDelete={handleToolbarDelete}
+        onDuplicate={handleToolbarDuplicate}
         canDelete={hasSelection()}
         canDuplicate={hasSelection()}
         onToggleDesignPalette={handleToggleDesignPalette}

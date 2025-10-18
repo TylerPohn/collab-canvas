@@ -161,6 +161,9 @@ export const useCanvasShortcuts = ({
     onNudge,
     onCopy,
     onPaste,
-    onToolSelect
+    onToolSelect,
+    onToggleLayers,
+    onBringForward,
+    onSendBackward
   ])
 }
