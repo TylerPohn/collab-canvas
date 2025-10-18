@@ -86,36 +86,45 @@ const CursorLayer: React.FC<CursorLayerProps> = memo(
       })
     }, [otherUsers, viewport])
 
-    // PR #9: Animation loop for cursor interpolation
+    // PR #9: Animation loop for cursor interpolation with 60 FPS throttling
     useEffect(() => {
       // Only start animation if there are cursors to animate
       if (interpolatedCursors.size === 0) {
         return
       }
 
-      const animate = () => {
-        setInterpolatedCursors(prev => {
-          const newCursors = new Map(prev)
-          let hasChanges = false
+      let lastFrameTime = 0
+      const TARGET_FPS = 60
+      const FRAME_INTERVAL = 1000 / TARGET_FPS // 16.67ms per frame
 
-          for (const [, cursor] of newCursors) {
-            const dx = cursor.targetX - cursor.x
-            const dy = cursor.targetY - cursor.y
+      const animate = (currentTime: number) => {
+        // Throttle to 60 FPS
+        if (currentTime - lastFrameTime >= FRAME_INTERVAL) {
+          setInterpolatedCursors(prev => {
+            const newCursors = new Map(prev)
+            let hasChanges = false
 
-            // Only interpolate if there's a significant difference
-            if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
-              cursor.x += dx * INTERPOLATION_SPEED
-              cursor.y += dy * INTERPOLATION_SPEED
-              hasChanges = true
-            } else {
-              // Snap to target if very close
-              cursor.x = cursor.targetX
-              cursor.y = cursor.targetY
+            for (const [, cursor] of newCursors) {
+              const dx = cursor.targetX - cursor.x
+              const dy = cursor.targetY - cursor.y
+
+              // Only interpolate if there's a significant difference
+              if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+                cursor.x += dx * INTERPOLATION_SPEED
+                cursor.y += dy * INTERPOLATION_SPEED
+                hasChanges = true
+              } else {
+                // Snap to target if very close
+                cursor.x = cursor.targetX
+                cursor.y = cursor.targetY
+              }
             }
-          }
 
-          return hasChanges ? newCursors : prev
-        })
+            return hasChanges ? newCursors : prev
+          })
+
+          lastFrameTime = currentTime
+        }
 
         animationFrameRef.current = requestAnimationFrame(animate)
       }

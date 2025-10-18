@@ -23,7 +23,6 @@ import {
 } from 'react-konva'
 import { useCanvasShortcuts } from '../hooks/useCanvasShortcuts'
 import { usePanZoom } from '../hooks/usePanZoom'
-import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor'
 import { useSpatialIndex } from '../hooks/useSpatialIndex'
 import { useToast } from '../hooks/useToast'
 import { getClipboardService } from '../lib/clipboard'
@@ -198,9 +197,6 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
 
     // Add spatial index for fast shape queries
     const { queryShapes } = useSpatialIndex(shapes)
-
-    // Performance monitoring for development
-    usePerformanceMonitor()
 
     // Virtual rendering: only render shapes visible in viewport
     const visibleShapes = useMemo(() => {
@@ -1035,13 +1031,31 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
             selectedIds.forEach(selectedId => {
               const initialPos = initialShapePositions.get(selectedId)
               if (initialPos) {
-                batchUpdateRef.current.push({
-                  objectId: selectedId,
-                  updates: {
-                    x: initialPos.x + offsetX,
-                    y: initialPos.y + offsetY
-                  }
-                })
+                const shape = shapes.find(s => s.id === selectedId)
+                if (
+                  shape &&
+                  (shape.type === 'line' || shape.type === 'arrow')
+                ) {
+                  // For line and arrow shapes, offset endX and endY by the same amount
+                  batchUpdateRef.current.push({
+                    objectId: selectedId,
+                    updates: {
+                      x: initialPos.x + offsetX,
+                      y: initialPos.y + offsetY,
+                      endX: shape.endX + offsetX,
+                      endY: shape.endY + offsetY
+                    }
+                  })
+                } else {
+                  // For other shape types, only update x and y
+                  batchUpdateRef.current.push({
+                    objectId: selectedId,
+                    updates: {
+                      x: initialPos.x + offsetX,
+                      y: initialPos.y + offsetY
+                    }
+                  })
+                }
               }
             })
 
@@ -1050,10 +1064,24 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
           }
         } else {
           // PR #13.1: Update position in real-time during drag for single object
-          onShapeUpdateDebounced(draggedShapeId, {
-            x: currentX,
-            y: currentY
-          })
+          const shape = shapes.find(s => s.id === draggedShapeId)
+          if (shape && (shape.type === 'line' || shape.type === 'arrow')) {
+            // For line and arrow shapes, offset endX and endY by the same amount
+            const deltaX = currentX - shape.x
+            const deltaY = currentY - shape.y
+            onShapeUpdateDebounced(draggedShapeId, {
+              x: currentX,
+              y: currentY,
+              endX: shape.endX + deltaX,
+              endY: shape.endY + deltaY
+            })
+          } else {
+            // For other shape types, only update x and y
+            onShapeUpdateDebounced(draggedShapeId, {
+              x: currentX,
+              y: currentY
+            })
+          }
         }
       },
       [
@@ -1090,10 +1118,24 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
           batchUpdateRef.current = []
         } else {
           // Single shape drag
-          onShapeUpdate(id, {
-            x: newX,
-            y: newY
-          })
+          const shape = shapes.find(s => s.id === id)
+          if (shape && (shape.type === 'line' || shape.type === 'arrow')) {
+            // For line and arrow shapes, offset endX and endY by the same amount
+            const deltaX = newX - shape.x
+            const deltaY = newY - shape.y
+            onShapeUpdate(id, {
+              x: newX,
+              y: newY,
+              endX: shape.endX + deltaX,
+              endY: shape.endY + deltaY
+            })
+          } else {
+            // For other shape types, only update x and y
+            onShapeUpdate(id, {
+              x: newX,
+              y: newY
+            })
+          }
         }
       },
       [
@@ -1411,7 +1453,6 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
             {/* Render shapes sorted by zIndex */}
             {visibleShapes.map(shape => {
               const commonProps = {
-                key: shape.id,
                 shape,
                 onSelect: (e: Konva.KonvaEventObject<MouseEvent>) =>
                   handleShapeSelect(shape.id, e),
@@ -1427,6 +1468,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 case 'rect':
                   return (
                     <RectangleShape
+                      key={shape.id}
                       {...commonProps}
                       shape={shape as RectangleShapeType}
                     />
@@ -1434,6 +1476,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 case 'circle':
                   return (
                     <CircleShape
+                      key={shape.id}
                       {...commonProps}
                       shape={shape as CircleShapeType}
                     />
@@ -1441,6 +1484,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 case 'text':
                   return (
                     <TextShape
+                      key={shape.id}
                       {...commonProps}
                       shape={shape as TextShapeType}
                       onDoubleClick={(e: Konva.KonvaEventObject<MouseEvent>) =>
@@ -1452,6 +1496,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 case 'mermaid':
                   return (
                     <MermaidShape
+                      key={shape.id}
                       {...commonProps}
                       shape={shape as MermaidShapeType}
                     />
@@ -1459,6 +1504,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 case 'line':
                   return (
                     <LineShape
+                      key={shape.id}
                       {...commonProps}
                       shape={shape as LineShapeType}
                     />
@@ -1466,6 +1512,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 case 'arrow':
                   return (
                     <ArrowShape
+                      key={shape.id}
                       {...commonProps}
                       shape={shape as ArrowShapeType}
                     />
@@ -1473,6 +1520,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 case 'ellipse':
                   return (
                     <EllipseShape
+                      key={shape.id}
                       {...commonProps}
                       shape={shape as EllipseShapeType}
                     />
@@ -1480,6 +1528,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 case 'hexagon':
                   return (
                     <HexagonShape
+                      key={shape.id}
                       {...commonProps}
                       shape={shape as HexagonShapeType}
                     />
@@ -1487,6 +1536,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 case 'star':
                   return (
                     <StarShape
+                      key={shape.id}
                       {...commonProps}
                       shape={shape as StarShapeType}
                     />
@@ -1494,6 +1544,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
                 case 'image':
                   return (
                     <ImageShape
+                      key={shape.id}
                       {...commonProps}
                       shape={shape as ImageShapeType}
                     />
