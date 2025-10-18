@@ -30,12 +30,35 @@ export const useCanvasShortcuts = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       // Check if user is typing in a text input element
       const activeElement = document.activeElement
+
+      // More comprehensive text input detection
       const isTextInput =
         activeElement &&
+        // Standard HTML elements
         (activeElement.tagName === 'TEXTAREA' ||
           activeElement.tagName === 'INPUT' ||
+          activeElement.getAttribute('contenteditable') === 'true' ||
           (activeElement as HTMLElement).contentEditable === 'true' ||
-          activeElement.getAttribute('contenteditable') === 'true')
+          // Material-UI specific detection
+          activeElement.closest('[role="textbox"]') ||
+          activeElement.closest('.MuiInputBase-input') ||
+          activeElement.closest('.MuiTextField-root') ||
+          // Check if the element is inside a form or has input-related attributes
+          activeElement.closest('form') ||
+          activeElement.getAttribute('type') === 'text' ||
+          activeElement.getAttribute('type') === 'search' ||
+          activeElement.getAttribute('type') === 'email' ||
+          activeElement.getAttribute('type') === 'password' ||
+          activeElement.getAttribute('type') === 'url' ||
+          activeElement.getAttribute('type') === 'tel' ||
+          // Check for any element that might be a text input
+          activeElement.getAttribute('data-testid')?.includes('input') ||
+          activeElement.getAttribute('data-testid')?.includes('textfield'))
+
+      // Early return if user is typing in any text input
+      if (isTextInput) {
+        return // Don't handle any shortcuts when typing in text inputs
+      }
 
       // Handle tool selection shortcuts (only when not typing in text input)
       if (

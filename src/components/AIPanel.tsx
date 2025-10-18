@@ -883,6 +883,7 @@ const AIPanel: React.FC<AIPanelProps> = ({ canvasId, isOpen, onClose }) => {
                     }
                   }}
                   disabled={isExecuting}
+                  data-testid="ai-panel-text-input"
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">

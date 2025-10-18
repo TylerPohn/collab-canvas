@@ -19,7 +19,16 @@ const ColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/)
 export const AIToolSchemas = {
   // Creation Commands
   createShape: z.object({
-    type: z.enum(['rect', 'circle', 'text']),
+    type: z.enum([
+      'rect',
+      'circle',
+      'text',
+      'ellipse',
+      'star',
+      'hexagon',
+      'line',
+      'arrow'
+    ]),
     position: PositionSchema,
     size: SizeSchema.optional(),
     radius: z.number().min(1).optional(),
@@ -358,7 +367,18 @@ export const AIToolSchemas = {
 
   findShapes: z.object({
     criteria: z.object({
-      type: z.enum(['rect', 'circle', 'text']).optional(),
+      type: z
+        .enum([
+          'rect',
+          'circle',
+          'text',
+          'ellipse',
+          'star',
+          'hexagon',
+          'line',
+          'arrow'
+        ])
+        .optional(),
       color: ColorSchema.optional(),
       text: z.string().optional(),
       position: z
@@ -623,6 +643,20 @@ export function createAITools(queryClient: any) {
         } else if (currentShape.type === 'text' && params.size) {
           // For text, we might want to adjust fontSize instead
           updates.fontSize = Math.max(8, Math.min(72, params.size.width / 10))
+        } else if (currentShape.type === 'ellipse' && params.size) {
+          updates.radiusX = params.size.width
+          updates.radiusY = params.size.height
+        } else if (currentShape.type === 'star' && params.size) {
+          updates.outerRadius = params.size.width
+          updates.innerRadius = params.size.width * 0.4
+        } else if (currentShape.type === 'hexagon' && params.size) {
+          updates.radius = params.size.width
+        } else if (currentShape.type === 'line' && params.size) {
+          updates.endX = params.size.width
+          updates.endY = params.size.height
+        } else if (currentShape.type === 'arrow' && params.size) {
+          updates.endX = params.size.width
+          updates.endY = params.size.height
         }
 
         console.log('🤖 Resizing shape:', {
@@ -675,6 +709,29 @@ export function createAITools(queryClient: any) {
             8,
             Math.min(72, Math.round(currentFontSize * fibRatio))
           )
+        } else if (currentShape.type === 'ellipse') {
+          const currentRadiusX = (currentShape as any).radiusX || 50
+          const currentRadiusY = (currentShape as any).radiusY || 30
+          updates.radiusX = Math.round(currentRadiusX * fibRatio)
+          updates.radiusY = Math.round(currentRadiusY * fibRatio)
+        } else if (currentShape.type === 'star') {
+          const currentOuterRadius = (currentShape as any).outerRadius || 50
+          const currentInnerRadius = (currentShape as any).innerRadius || 20
+          updates.outerRadius = Math.round(currentOuterRadius * fibRatio)
+          updates.innerRadius = Math.round(currentInnerRadius * fibRatio)
+        } else if (currentShape.type === 'hexagon') {
+          const currentRadius = (currentShape as any).radius || 50
+          updates.radius = Math.round(currentRadius * fibRatio)
+        } else if (currentShape.type === 'line') {
+          const currentEndX = (currentShape as any).endX || 100
+          const currentEndY = (currentShape as any).endY || 0
+          updates.endX = Math.round(currentEndX * fibRatio)
+          updates.endY = Math.round(currentEndY * fibRatio)
+        } else if (currentShape.type === 'arrow') {
+          const currentEndX = (currentShape as any).endX || 100
+          const currentEndY = (currentShape as any).endY || 0
+          updates.endX = Math.round(currentEndX * fibRatio)
+          updates.endY = Math.round(currentEndY * fibRatio)
         }
 
         console.log('🤖 Making shape larger:', {
@@ -728,6 +785,35 @@ export function createAITools(queryClient: any) {
             8,
             Math.min(72, Math.round(currentFontSize * fibRatio))
           )
+        } else if (currentShape.type === 'ellipse') {
+          const currentRadiusX = (currentShape as any).radiusX || 50
+          const currentRadiusY = (currentShape as any).radiusY || 30
+          updates.radiusX = Math.max(5, Math.round(currentRadiusX * fibRatio))
+          updates.radiusY = Math.max(3, Math.round(currentRadiusY * fibRatio))
+        } else if (currentShape.type === 'star') {
+          const currentOuterRadius = (currentShape as any).outerRadius || 50
+          const currentInnerRadius = (currentShape as any).innerRadius || 20
+          updates.outerRadius = Math.max(
+            5,
+            Math.round(currentOuterRadius * fibRatio)
+          )
+          updates.innerRadius = Math.max(
+            2,
+            Math.round(currentInnerRadius * fibRatio)
+          )
+        } else if (currentShape.type === 'hexagon') {
+          const currentRadius = (currentShape as any).radius || 50
+          updates.radius = Math.max(5, Math.round(currentRadius * fibRatio))
+        } else if (currentShape.type === 'line') {
+          const currentEndX = (currentShape as any).endX || 100
+          const currentEndY = (currentShape as any).endY || 0
+          updates.endX = Math.max(10, Math.round(currentEndX * fibRatio))
+          updates.endY = Math.round(currentEndY * fibRatio)
+        } else if (currentShape.type === 'arrow') {
+          const currentEndX = (currentShape as any).endX || 100
+          const currentEndY = (currentShape as any).endY || 0
+          updates.endX = Math.max(10, Math.round(currentEndX * fibRatio))
+          updates.endY = Math.round(currentEndY * fibRatio)
         }
 
         console.log('🤖 Making shape smaller:', {

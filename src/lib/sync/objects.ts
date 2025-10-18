@@ -806,7 +806,15 @@ export class ObjectSyncService {
   // AI-friendly shape creation with smart defaults
   async createShapeWithDefaults(
     canvasId: string,
-    type: 'rect' | 'circle' | 'text',
+    type:
+      | 'rect'
+      | 'circle'
+      | 'text'
+      | 'ellipse'
+      | 'star'
+      | 'hexagon'
+      | 'line'
+      | 'arrow',
     position: { x: number; y: number },
     options: {
       size?: { width: number; height: number }
@@ -900,6 +908,119 @@ export class ObjectSyncService {
         }
       })
       return this.createObject(canvasId, textData as any, userId)
+    } else if (type === 'ellipse') {
+      const ellipseData = {
+        ...shapeData,
+        radiusX:
+          cleanOptions.size &&
+          typeof cleanOptions.size === 'object' &&
+          'width' in cleanOptions.size
+            ? cleanOptions.size.width
+            : 50,
+        radiusY:
+          cleanOptions.size &&
+          typeof cleanOptions.size === 'object' &&
+          'height' in cleanOptions.size
+            ? cleanOptions.size.height
+            : 30
+      }
+      // Ensure no undefined values
+      Object.keys(ellipseData).forEach(key => {
+        if ((ellipseData as any)[key] === undefined) {
+          delete (ellipseData as any)[key]
+        }
+      })
+      return this.createObject(canvasId, ellipseData as any, userId)
+    } else if (type === 'star') {
+      const starData = {
+        ...shapeData,
+        outerRadius:
+          cleanOptions.size &&
+          typeof cleanOptions.size === 'object' &&
+          'width' in cleanOptions.size
+            ? cleanOptions.size.width
+            : 50,
+        innerRadius:
+          (cleanOptions.size &&
+          typeof cleanOptions.size === 'object' &&
+          'width' in cleanOptions.size
+            ? cleanOptions.size.width
+            : 50) * 0.4,
+        points: 5,
+        starType: '5-point'
+      }
+      // Ensure no undefined values
+      Object.keys(starData).forEach(key => {
+        if ((starData as any)[key] === undefined) {
+          delete (starData as any)[key]
+        }
+      })
+      return this.createObject(canvasId, starData as any, userId)
+    } else if (type === 'hexagon') {
+      const hexagonData = {
+        ...shapeData,
+        radius:
+          cleanOptions.size &&
+          typeof cleanOptions.size === 'object' &&
+          'width' in cleanOptions.size
+            ? cleanOptions.size.width
+            : 50,
+        sides: 6
+      }
+      // Ensure no undefined values
+      Object.keys(hexagonData).forEach(key => {
+        if ((hexagonData as any)[key] === undefined) {
+          delete (hexagonData as any)[key]
+        }
+      })
+      return this.createObject(canvasId, hexagonData as any, userId)
+    } else if (type === 'line') {
+      const lineData = {
+        ...shapeData,
+        endX:
+          cleanOptions.size &&
+          typeof cleanOptions.size === 'object' &&
+          'width' in cleanOptions.size
+            ? cleanOptions.size.width
+            : 100,
+        endY:
+          cleanOptions.size &&
+          typeof cleanOptions.size === 'object' &&
+          'height' in cleanOptions.size
+            ? cleanOptions.size.height
+            : 0
+      }
+      // Ensure no undefined values
+      Object.keys(lineData).forEach(key => {
+        if ((lineData as any)[key] === undefined) {
+          delete (lineData as any)[key]
+        }
+      })
+      return this.createObject(canvasId, lineData as any, userId)
+    } else if (type === 'arrow') {
+      const arrowData = {
+        ...shapeData,
+        endX:
+          cleanOptions.size &&
+          typeof cleanOptions.size === 'object' &&
+          'width' in cleanOptions.size
+            ? cleanOptions.size.width
+            : 100,
+        endY:
+          cleanOptions.size &&
+          typeof cleanOptions.size === 'object' &&
+          'height' in cleanOptions.size
+            ? cleanOptions.size.height
+            : 0,
+        arrowType: 'end'
+      }
+      // Ensure no undefined values
+      Object.keys(arrowData).forEach(key => {
+        if ((arrowData as any)[key] === undefined) {
+          delete (arrowData as any)[key]
+        }
+      })
+      return this.createObject(canvasId, arrowData as any, userId)
     }
 
     throw new Error(`Unsupported shape type: ${type}`)
@@ -1580,20 +1701,23 @@ export class ObjectSyncService {
       } else if (type === 'circle') {
         shapeData.radius = shapeWidth / 2
       } else if (type === 'ellipse') {
-        shapeData.width = shapeWidth
-        shapeData.height = shapeHeight
+        shapeData.radiusX = shapeWidth
+        shapeData.radiusY = shapeHeight
       } else if (type === 'star') {
-        shapeData.width = shapeWidth
-        shapeData.height = shapeHeight
+        shapeData.outerRadius = shapeWidth
+        shapeData.innerRadius = shapeWidth * 0.4
+        shapeData.points = 5
+        shapeData.starType = '5-point'
       } else if (type === 'hexagon') {
-        shapeData.width = shapeWidth
-        shapeData.height = shapeHeight
+        shapeData.radius = shapeWidth
+        shapeData.sides = 6
       } else if (type === 'line') {
-        shapeData.width = shapeWidth
-        shapeData.height = finalProperties.size?.height || 2
+        shapeData.endX = shapeWidth
+        shapeData.endY = shapeHeight
       } else if (type === 'arrow') {
-        shapeData.width = shapeWidth
-        shapeData.height = finalProperties.size?.height || 20
+        shapeData.endX = shapeWidth
+        shapeData.endY = shapeHeight
+        shapeData.arrowType = 'end'
       }
 
       shapes.push(shapeData)
@@ -1720,20 +1844,23 @@ export class ObjectSyncService {
       } else if (patternShape.type === 'circle') {
         shapeData.radius = shapeWidth / 2
       } else if (patternShape.type === 'ellipse') {
-        shapeData.width = shapeWidth
-        shapeData.height = shapeHeight
+        shapeData.radiusX = shapeWidth
+        shapeData.radiusY = shapeHeight
       } else if (patternShape.type === 'star') {
-        shapeData.width = shapeWidth
-        shapeData.height = shapeHeight
+        shapeData.outerRadius = shapeWidth
+        shapeData.innerRadius = shapeWidth * 0.4
+        shapeData.points = 5
+        shapeData.starType = '5-point'
       } else if (patternShape.type === 'hexagon') {
-        shapeData.width = shapeWidth
-        shapeData.height = shapeHeight
+        shapeData.radius = shapeWidth
+        shapeData.sides = 6
       } else if (patternShape.type === 'line') {
-        shapeData.width = shapeWidth
-        shapeData.height = finalProperties.size?.height || 2
+        shapeData.endX = shapeWidth
+        shapeData.endY = shapeHeight
       } else if (patternShape.type === 'arrow') {
-        shapeData.width = shapeWidth
-        shapeData.height = finalProperties.size?.height || 20
+        shapeData.endX = shapeWidth
+        shapeData.endY = shapeHeight
+        shapeData.arrowType = 'end'
       }
 
       shapes.push(shapeData)
