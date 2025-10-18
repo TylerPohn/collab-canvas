@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { sanitizeText } from '../lib/security'
 import type { TextShape } from '../lib/types'
-import { useDesignPaletteStore } from '../store/designPalette'
 
 interface TextEditorProps {
   shape: TextShape
@@ -23,15 +22,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const [text, setText] = useState(shape.text)
 
-  // Get current design palette settings
-  const {
-    fontSize,
-    fontFamily,
-    fontWeight,
-    fontStyle,
-    textDecoration,
-    selectedFillColor
-  } = useDesignPaletteStore()
+  // Use the shape's actual styling properties instead of design palette store
 
   useEffect(() => {
     if (isVisible && inputRef.current) {
@@ -63,6 +54,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
   // Calculate position accounting for stage transform
   // The stage position and scale are already applied to the canvas
   // We need to convert world coordinates to screen coordinates
+  // Shape scale should NOT be applied to position - it's applied to content only
   const x = shape.x * stageScale + stagePosition.x
   const y = shape.y * stageScale + stagePosition.y
 
@@ -73,7 +65,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
         left: x,
         top: y,
         transform: `scale(${stageScale}) rotate(${shape.rotation || 0}deg)`,
-        transformOrigin: 'bottom left'
+        transformOrigin: 'top left'
       }}
     >
       <textarea
@@ -84,15 +76,15 @@ const TextEditor: React.FC<TextEditorProps> = ({
         onBlur={handleBlur}
         className="bg-transparent border-none outline-none resize-none"
         style={{
-          fontSize: fontSize,
-          fontFamily: fontFamily,
-          fontWeight: fontWeight === 'bold' ? 700 : 400,
-          fontStyle: fontStyle,
-          textDecoration: textDecoration,
-          color: selectedFillColor,
-          minWidth: '100px',
-          minHeight: '20px',
-          lineHeight: 1.2,
+          fontSize: (shape.fontSize || 16) * (shape.scaleY || 1),
+          fontFamily: shape.fontFamily || 'Inter, system-ui, sans-serif',
+          fontWeight: shape.fontWeight === 'bold' ? 700 : 400,
+          fontStyle: shape.fontStyle || 'normal',
+          textDecoration: shape.textDecoration || 'none',
+          color: shape.fill || '#374151',
+          minWidth: `${100 * (shape.scaleX || 1)}px`,
+          minHeight: `${20 * (shape.scaleY || 1)}px`,
+          lineHeight: shape.lineHeight || 1.2,
           verticalAlign: 'bottom'
         }}
         autoComplete="off"
