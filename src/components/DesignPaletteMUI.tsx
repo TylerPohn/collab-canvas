@@ -6,7 +6,6 @@ import {
   FormatBold,
   FormatItalic,
   FormatUnderlined,
-  Layers,
   Palette as PaletteIcon,
   RotateLeft
 } from '@mui/icons-material'
@@ -17,7 +16,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Chip,
   Divider,
   FormControl,
   IconButton,
@@ -277,76 +275,6 @@ const DesignPaletteMUI: React.FC<DesignPaletteMUIProps> = ({
   const handleLineHeightChange = (newLineHeight: number) => {
     setLineHeight(newLineHeight)
     updateSelectedShapes({ lineHeight: newLineHeight })
-  }
-
-  // Calculate layer information for selected shapes
-  const getLayerInfo = () => {
-    if (!hasSelection) return null
-
-    // Get all shapes sorted by zIndex (ascending)
-    const sortedShapes = [...shapes].sort(
-      (a, b) => (a.zIndex || 0) - (b.zIndex || 0)
-    )
-
-    const layerInfo = selectedShapes.map(selectedShape => {
-      const currentIndex = sortedShapes.findIndex(
-        s => s.id === selectedShape.id
-      )
-      return {
-        shape: selectedShape,
-        position: currentIndex + 1,
-        totalLayers: sortedShapes.length,
-        canBringForward: currentIndex < sortedShapes.length - 1,
-        canSendBackward: currentIndex > 0
-      }
-    })
-
-    return layerInfo
-  }
-
-  const layerInfo = getLayerInfo()
-
-  // Handle layer ordering
-  const handleBringForward = () => {
-    if (!hasSelection) return
-
-    // Get all shapes sorted by zIndex (ascending)
-    const sortedShapes = [...shapes].sort(
-      (a, b) => (a.zIndex || 0) - (b.zIndex || 0)
-    )
-
-    selectedShapes.forEach(selectedShape => {
-      const currentIndex = sortedShapes.findIndex(
-        s => s.id === selectedShape.id
-      )
-      if (currentIndex < sortedShapes.length - 1) {
-        // Find the next shape's zIndex
-        const nextShape = sortedShapes[currentIndex + 1]
-        const newZIndex = (nextShape.zIndex || 0) + 1
-        onShapeUpdate(selectedShape.id, { zIndex: newZIndex })
-      }
-    })
-  }
-
-  const handleSendBackward = () => {
-    if (!hasSelection) return
-
-    // Get all shapes sorted by zIndex (ascending)
-    const sortedShapes = [...shapes].sort(
-      (a, b) => (a.zIndex || 0) - (b.zIndex || 0)
-    )
-
-    selectedShapes.forEach(selectedShape => {
-      const currentIndex = sortedShapes.findIndex(
-        s => s.id === selectedShape.id
-      )
-      if (currentIndex > 0) {
-        // Find the previous shape's zIndex
-        const prevShape = sortedShapes[currentIndex - 1]
-        const newZIndex = Math.max(0, (prevShape.zIndex || 0) - 1)
-        onShapeUpdate(selectedShape.id, { zIndex: newZIndex })
-      }
-    })
   }
 
   const colorPresets = [
@@ -1015,149 +943,6 @@ const DesignPaletteMUI: React.FC<DesignPaletteMUIProps> = ({
                   )}
                 </>
               )}
-
-              <Divider />
-
-              {/* Layer Section */}
-              <Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}
-                >
-                  <Layers color="action" />
-                  <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                    Layer
-                  </Typography>
-                </Box>
-
-                <Stack spacing={2}>
-                  {/* Layer Position Information */}
-                  {layerInfo && layerInfo.length > 0 && (
-                    <Paper
-                      variant="outlined"
-                      sx={{
-                        p: 2,
-                        backgroundColor: alpha(theme.palette.grey[100], 0.5)
-                      }}
-                    >
-                      <Typography
-                        variant="subtitle2"
-                        sx={{ fontWeight: 600, mb: 1 }}
-                      >
-                        Layer Position
-                      </Typography>
-                      {layerInfo.map((info, index) => (
-                        <Box
-                          key={info.shape.id}
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between'
-                          }}
-                        >
-                          <Typography variant="body2">
-                            {info.shape.type === 'rect'
-                              ? 'Rectangle'
-                              : info.shape.type === 'circle'
-                                ? 'Circle'
-                                : info.shape.type === 'text'
-                                  ? 'Text'
-                                  : 'Shape'}{' '}
-                            {index + 1}
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            Layer {info.position} of {info.totalLayers}
-                          </Typography>
-                        </Box>
-                      ))}
-                    </Paper>
-                  )}
-
-                  <Stack direction="row" spacing={1}>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={handleBringForward}
-                      disabled={
-                        !hasSelection ||
-                        (layerInfo
-                          ? !layerInfo.some(info => info.canBringForward)
-                          : true)
-                      }
-                      sx={{ flex: 1, fontSize: '0.75rem' }}
-                    >
-                      Bring Forward
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={handleSendBackward}
-                      disabled={
-                        !hasSelection ||
-                        (layerInfo
-                          ? !layerInfo.some(info => info.canSendBackward)
-                          : true)
-                      }
-                      sx={{ flex: 1, fontSize: '0.75rem' }}
-                    >
-                      Send Backward
-                    </Button>
-                  </Stack>
-
-                  <Stack spacing={1}>
-                    {hasSelection ? (
-                      selectedShapes.map((shape, index) => (
-                        <Box
-                          key={shape.id}
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            p: 1,
-                            borderRadius: 1,
-                            backgroundColor: alpha(theme.palette.grey[100], 0.5)
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              width: 16,
-                              height: 16,
-                              borderRadius:
-                                shape.type === 'circle' ? '50%' : 0.5,
-                              backgroundColor: shape.fill || '#3B82F6'
-                            }}
-                          />
-                          <Typography variant="body2" sx={{ flex: 1 }}>
-                            {shape.type === 'rect'
-                              ? 'Rectangle'
-                              : shape.type === 'circle'
-                                ? 'Circle'
-                                : shape.type === 'text'
-                                  ? 'Text'
-                                  : 'Shape'}{' '}
-                            {index + 1}
-                          </Typography>
-                          <Chip
-                            label="Selected"
-                            size="small"
-                            color="primary"
-                            variant="outlined"
-                          />
-                        </Box>
-                      ))
-                    ) : (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ textAlign: 'center', py: 2 }}
-                      >
-                        No shapes selected
-                      </Typography>
-                    )}
-                  </Stack>
-                </Stack>
-              </Box>
-
-              <Divider />
 
               {/* Text Section */}
               <Box>
