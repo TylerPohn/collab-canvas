@@ -186,6 +186,109 @@ export const AIToolSchemas = {
     offset: PositionSchema.optional()
   }),
 
+  // NEW: Multi-Shape Creation (PR #25)
+  createMultipleShapes: z.object({
+    count: z.number().min(1).max(20),
+    type: z.enum([
+      'rect',
+      'circle',
+      'ellipse',
+      'star',
+      'hexagon',
+      'line',
+      'arrow'
+    ]),
+    properties: z
+      .object({
+        size: SizeSchema.optional(),
+        fill: ColorSchema.optional(),
+        stroke: ColorSchema.optional(),
+        strokeWidth: z.number().min(0).optional(),
+        opacity: z.number().min(0).max(1).optional(),
+        blendMode: z
+          .enum([
+            'normal',
+            'multiply',
+            'overlay',
+            'screen',
+            'darken',
+            'lighten',
+            'color-dodge',
+            'color-burn',
+            'hard-light',
+            'soft-light',
+            'difference',
+            'exclusion'
+          ])
+          .optional()
+      })
+      .optional(),
+    initialPosition: PositionSchema.optional(),
+    spacing: z.number().min(0).default(20),
+    layout: z
+      .object({
+        type: z.enum(['row', 'column', 'grid']),
+        rows: z.number().min(1).max(10).optional(),
+        cols: z.number().min(1).max(10).optional()
+      })
+      .optional()
+  }),
+
+  // NEW: Alternating Shape Creation (PR #25)
+  createAlternatingShapes: z.object({
+    pattern: z
+      .array(
+        z.object({
+          type: z.enum([
+            'rect',
+            'circle',
+            'ellipse',
+            'star',
+            'hexagon',
+            'line',
+            'arrow'
+          ]),
+          properties: z
+            .object({
+              size: SizeSchema.optional(),
+              fill: ColorSchema.optional(),
+              stroke: ColorSchema.optional(),
+              strokeWidth: z.number().min(0).optional(),
+              opacity: z.number().min(0).max(1).optional(),
+              blendMode: z
+                .enum([
+                  'normal',
+                  'multiply',
+                  'overlay',
+                  'screen',
+                  'darken',
+                  'lighten',
+                  'color-dodge',
+                  'color-burn',
+                  'hard-light',
+                  'soft-light',
+                  'difference',
+                  'exclusion'
+                ])
+                .optional()
+            })
+            .optional()
+        })
+      )
+      .min(2)
+      .max(5), // Pattern must have 2-5 shape types
+    count: z.number().min(2).max(20), // Total number of shapes to create
+    initialPosition: PositionSchema.optional(),
+    spacing: z.number().min(0).default(20),
+    layout: z
+      .object({
+        type: z.enum(['row', 'column', 'grid']),
+        rows: z.number().min(1).max(10).optional(),
+        cols: z.number().min(1).max(10).optional()
+      })
+      .optional()
+  }),
+
   spaceEvenly: z.object({
     shapeIds: z.array(z.string()).min(2),
     direction: z.enum(['horizontal', 'vertical']).default('horizontal'),
@@ -900,6 +1003,79 @@ export function createAITools(queryClient: any) {
           context.userId
         )
         return { success: true, newShapeId }
+      }
+    },
+
+    // NEW: Multi-Shape Creation (PR #25)
+    createMultipleShapes: {
+      name: 'createMultipleShapes',
+      description:
+        'Create multiple shapes of the same type with batch properties and smart positioning',
+      parameters: AIToolSchemas.createMultipleShapes,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.createMultipleShapes>,
+        context: AIContext
+      ) => {
+        console.log(
+          '🤖 createMultipleShapes tool executing with params:',
+          params
+        )
+        console.log('🤖 createMultipleShapes tool context:', context)
+
+        const shapes = await objectSync.createMultipleShapesWithDefaults(
+          context.canvasId,
+          params.count,
+          params.type,
+          params.properties || {},
+          params.initialPosition || { x: 100, y: 100 },
+          params.spacing,
+          context.userId,
+          params.layout
+        )
+
+        // Automatically select the newly created shapes
+        const { useSelectionStore } = await import('../../store/selection')
+        const shapeIds = shapes.map(s => s.id)
+        useSelectionStore.getState().selectMultiple(shapeIds)
+
+        console.log('🤖 createMultipleShapes tool created shapes:', shapes)
+        return { success: true, shapeIds, shapes }
+      }
+    },
+
+    // NEW: Alternating Shape Creation (PR #25)
+    createAlternatingShapes: {
+      name: 'createAlternatingShapes',
+      description:
+        'Create alternating shapes following a repeating pattern (e.g., circle, rectangle, circle, rectangle)',
+      parameters: AIToolSchemas.createAlternatingShapes,
+      execute: async (
+        params: z.infer<typeof AIToolSchemas.createAlternatingShapes>,
+        context: AIContext
+      ) => {
+        console.log(
+          '🤖 createAlternatingShapes tool executing with params:',
+          params
+        )
+        console.log('🤖 createAlternatingShapes tool context:', context)
+
+        const shapes = await objectSync.createAlternatingShapesWithDefaults(
+          context.canvasId,
+          params.pattern,
+          params.count,
+          params.initialPosition || { x: 100, y: 100 },
+          params.spacing,
+          context.userId,
+          params.layout
+        )
+
+        // Automatically select the newly created shapes
+        const { useSelectionStore } = await import('../../store/selection')
+        const shapeIds = shapes.map(s => s.id)
+        useSelectionStore.getState().selectMultiple(shapeIds)
+
+        console.log('🤖 createAlternatingShapes tool created shapes:', shapes)
+        return { success: true, shapeIds, shapes }
       }
     },
 

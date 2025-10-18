@@ -1391,6 +1391,274 @@ export class ObjectSyncService {
     return duplicate.id
   }
 
+  // NEW: AI-friendly multi-shape creation (PR #25)
+  async createMultipleShapesWithDefaults(
+    canvasId: string,
+    count: number,
+    type: 'rect' | 'circle' | 'ellipse' | 'star' | 'hexagon' | 'line' | 'arrow',
+    properties: {
+      size?: { width: number; height: number }
+      fill?: string
+      stroke?: string
+      strokeWidth?: number
+      opacity?: number
+      blendMode?: string
+    } = {},
+    initialPosition: { x: number; y: number } = { x: 100, y: 100 },
+    spacing: number = 20,
+    userId: string,
+    layout?: { type: 'row' | 'column' | 'grid'; rows?: number; cols?: number }
+  ): Promise<Shape[]> {
+    console.log('🤖 createMultipleShapesWithDefaults called:', {
+      canvasId,
+      count,
+      type,
+      properties,
+      initialPosition,
+      spacing,
+      userId
+    })
+
+    const shapes = []
+    const currentX = initialPosition.x
+    const currentY = initialPosition.y
+
+    // Default properties
+    const defaults = {
+      fill: '#3B82F6',
+      stroke: '#1E40AF',
+      strokeWidth: 2,
+      opacity: 1,
+      blendMode: 'normal'
+    }
+
+    const finalProperties = { ...defaults, ...properties }
+
+    // Calculate layout dimensions
+    const shapeWidth = finalProperties.size?.width || 100
+    const shapeHeight =
+      finalProperties.size?.height || (type === 'circle' ? shapeWidth : 60)
+
+    // Determine layout configuration
+    const layoutType = layout?.type || 'row'
+    let rows = layout?.rows
+    let cols = layout?.cols
+
+    if (layoutType === 'grid') {
+      // Auto-calculate grid dimensions if not provided
+      if (!rows && !cols) {
+        // Calculate square root rounded up for auto-grid
+        const sqrt = Math.ceil(Math.sqrt(count))
+        rows = sqrt
+        cols = Math.ceil(count / rows)
+      } else if (!rows) {
+        rows = Math.ceil(count / cols!)
+      } else if (!cols) {
+        cols = Math.ceil(count / rows)
+      }
+    }
+
+    for (let i = 0; i < count; i++) {
+      // Calculate position based on layout type
+      let x = currentX
+      let y = currentY
+
+      if (layoutType === 'row') {
+        // Horizontal row (default behavior)
+        x = currentX + i * (shapeWidth + spacing)
+        y = currentY
+      } else if (layoutType === 'column') {
+        // Vertical column
+        x = currentX
+        y = currentY + i * (shapeHeight + spacing)
+      } else if (layoutType === 'grid') {
+        // Grid layout
+        const row = Math.floor(i / cols!)
+        const col = i % cols!
+        x = currentX + col * (shapeWidth + spacing)
+        y = currentY + row * (shapeHeight + spacing)
+      }
+
+      const shapeData: any = {
+        type,
+        x,
+        y,
+        ...finalProperties
+      }
+
+      // Add type-specific properties
+      if (type === 'rect') {
+        shapeData.width = shapeWidth
+        shapeData.height = shapeHeight
+      } else if (type === 'circle') {
+        shapeData.radius = shapeWidth / 2
+      } else if (type === 'ellipse') {
+        shapeData.width = shapeWidth
+        shapeData.height = shapeHeight
+      } else if (type === 'star') {
+        shapeData.width = shapeWidth
+        shapeData.height = shapeHeight
+      } else if (type === 'hexagon') {
+        shapeData.width = shapeWidth
+        shapeData.height = shapeHeight
+      } else if (type === 'line') {
+        shapeData.width = shapeWidth
+        shapeData.height = finalProperties.size?.height || 2
+      } else if (type === 'arrow') {
+        shapeData.width = shapeWidth
+        shapeData.height = finalProperties.size?.height || 20
+      }
+
+      shapes.push(shapeData)
+    }
+
+    console.log('🤖 createMultipleShapesWithDefaults creating shapes:', shapes)
+    return this.batchCreateObjects(canvasId, shapes, userId)
+  }
+
+  // NEW: Alternating Shape Creation (PR #25)
+  async createAlternatingShapesWithDefaults(
+    canvasId: string,
+    pattern: Array<{
+      type:
+        | 'rect'
+        | 'circle'
+        | 'ellipse'
+        | 'star'
+        | 'hexagon'
+        | 'line'
+        | 'arrow'
+      properties?: {
+        size?: { width: number; height: number }
+        fill?: string
+        stroke?: string
+        strokeWidth?: number
+        opacity?: number
+        blendMode?: string
+      }
+    }>,
+    count: number,
+    initialPosition: { x: number; y: number } = { x: 100, y: 100 },
+    spacing: number = 20,
+    userId: string,
+    layout?: { type: 'row' | 'column' | 'grid'; rows?: number; cols?: number }
+  ): Promise<Shape[]> {
+    console.log('🤖 createAlternatingShapesWithDefaults called:', {
+      canvasId,
+      pattern,
+      count,
+      initialPosition,
+      spacing,
+      layout,
+      userId
+    })
+
+    const shapes = []
+    const currentX = initialPosition.x
+    const currentY = initialPosition.y
+
+    // Default properties
+    const defaults = {
+      fill: '#3B82F6',
+      stroke: '#1E40AF',
+      strokeWidth: 2,
+      opacity: 1,
+      blendMode: 'normal'
+    }
+
+    // Determine layout configuration
+    const layoutType = layout?.type || 'row'
+    let rows = layout?.rows
+    let cols = layout?.cols
+
+    if (layoutType === 'grid') {
+      // Auto-calculate grid dimensions if not provided
+      if (!rows && !cols) {
+        // Calculate square root rounded up for auto-grid
+        const sqrt = Math.ceil(Math.sqrt(count))
+        rows = sqrt
+        cols = Math.ceil(count / rows)
+      } else if (!rows) {
+        rows = Math.ceil(count / cols!)
+      } else if (!cols) {
+        cols = Math.ceil(count / rows)
+      }
+    }
+
+    for (let i = 0; i < count; i++) {
+      // Get pattern for this shape (cycle through pattern array)
+      const patternIndex = i % pattern.length
+      const patternShape = pattern[patternIndex]
+
+      // Merge default properties with pattern-specific properties
+      const finalProperties = { ...defaults, ...patternShape.properties }
+
+      // Calculate shape dimensions
+      const shapeWidth = finalProperties.size?.width || 100
+      const shapeHeight =
+        finalProperties.size?.height ||
+        (patternShape.type === 'circle' ? shapeWidth : 60)
+
+      // Calculate position based on layout type
+      let x = currentX
+      let y = currentY
+
+      if (layoutType === 'row') {
+        // Horizontal row (default behavior)
+        x = currentX + i * (shapeWidth + spacing)
+        y = currentY
+      } else if (layoutType === 'column') {
+        // Vertical column
+        x = currentX
+        y = currentY + i * (shapeHeight + spacing)
+      } else if (layoutType === 'grid') {
+        // Grid layout
+        const row = Math.floor(i / cols!)
+        const col = i % cols!
+        x = currentX + col * (shapeWidth + spacing)
+        y = currentY + row * (shapeHeight + spacing)
+      }
+
+      const shapeData: any = {
+        type: patternShape.type,
+        x,
+        y,
+        ...finalProperties
+      }
+
+      // Add type-specific properties
+      if (patternShape.type === 'rect') {
+        shapeData.width = shapeWidth
+        shapeData.height = shapeHeight
+      } else if (patternShape.type === 'circle') {
+        shapeData.radius = shapeWidth / 2
+      } else if (patternShape.type === 'ellipse') {
+        shapeData.width = shapeWidth
+        shapeData.height = shapeHeight
+      } else if (patternShape.type === 'star') {
+        shapeData.width = shapeWidth
+        shapeData.height = shapeHeight
+      } else if (patternShape.type === 'hexagon') {
+        shapeData.width = shapeWidth
+        shapeData.height = shapeHeight
+      } else if (patternShape.type === 'line') {
+        shapeData.width = shapeWidth
+        shapeData.height = finalProperties.size?.height || 2
+      } else if (patternShape.type === 'arrow') {
+        shapeData.width = shapeWidth
+        shapeData.height = finalProperties.size?.height || 20
+      }
+
+      shapes.push(shapeData)
+    }
+
+    console.log(
+      '🤖 createAlternatingShapesWithDefaults creating shapes:',
+      shapes
+    )
+    return this.batchCreateObjects(canvasId, shapes, userId)
+  }
+
   // Complex shape operations
   async createFormLayout(
     canvasId: string,

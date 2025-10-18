@@ -390,6 +390,28 @@ For duplication commands:
 2. Default offset is 50px right and 50px down if not specified
 3. Returns the new shape ID for reference
 
+For multi-shape creation commands:
+1. For createMultipleShapes: create multiple shapes with optional layout parameter
+2. Examples: "create 3 red squares" (row by default), "create 5 blue circles in a column", "create 9 green stars in a grid"
+3. Parameters: count (1-20), type (rect/circle/ellipse/star/hexagon/line/arrow), properties (size/fill/stroke/opacity/blendMode), layout (row/column/grid)
+4. Layout types:
+   - row (default): shapes in horizontal row
+   - column: shapes in vertical column  
+   - grid: shapes in grid layout (auto-calculates rows/cols)
+5. For grid layouts: "create 9 blue circles in a grid" → use layout: { type: 'grid' } (auto 3x3)
+6. For column layouts: "create 5 circles in a column" → use layout: { type: 'column' }
+7. For custom grids: "create 6 squares in 2 rows" → use layout: { type: 'grid', rows: 2, cols: 3 }
+8. Grid auto-calculation: square root rounded up (9→3x3, 6→2x3, 8→3x3)
+
+For alternating shape creation commands:
+1. For createAlternatingShapes: create shapes that alternate between types
+2. Examples: "create alternating circles and rectangles", "alternate red squares and blue circles"
+3. Pattern: array of shape definitions (type + properties) that repeats
+4. Count: total number of shapes (pattern repeats as needed)
+5. Example: pattern of [circle, rect] with count 6 creates: circle, rect, circle, rect, circle, rect
+6. Supports row, column, and grid layouts
+7. Natural language: "create 6 alternating circles and rectangles" → pattern: [{type: 'circle'}, {type: 'rect'}], count: 6
+
 CRITICAL: When findShapes returns 0 results:
 1. DO NOT proceed with empty shape IDs - this will cause validation errors
 2. Try using getCanvasState to see all available shapes on the canvas

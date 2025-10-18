@@ -67,7 +67,9 @@ function getSchemaForCommand(command: string): z.ZodSchema | null {
     distributeShapes: 'distributeShapes', // Advanced Alignment
     changeColor: 'changeColor', // Style Manipulation
     copyStyle: 'copyStyle', // Style Manipulation
-    duplicateShape: 'duplicateShape' // Duplication
+    duplicateShape: 'duplicateShape', // Duplication
+    createMultipleShapes: 'createMultipleShapes', // Multi-Shape Creation
+    createAlternatingShapes: 'createAlternatingShapes' // Alternating Shape Creation
   }
 
   const schemaKey = commandMap[command]
