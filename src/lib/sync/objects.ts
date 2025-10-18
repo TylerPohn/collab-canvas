@@ -895,7 +895,8 @@ export class ObjectSyncService {
     userId: string
   ): Promise<void> {
     const shapes = await this.getAllObjects(canvasId)
-    const targetShapes = shapes.filter(shape => shapeIds.includes(shape.id))
+    const shapeIdSet = new Set(shapeIds)
+    const targetShapes = shapes.filter(shape => shapeIdSet.has(shape.id))
 
     if (targetShapes.length === 0) return
 
@@ -975,7 +976,8 @@ export class ObjectSyncService {
     userId: string
   ): Promise<void> {
     const shapes = await this.getAllObjects(canvasId)
-    const targetShapes = shapes.filter(shape => shapeIds.includes(shape.id))
+    const shapeIdSet = new Set(shapeIds)
+    const targetShapes = shapes.filter(shape => shapeIdSet.has(shape.id))
 
     if (targetShapes.length === 0) return
 
@@ -1017,7 +1019,8 @@ export class ObjectSyncService {
     userId: string
   ): Promise<void> {
     const shapes = await this.getAllObjects(canvasId)
-    const targetShapes = shapes.filter(shape => shapeIds.includes(shape.id))
+    const shapeIdSet = new Set(shapeIds)
+    const targetShapes = shapes.filter(shape => shapeIdSet.has(shape.id))
 
     if (targetShapes.length < 2) return
 
@@ -1117,7 +1120,8 @@ export class ObjectSyncService {
     userId: string
   ): Promise<void> {
     const shapes = await this.getAllObjects(canvasId)
-    const targetShapes = shapes.filter(shape => shapeIds.includes(shape.id))
+    const shapeIdSet = new Set(shapeIds)
+    const targetShapes = shapes.filter(shape => shapeIdSet.has(shape.id))
 
     if (targetShapes.length < 2) return
 
@@ -1160,7 +1164,8 @@ export class ObjectSyncService {
     userId: string
   ): Promise<void> {
     const shapes = await this.getAllObjects(canvasId)
-    const targetShapes = shapes.filter(shape => shapeIds.includes(shape.id))
+    const shapeIdSet = new Set(shapeIds)
+    const targetShapes = shapes.filter(shape => shapeIdSet.has(shape.id))
 
     if (targetShapes.length < 2) return
 
@@ -1251,7 +1256,8 @@ export class ObjectSyncService {
     userId: string
   ): Promise<void> {
     const shapes = await this.getAllObjects(canvasId)
-    const targetShapes = shapes.filter(shape => shapeIds.includes(shape.id))
+    const shapeIdSet = new Set(shapeIds)
+    const targetShapes = shapes.filter(shape => shapeIdSet.has(shape.id))
 
     if (targetShapes.length < 3) return
 

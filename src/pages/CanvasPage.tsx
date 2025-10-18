@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import AIPanel from '../components/AIPanel'
 import AIThinkingIndicator from '../components/AIThinkingIndicator'
 import CanvasStage from '../components/CanvasStage'
@@ -62,6 +62,12 @@ const CanvasPage: React.FC = () => {
     isLoading: shapesLoading,
     error: shapesError
   } = useShapes(canvasId)
+
+  // Cache max zIndex calculation to avoid recalculating on every render
+  const maxZIndex = useMemo(
+    () => shapes.reduce((max, shape) => Math.max(max, shape.zIndex || 0), 0),
+    [shapes]
+  )
 
   const {
     createShape,
@@ -257,10 +263,6 @@ const CanvasPage: React.FC = () => {
       const shapesToDuplicate = shapes.filter(shape => ids.includes(shape.id))
 
       // Calculate zIndex for duplicated shapes (highest existing zIndex + 1)
-      const maxZIndex = shapes.reduce(
-        (max, shape) => Math.max(max, shape.zIndex || 0),
-        0
-      )
       const newZIndex = maxZIndex + 1
 
       const duplicatedShapes = shapesToDuplicate.map(shape => ({
@@ -284,7 +286,7 @@ const CanvasPage: React.FC = () => {
         showError('Failed to duplicate shapes', 'Please try again')
       }
     },
-    [shapes, batchCreateShapes, user?.uid, showSuccess, showError]
+    [shapes, maxZIndex, batchCreateShapes, user?.uid, showSuccess, showError]
   )
 
   // Toolbar handlers
@@ -345,10 +347,6 @@ const CanvasPage: React.FC = () => {
         const centerY = canvasSize.height / 2 - actualHeight / 2
 
         // Calculate zIndex for new shape (highest existing zIndex + 1)
-        const maxZIndex = shapes.reduce(
-          (max, shape) => Math.max(max, shape.zIndex || 0),
-          0
-        )
         const newZIndex = maxZIndex + 1
 
         const mermaidShape = {
@@ -385,7 +383,7 @@ const CanvasPage: React.FC = () => {
     [
       user?.uid,
       canvasSize,
-      shapes,
+      maxZIndex,
       createShape,
       showSuccess,
       showError,

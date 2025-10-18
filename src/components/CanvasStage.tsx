@@ -4,6 +4,7 @@ import React, {
   startTransition,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState
 } from 'react'
@@ -115,6 +116,12 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
     const stageRef = useRef<Konva.Stage>(null)
     const transformerRef = useRef<Konva.Transformer>(null)
     const { showSuccess, showError } = useToast()
+
+    // Memoize sorted shapes to avoid re-sorting on every render
+    const sortedShapes = useMemo(
+      () => [...shapes].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0)),
+      [shapes]
+    )
     const [isDrawing, setIsDrawing] = useState(false)
     const [drawingStart, setDrawingStart] = useState<{
       x: number
@@ -183,26 +190,24 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
     const { getDefaultTextProperties, getDefaultShapeProperties } =
       useDesignPaletteStore()
 
+    // Memoize selected nodes to avoid recalculating on every render
+    const selectedNodes = useMemo(() => {
+      if (selectedIds.length === 0) return []
+      return selectedIds
+        .map(id => stageRef.current?.findOne(`#${id}`))
+        .filter(Boolean) as Konva.Node[]
+    }, [selectedIds])
+
     // Update transformer when selection changes
     useEffect(() => {
-      if (transformerRef.current && selectedIds.length > 0) {
-        const selectedNodes = selectedIds
-          .map(id => stageRef.current?.findOne(`#${id}`))
-          .filter(Boolean) as Konva.Node[]
-
-        if (selectedNodes.length > 0) {
-          transformerRef.current.nodes(selectedNodes)
-          transformerRef.current.getLayer()?.batchDraw()
-        } else {
-          // If no valid nodes found (e.g., after deletion), clear transformer
-          transformerRef.current.nodes([])
-          transformerRef.current.getLayer()?.batchDraw()
-        }
+      if (transformerRef.current && selectedNodes.length > 0) {
+        transformerRef.current.nodes(selectedNodes)
+        transformerRef.current.getLayer()?.batchDraw()
       } else if (transformerRef.current) {
         transformerRef.current.nodes([])
         transformerRef.current.getLayer()?.batchDraw()
       }
-    }, [selectedIds, shapes])
+    }, [selectedNodes])
 
     // Keyboard shortcuts
     const handleDelete = useCallback(() => {
@@ -246,11 +251,15 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
             break
         }
 
+        const shapeMap = new Map(shapes.map(s => [s.id, s]))
         selectedIds.forEach(id => {
-          onShapeUpdate(id, {
-            x: shapes.find(s => s.id === id)!.x + deltaX,
-            y: shapes.find(s => s.id === id)!.y + deltaY
-          })
+          const shape = shapeMap.get(id)
+          if (shape) {
+            onShapeUpdate(id, {
+              x: shape.x + deltaX,
+              y: shape.y + deltaY
+            })
+          }
         })
       },
       [selectedIds, shapes, onShapeUpdate]
@@ -1425,101 +1434,99 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         >
           <Layer>
             {/* Render shapes sorted by zIndex */}
-            {shapes
-              .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
-              .map(shape => {
-                const commonProps = {
-                  key: shape.id,
-                  shape,
-                  onSelect: (e: Konva.KonvaEventObject<MouseEvent>) =>
-                    handleShapeSelect(shape.id, e),
-                  onDragStart: () => handleShapeDragStart(shape.id),
-                  onDragMove: handleShapeDragMove,
-                  onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) =>
-                    handleShapeDragEnd(shape.id, e),
-                  onTransformEnd: (e: Konva.KonvaEventObject<Event>) =>
-                    handleShapeTransformEnd(shape.id, e)
-                }
+            {sortedShapes.map(shape => {
+              const commonProps = {
+                key: shape.id,
+                shape,
+                onSelect: (e: Konva.KonvaEventObject<MouseEvent>) =>
+                  handleShapeSelect(shape.id, e),
+                onDragStart: () => handleShapeDragStart(shape.id),
+                onDragMove: handleShapeDragMove,
+                onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) =>
+                  handleShapeDragEnd(shape.id, e),
+                onTransformEnd: (e: Konva.KonvaEventObject<Event>) =>
+                  handleShapeTransformEnd(shape.id, e)
+              }
 
-                switch (shape.type) {
-                  case 'rect':
-                    return (
-                      <RectangleShape
-                        {...commonProps}
-                        shape={shape as RectangleShapeType}
-                      />
-                    )
-                  case 'circle':
-                    return (
-                      <CircleShape
-                        {...commonProps}
-                        shape={shape as CircleShapeType}
-                      />
-                    )
-                  case 'text':
-                    return (
-                      <TextShape
-                        {...commonProps}
-                        shape={shape as TextShapeType}
-                        onDoubleClick={(
-                          e: Konva.KonvaEventObject<MouseEvent>
-                        ) => handleTextDoubleClick(shape.id, e)}
-                        isEditing={editingTextId === shape.id}
-                      />
-                    )
-                  case 'mermaid':
-                    return (
-                      <MermaidShape
-                        {...commonProps}
-                        shape={shape as MermaidShapeType}
-                      />
-                    )
-                  case 'line':
-                    return (
-                      <LineShape
-                        {...commonProps}
-                        shape={shape as LineShapeType}
-                      />
-                    )
-                  case 'arrow':
-                    return (
-                      <ArrowShape
-                        {...commonProps}
-                        shape={shape as ArrowShapeType}
-                      />
-                    )
-                  case 'ellipse':
-                    return (
-                      <EllipseShape
-                        {...commonProps}
-                        shape={shape as EllipseShapeType}
-                      />
-                    )
-                  case 'hexagon':
-                    return (
-                      <HexagonShape
-                        {...commonProps}
-                        shape={shape as HexagonShapeType}
-                      />
-                    )
-                  case 'star':
-                    return (
-                      <StarShape
-                        {...commonProps}
-                        shape={shape as StarShapeType}
-                      />
-                    )
-                  case 'image':
-                    return (
-                      <ImageShape
-                        {...commonProps}
-                        shape={shape as ImageShapeType}
-                      />
-                    )
-                  default:
-                    return null
-                }
-              })}
+              switch (shape.type) {
+                case 'rect':
+                  return (
+                    <RectangleShape
+                      {...commonProps}
+                      shape={shape as RectangleShapeType}
+                    />
+                  )
+                case 'circle':
+                  return (
+                    <CircleShape
+                      {...commonProps}
+                      shape={shape as CircleShapeType}
+                    />
+                  )
+                case 'text':
+                  return (
+                    <TextShape
+                      {...commonProps}
+                      shape={shape as TextShapeType}
+                      onDoubleClick={(e: Konva.KonvaEventObject<MouseEvent>) =>
+                        handleTextDoubleClick(shape.id, e)
+                      }
+                      isEditing={editingTextId === shape.id}
+                    />
+                  )
+                case 'mermaid':
+                  return (
+                    <MermaidShape
+                      {...commonProps}
+                      shape={shape as MermaidShapeType}
+                    />
+                  )
+                case 'line':
+                  return (
+                    <LineShape
+                      {...commonProps}
+                      shape={shape as LineShapeType}
+                    />
+                  )
+                case 'arrow':
+                  return (
+                    <ArrowShape
+                      {...commonProps}
+                      shape={shape as ArrowShapeType}
+                    />
+                  )
+                case 'ellipse':
+                  return (
+                    <EllipseShape
+                      {...commonProps}
+                      shape={shape as EllipseShapeType}
+                    />
+                  )
+                case 'hexagon':
+                  return (
+                    <HexagonShape
+                      {...commonProps}
+                      shape={shape as HexagonShapeType}
+                    />
+                  )
+                case 'star':
+                  return (
+                    <StarShape
+                      {...commonProps}
+                      shape={shape as StarShapeType}
+                    />
+                  )
+                case 'image':
+                  return (
+                    <ImageShape
+                      {...commonProps}
+                      shape={shape as ImageShapeType}
+                    />
+                  )
+                default:
+                  return null
+              }
+            })}
 
             {/* Preview shape during drawing */}
             {previewShape && (

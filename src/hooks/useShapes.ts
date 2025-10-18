@@ -43,8 +43,18 @@ export function useShapes(canvasId: string) {
     }
   }, [canvasId, objectSync])
 
+  // Add shape map for O(1) lookups
+  const shapeMap = useMemo(() => {
+    const map = new Map<string, Shape>()
+    shapes.forEach(shape => {
+      map.set(shape.id, shape)
+    })
+    return map
+  }, [shapes])
+
   return {
     shapes,
+    shapeMap, // Add this line
     isLoading,
     error,
     refetch
