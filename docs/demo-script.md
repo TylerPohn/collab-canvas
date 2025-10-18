@@ -16,6 +16,8 @@
 // show off paste screenshot
 // show import file
 
+// AI
+# change color of circle to black
 # create alternating grid of circles and rectangles
 # arrange the circles into a row
 # arrange the rectangles into a column
@@ -25,6 +27,25 @@
 # create 
 
 // mermaid
+
+"Under the hood, CollabCanvas uses a sophisticated architecture:
+
+- React 19 with concurrent features and TypeScript for type safety
+- Konva.js with WebGL acceleration for 60fps 2D rendering
+- React Query provides optimistic updates and intelligent caching
+- Custom ObjectSyncService bridges React Query with Firebase Firestore
+- Zustand for lightweight state management
+- MUI components with Material Design for accessibility
+- DOMPurify for XSS protection and comprehensive input validation
+- OpenAI GPT-4o-mini with function calling for natural language processing (LangChain agent not working)
+- **Enhanced AI Agent with 25 commands** - creation, manipulation, layout, style, and complex operations
+- **Advanced Visual Effects** - 12 Canvas 2D blend modes and opacity controls for professional layering
+- **Layers Panel** - drag-to-reorder layer management with visibility controls and hierarchy visualization
+- **AI Thinking Indicator** - real-time visual feedback during AI processing with animated thought bubble
+- Rate limiting and security audit logging
+- Debounced updates (100ms) and cursor throttling (25ms) via RTDB for optimal performance
+- Last-write-wins conflict resolution with visual feedback in design palette
+
 _[Show login page, then switch to canvas - highlight security features in browser dev tools]_
 
 ## Core Canvas Features (60 seconds)
