@@ -45,6 +45,9 @@ interface DesignPaletteMUIProps {
   shapes: Shape[]
   onShapeUpdate: (id: string, updates: Partial<Shape>) => void
   onShapeUpdateDebounced: (id: string, updates: Partial<Shape>) => void
+  onShapeBatchUpdateDebounced: (
+    updates: Array<{ objectId: string; updates: Partial<Shape> }>
+  ) => void
   currentUser: User | null
   presence: UserPresence[]
 }
@@ -55,6 +58,7 @@ const DesignPaletteMUI: React.FC<DesignPaletteMUIProps> = ({
   shapes,
   onShapeUpdate,
   onShapeUpdateDebounced,
+  onShapeBatchUpdateDebounced,
   currentUser,
   presence
 }) => {
@@ -153,11 +157,19 @@ const DesignPaletteMUI: React.FC<DesignPaletteMUIProps> = ({
   // Helper function to update selected shapes with immediate preview
   const updateSelectedShapes = useCallback(
     (updates: Partial<Shape>) => {
-      selectedShapes.forEach(shape => {
-        onShapeUpdateDebounced(shape.id, updates)
-      })
+      if (selectedShapes.length === 1) {
+        // Single shape - use individual update for immediate feedback
+        onShapeUpdateDebounced(selectedShapes[0].id, updates)
+      } else if (selectedShapes.length > 1) {
+        // Multiple shapes - use batch update to prevent flashing
+        const batchUpdates = selectedShapes.map(shape => ({
+          objectId: shape.id,
+          updates
+        }))
+        onShapeBatchUpdateDebounced(batchUpdates)
+      }
     },
-    [selectedShapes, onShapeUpdateDebounced]
+    [selectedShapes, onShapeUpdateDebounced, onShapeBatchUpdateDebounced]
   )
 
   // Handle fill color change
@@ -783,10 +795,18 @@ const DesignPaletteMUI: React.FC<DesignPaletteMUIProps> = ({
                         onChange={(_, value) => {
                           const newOpacity = value as number
                           setOpacity(newOpacity)
-                          // Update selected shapes
-                          selectedShapes.forEach(shape => {
-                            onShapeUpdate(shape.id, { opacity: newOpacity })
-                          })
+                          // Update selected shapes using batch update
+                          if (selectedShapes.length === 1) {
+                            onShapeUpdate(selectedShapes[0].id, {
+                              opacity: newOpacity
+                            })
+                          } else if (selectedShapes.length > 1) {
+                            const batchUpdates = selectedShapes.map(shape => ({
+                              objectId: shape.id,
+                              updates: { opacity: newOpacity }
+                            }))
+                            onShapeBatchUpdateDebounced(batchUpdates)
+                          }
                         }}
                         min={0}
                         max={1}
@@ -812,10 +832,18 @@ const DesignPaletteMUI: React.FC<DesignPaletteMUIProps> = ({
                         onChange={e => {
                           const newBlendMode = e.target.value
                           setBlendMode(newBlendMode)
-                          // Update selected shapes
-                          selectedShapes.forEach(shape => {
-                            onShapeUpdate(shape.id, { blendMode: newBlendMode })
-                          })
+                          // Update selected shapes using batch update
+                          if (selectedShapes.length === 1) {
+                            onShapeUpdate(selectedShapes[0].id, {
+                              blendMode: newBlendMode
+                            })
+                          } else if (selectedShapes.length > 1) {
+                            const batchUpdates = selectedShapes.map(shape => ({
+                              objectId: shape.id,
+                              updates: { blendMode: newBlendMode }
+                            }))
+                            onShapeBatchUpdateDebounced(batchUpdates)
+                          }
                         }}
                         size="small"
                         fullWidth

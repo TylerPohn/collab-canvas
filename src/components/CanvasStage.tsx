@@ -23,6 +23,8 @@ import {
 } from 'react-konva'
 import { useCanvasShortcuts } from '../hooks/useCanvasShortcuts'
 import { usePanZoom } from '../hooks/usePanZoom'
+import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor'
+import { useSpatialIndex } from '../hooks/useSpatialIndex'
 import { useToast } from '../hooks/useToast'
 import { getClipboardService } from '../lib/clipboard'
 import {
@@ -173,7 +175,11 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
       x: number
       y: number
     } | null>(null)
-    const [lastBatchUpdateTime, setLastBatchUpdateTime] = useState<number>(0)
+
+    // Add ref for batch updates to avoid creating new arrays on every mouse move
+    const batchUpdateRef = useRef<
+      Array<{ objectId: string; updates: Partial<Shape> }>
+    >([])
 
     const {
       viewport,
@@ -189,6 +195,27 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
 
     const { getDefaultTextProperties, getDefaultShapeProperties } =
       useDesignPaletteStore()
+
+    // Add spatial index for fast shape queries
+    const { queryShapes } = useSpatialIndex(shapes)
+
+    // Performance monitoring for development
+    usePerformanceMonitor()
+
+    // Virtual rendering: only render shapes visible in viewport
+    const visibleShapes = useMemo(() => {
+      if (shapes.length < 100) return sortedShapes // No optimization needed for small canvases
+
+      const margin = 200 // Render shapes slightly outside viewport
+      const viewportBounds = {
+        x: -viewport.x / viewport.scale - margin,
+        y: -viewport.y / viewport.scale - margin,
+        width: width / viewport.scale + margin * 2,
+        height: height / viewport.scale + margin * 2
+      }
+
+      return queryShapes(viewportBounds)
+    }, [sortedShapes, viewport, width, height, queryShapes])
 
     // Memoize selected nodes to avoid recalculating on every render
     const selectedNodes = useMemo(() => {
@@ -692,25 +719,8 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
             selectionRect.width > 5 &&
             selectionRect.height > 5
           ) {
-            // Find shapes that intersect with the selection rectangle
-            const shapesInSelection = shapes.filter(shape => {
-              const shapeBounds = {
-                x: shape.x,
-                y: shape.y,
-                width:
-                  shape.type === 'circle' ? shape.radius * 2 : shape.width || 0,
-                height:
-                  shape.type === 'circle' ? shape.radius * 2 : shape.height || 0
-              }
-
-              // Check if shapes intersect with selection rectangle
-              return !(
-                shapeBounds.x + shapeBounds.width < selectionRect.x ||
-                selectionRect.x + selectionRect.width < shapeBounds.x ||
-                shapeBounds.y + shapeBounds.height < selectionRect.y ||
-                selectionRect.y + selectionRect.height < shapeBounds.y
-              )
-            })
+            // Find shapes that intersect with the selection rectangle using spatial index
+            const shapesInSelection = queryShapes(selectionRect)
 
             // Select all shapes in the selection rectangle
             if (shapesInSelection.length > 0) {
@@ -1018,34 +1028,25 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
             const offsetY = currentY - initialPos.y
             setDragOffset({ x: offsetX, y: offsetY })
 
-            // Create batch update for all selected shapes
-            const batchUpdates = selectedIds
-              .map(selectedId => {
-                const initialPos = initialShapePositions.get(selectedId)
-                if (initialPos) {
-                  return {
-                    objectId: selectedId,
-                    updates: {
-                      x: initialPos.x + offsetX,
-                      y: initialPos.y + offsetY
-                    }
-                  }
-                }
-                return null
-              })
-              .filter(Boolean) as Array<{
-              objectId: string
-              updates: Partial<Shape>
-            }>
+            // PR #27: Accumulate updates during drag, don't send until drag end
+            // Clear previous updates and create new ones efficiently
+            batchUpdateRef.current = []
 
-            // Throttle batch updates to prevent flashing (16ms = ~60fps)
-            const now = Date.now()
-            if (now - lastBatchUpdateTime > 16) {
-              startTransition(() => {
-                onShapeBatchUpdateDebounced(batchUpdates)
-              })
-              setLastBatchUpdateTime(now)
-            }
+            selectedIds.forEach(selectedId => {
+              const initialPos = initialShapePositions.get(selectedId)
+              if (initialPos) {
+                batchUpdateRef.current.push({
+                  objectId: selectedId,
+                  updates: {
+                    x: initialPos.x + offsetX,
+                    y: initialPos.y + offsetY
+                  }
+                })
+              }
+            })
+
+            // PR #27: Remove throttling during drag - only accumulate updates
+            // The actual batch update will be sent at drag end to prevent flashing
           }
         } else {
           // PR #13.1: Update position in real-time during drag for single object
@@ -1061,10 +1062,8 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         viewport.scale,
         onCursorMove,
         onShapeUpdateDebounced,
-        onShapeBatchUpdateDebounced,
         selectedIds,
-        initialShapePositions,
-        lastBatchUpdateTime
+        initialShapePositions
       ]
     )
 
@@ -1077,42 +1076,18 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
 
         // If multiple shapes are selected and we have initial positions
         if (selectedIds.length > 1 && initialShapePositions.size > 0) {
-          const initialPos = initialShapePositions.get(id)
-          if (initialPos) {
-            // Calculate the drag offset
-            const deltaX = newX - initialPos.x
-            const deltaY = newY - initialPos.y
-
-            // Apply the same offset to all selected shapes using batch update
-            const finalBatchUpdates = selectedIds
-              .map(selectedId => {
-                const initialPos = initialShapePositions.get(selectedId)
-                if (initialPos) {
-                  return {
-                    objectId: selectedId,
-                    updates: {
-                      x: initialPos.x + deltaX,
-                      y: initialPos.y + deltaY
-                    }
-                  }
-                }
-                return null
-              })
-              .filter(Boolean) as Array<{
-              objectId: string
-              updates: Partial<Shape>
-            }>
-
-            // Send final batch update
+          // PR #27: Use accumulated updates from batchUpdateRef instead of recalculating
+          if (batchUpdateRef.current.length > 0) {
+            // Send the accumulated batch update (single network request)
             startTransition(() => {
-              onShapeBatchUpdateDebounced(finalBatchUpdates)
+              onShapeBatchUpdateDebounced([...batchUpdateRef.current])
             })
-
-            // Clear the initial positions and drag offset
-            setInitialShapePositions(new Map())
-            setDragOffset(null)
-            setLastBatchUpdateTime(0)
           }
+
+          // Clear the initial positions and drag offset
+          setInitialShapePositions(new Map())
+          setDragOffset(null)
+          batchUpdateRef.current = []
         } else {
           // Single shape drag
           onShapeUpdate(id, {
@@ -1434,7 +1409,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
         >
           <Layer>
             {/* Render shapes sorted by zIndex */}
-            {sortedShapes.map(shape => {
+            {visibleShapes.map(shape => {
               const commonProps = {
                 key: shape.id,
                 shape,

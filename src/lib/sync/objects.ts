@@ -15,7 +15,7 @@ import type { Shape } from '../types'
 
 // Performance optimization constants
 const DRAG_DEBOUNCE_MS = 50
-const MAX_BATCH_SIZE = 10
+const MAX_BATCH_SIZE = 100
 const MAX_RETRY_ATTEMPTS = 3
 const RETRY_DELAY_MS = 1000
 
@@ -57,6 +57,10 @@ export class ObjectSyncService {
       userId: string
     }
   > = new Map()
+
+  // PR #27: Track pending optimistic updates for cache merging
+  private pendingOptimisticUpdates: Map<string, Map<string, Partial<Shape>>> =
+    new Map()
 
   // PR #13.9.5: Operation queuing for offline scenarios
   private operationQueue: Array<{
@@ -243,8 +247,8 @@ export class ObjectSyncService {
     this.unsubscribeFromObjects(canvasId)
 
     const unsubscribe = subscribeToObjects(canvasId, objects => {
-      // Update React Query cache with latest objects
-      this.queryClient.setQueryData(queryKey, objects)
+      // PR #27: Merge Firestore data with pending optimistic updates
+      this.mergeWithPendingUpdates(queryKey, objects)
     })
 
     this.subscriptions.set(canvasId, unsubscribe)
@@ -258,6 +262,57 @@ export class ObjectSyncService {
       unsubscribe()
       this.subscriptions.delete(canvasId)
     }
+  }
+
+  // PR #27: Merge Firestore data with pending optimistic updates
+  private mergeWithPendingUpdates(
+    queryKey: readonly unknown[],
+    firestoreData: Shape[]
+  ) {
+    const canvasId = queryKey[2] as string
+    const pendingUpdates = this.pendingOptimisticUpdates.get(canvasId)
+
+    if (!pendingUpdates || pendingUpdates.size === 0) {
+      // No pending updates, use Firestore data as-is
+      this.queryClient.setQueryData(queryKey, firestoreData)
+      return
+    }
+
+    // Merge Firestore data with pending optimistic updates
+    const mergedData = firestoreData.map(shape => {
+      const pendingUpdate = pendingUpdates.get(shape.id)
+      if (pendingUpdate) {
+        // Merge pending update with Firestore data
+        return {
+          ...shape,
+          ...pendingUpdate,
+          // Preserve server timestamps for confirmed updates
+          updatedAt: shape.updatedAt,
+          updatedBy: shape.updatedBy
+        }
+      }
+      return shape
+    })
+
+    // Add any new shapes from pending updates that aren't in Firestore yet
+    const firestoreIds = new Set(firestoreData.map(s => s.id))
+    pendingUpdates.forEach((pendingUpdate, objectId) => {
+      if (!firestoreIds.has(objectId)) {
+        // This is a new shape that hasn't been written to Firestore yet
+        const existingShapes = this.queryClient.getQueryData<Shape[]>(queryKey)
+        const existingShape = existingShapes?.find(
+          (s: Shape) => s.id === objectId
+        )
+        if (existingShape) {
+          mergedData.push({
+            ...existingShape,
+            ...pendingUpdate
+          })
+        }
+      }
+    })
+
+    this.queryClient.setQueryData(queryKey, mergedData)
   }
 
   // Clean up all subscriptions
@@ -274,6 +329,9 @@ export class ObjectSyncService {
     this.debouncedBatchUpdates.forEach(timeout => clearTimeout(timeout))
     this.debouncedBatchUpdates.clear()
     this.pendingBatchUpdates.clear()
+
+    // PR #27: Clean up pending optimistic updates
+    this.pendingOptimisticUpdates.clear()
   }
 
   // PR #7: Optimistic updates with conflict resolution
@@ -474,6 +532,17 @@ export class ObjectSyncService {
     const now = Date.now()
     const batchKey = `${canvasId}-batch`
 
+    // PR #27: Track pending optimistic updates for cache merging
+    if (!this.pendingOptimisticUpdates.has(canvasId)) {
+      this.pendingOptimisticUpdates.set(canvasId, new Map())
+    }
+    const pendingUpdates = this.pendingOptimisticUpdates.get(canvasId)!
+
+    // Store optimistic updates for cache merging
+    updates.forEach(update => {
+      pendingUpdates.set(update.objectId, update.updates)
+    })
+
     // Always apply optimistic updates immediately for smooth UI
     this.queryClient.setQueryData(queryKey, (old: Shape[] = []) =>
       old.map(obj => {
@@ -509,6 +578,18 @@ export class ObjectSyncService {
             userId
           )
           this.pendingBatchUpdates.delete(batchKey)
+
+          // PR #27: Clean up pending optimistic updates after successful Firestore write
+          const pendingUpdates = this.pendingOptimisticUpdates.get(canvasId)
+          if (pendingUpdates) {
+            pendingBatch.updates.forEach(update => {
+              pendingUpdates.delete(update.objectId)
+            })
+            // Clean up empty maps
+            if (pendingUpdates.size === 0) {
+              this.pendingOptimisticUpdates.delete(canvasId)
+            }
+          }
         } catch (error) {
           console.error('Debounced batch update failed:', error)
           // Rollback optimistic updates

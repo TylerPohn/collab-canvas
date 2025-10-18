@@ -481,6 +481,7 @@ const CanvasPage: React.FC = () => {
           shapes={shapes}
           onShapeUpdate={handleShapeUpdate}
           onShapeUpdateDebounced={handleShapeUpdateDebounced}
+          onShapeBatchUpdateDebounced={handleShapeBatchUpdateDebounced}
           currentUser={user}
           presence={presence}
         />
