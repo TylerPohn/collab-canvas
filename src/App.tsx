@@ -2,6 +2,7 @@ import {
   alpha,
   AppBar,
   Box,
+  Button,
   Container,
   Toolbar,
   Typography,
@@ -11,16 +12,75 @@ import {
   Navigate,
   Route,
   BrowserRouter as Router,
-  Routes
+  Routes,
+  useLocation,
+  useNavigate
 } from 'react-router-dom'
 import ConnectionStatus from './components/ConnectionStatus'
 import ProfileMenu from './components/ProfileMenu'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthProvider } from './components/providers/AuthProvider'
 import { ToastProvider } from './contexts/ToastContext'
+import { useAuth } from './hooks/useAuth'
 import CanvasPage from './pages/CanvasPage'
+import DashboardPage from './pages/DashboardPage'
+import GalleryPage from './pages/GalleryPage'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
+
+// Navigation component for authenticated users
+const Navigation: React.FC = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+
+  if (!user) return null
+
+  const isActive = (path: string) => location.pathname.startsWith(path)
+
+  return (
+    <Box sx={{ display: 'flex', gap: 1, mr: 4 }}>
+      <Button
+        onClick={() => navigate('/dashboard')}
+        variant={isActive('/dashboard') ? 'contained' : 'text'}
+        size="small"
+        sx={{
+          borderRadius: 2,
+          px: 2,
+          py: 1,
+          fontWeight: isActive('/dashboard') ? 600 : 500,
+          color: isActive('/dashboard') ? 'white' : 'text.primary',
+          '&:hover': {
+            backgroundColor: isActive('/dashboard')
+              ? 'primary.dark'
+              : 'action.hover'
+          }
+        }}
+      >
+        Dashboard
+      </Button>
+      <Button
+        onClick={() => navigate('/gallery')}
+        variant={isActive('/gallery') ? 'contained' : 'text'}
+        size="small"
+        sx={{
+          borderRadius: 2,
+          px: 2,
+          py: 1,
+          fontWeight: isActive('/gallery') ? 600 : 500,
+          color: isActive('/gallery') ? 'white' : 'text.primary',
+          '&:hover': {
+            backgroundColor: isActive('/gallery')
+              ? 'primary.dark'
+              : 'action.hover'
+          }
+        }}
+      >
+        Gallery
+      </Button>
+    </Box>
+  )
+}
 
 function App() {
   const theme = useTheme()
@@ -68,6 +128,7 @@ function App() {
                   </Box>
 
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Navigation />
                     <ConnectionStatus />
                     <ProfileMenu />
                   </Box>
@@ -78,15 +139,35 @@ function App() {
             {/* Main Content */}
             <Box component="main">
               <Routes>
-                {/* Landing page - redirect to canvas if authenticated, otherwise show welcome */}
+                {/* Landing page - redirect to dashboard if authenticated, otherwise show welcome */}
                 <Route path="/" element={<LandingPage />} />
 
                 {/* Login page */}
                 <Route path="/login" element={<LoginPage />} />
 
-                {/* Protected canvas route */}
+                {/* Protected dashboard route */}
                 <Route
-                  path="/canvas"
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Protected gallery route */}
+                <Route
+                  path="/gallery"
+                  element={
+                    <ProtectedRoute>
+                      <GalleryPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Protected canvas route with dynamic ID */}
+                <Route
+                  path="/canvas/:canvasId"
                   element={
                     <ProtectedRoute>
                       <Box
@@ -99,6 +180,12 @@ function App() {
                       </Box>
                     </ProtectedRoute>
                   }
+                />
+
+                {/* Redirect old canvas route to dashboard */}
+                <Route
+                  path="/canvas"
+                  element={<Navigate to="/dashboard" replace />}
                 />
 
                 {/* Catch all route */}

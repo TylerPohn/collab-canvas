@@ -125,19 +125,50 @@ export type Shape =
   | StarShape
   | ImageShape
 
+// Canvas access types
+export type CanvasAccessType = 'private' | 'link' | 'public'
+
+// Canvas permissions
+export interface CanvasPermissions {
+  ownerId: string
+  accessType: CanvasAccessType
+  password?: string // Hashed password for link-based access
+  accessedBy: string[] // Array of user IDs who have accessed this canvas
+}
+
 // Canvas metadata
 export interface CanvasMeta {
   id: string
   name?: string
+  description?: string
+  thumbnail?: string // Base64 data URL for canvas thumbnail
   viewport: {
     x: number
     y: number
     scale: number
   }
+  permissions: CanvasPermissions
+  lastAccessedAt?: number // Track when user last opened this canvas
   createdAt: number
   createdBy: string
   updatedAt: number
   updatedBy: string
+}
+
+// Canvas list item for dashboard/gallery views
+export interface CanvasListItem {
+  id: string
+  name: string
+  description?: string
+  thumbnail?: string
+  ownerId: string
+  ownerName: string
+  accessType: CanvasAccessType
+  hasPassword: boolean
+  lastModified: number
+  lastAccessedAt?: number
+  isOwner: boolean
+  hasAccessed: boolean
 }
 
 // Presence and cursor tracking

@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /canvases/{canvasId} {
+      // Special case: default-canvas is always accessible
+      allow read, write: if canvasId == 'default-canvas';
+      
+      match /objects/{objectId} {
+        // Special case: default-canvas objects are always accessible
+        allow read, write: if canvasId == 'default-canvas';
+      }
+      
+      // Owner can always read/write
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.meta.permissions.ownerId;
+      
+      // Public canvases - anyone can read (no auth required)
+      allow read: if resource.data.meta.permissions.accessType == 'public';
+      
+      // Link/accessed canvases - users who've accessed can read/write
+      allow read, write: if request.auth != null && 
+        request.auth.uid in resource.data.meta.permissions.accessedBy;
+      
+      // Allow canvas creation
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.meta.permissions.ownerId;
+      
+      match /objects/{objectId} {
+        // Same permissions as parent canvas
+        allow read, write: if request.auth != null && (
+          request.auth.uid == get(/databases/$(database)/documents/canvases/$(canvasId)).data.meta.permissions.ownerId ||
+          request.auth.uid in get(/databases/$(database)/documents/canvases/$(canvasId)).data.meta.permissions.accessedBy ||
+          get(/databases/$(database)/documents/canvases/$(canvasId)).data.meta.permissions.accessType == 'public'
+        );
+      }
+    }
+  }
+}

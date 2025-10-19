@@ -1,14 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import AIPanel from '../components/AIPanel'
 import AIThinkingIndicator from '../components/AIThinkingIndicator'
+import CanvasAccessDialog from '../components/CanvasAccessDialog'
+import CanvasAccessLoader from '../components/CanvasAccessLoader'
 import CanvasStage from '../components/CanvasStage'
 import DesignPaletteMUI from '../components/DesignPaletteMUI'
+import GuestUserBanner from '../components/GuestUserBanner'
 import LayersPanel from '../components/LayersPanel'
 import PresenceList from '../components/PresenceList'
 import ToolbarMUI from '../components/ToolbarMUI'
 import { useAIAgent } from '../hooks/useAIAgent'
 import { useAIExecutionState } from '../hooks/useAIExecutionState'
 import { useAuth } from '../hooks/useAuth'
+import { useCanvasAccess } from '../hooks/useCanvasAccess'
 import { usePresence } from '../hooks/usePresence'
 import {
   useCanvasMeta,
@@ -17,41 +22,84 @@ import {
   useShapes,
   useViewportPersistence
 } from '../hooks/useShapes'
+import { useThumbnailGeneration } from '../hooks/useThumbnailGeneration'
 import { useToast } from '../hooks/useToast'
+import { updateLastAccessed } from '../lib/firebase/firestore'
+import { getGuestUserId, getGuestUserName } from '../lib/guestUser'
 import type { Shape } from '../lib/types'
 import { type ToolType } from '../lib/types'
 import { useSelectionStore } from '../store/selection'
 
 const CanvasPage: React.FC = () => {
+  const { canvasId } = useParams<{ canvasId: string }>()
+  const navigate = useNavigate()
   const [selectedTool, setSelectedTool] = useState<ToolType>('select')
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   const [isDesignPaletteOpen, setIsDesignPaletteOpen] = useState(true)
   const [isAIOpen, setIsAIOpen] = useState(false)
   const [isLayersOpen, setIsLayersOpen] = useState(false)
+  const [showAccessDialog, setShowAccessDialog] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
 
   const { selectedIds, hasSelection, clearSelection, selectShape } =
     useSelectionStore()
   const { user } = useAuth()
   const { showError, showSuccess } = useToast()
 
-  // Use a fixed canvas ID for now (in a real app, this would come from URL params)
-  const canvasId = 'default-canvas'
+  // Guest user handling for default-canvas
+  const isDefaultCanvas = canvasId === 'default-canvas'
+  const guestUserId = isDefaultCanvas && !user ? getGuestUserId() : null
+  const guestUserName = isDefaultCanvas && !user ? getGuestUserName() : null
+  const effectiveUserId = user?.uid || guestUserId || ''
+
+  // Check canvas access
+  const {
+    hasAccess,
+    needsPassword,
+    isLoading: isCheckingAccess,
+    verifyPassword
+  } = useCanvasAccess(canvasId || '')
+
+  // Redirect if no canvas ID
+  useEffect(() => {
+    if (!canvasId) {
+      navigate('/dashboard')
+    }
+  }, [canvasId, navigate])
+
+  // Handle access checking
+  useEffect(() => {
+    if (!isCheckingAccess && !hasAccess && needsPassword) {
+      setShowAccessDialog(true)
+    } else if (!isCheckingAccess && !hasAccess && !needsPassword) {
+      // No access and no password needed - redirect to dashboard
+      navigate('/dashboard')
+    }
+  }, [isCheckingAccess, hasAccess, needsPassword, navigate])
+
+  // Update last accessed time when user has access
+  useEffect(() => {
+    if (hasAccess && effectiveUserId && canvasId) {
+      updateLastAccessed(canvasId, effectiveUserId)
+    }
+  }, [hasAccess, effectiveUserId, canvasId])
 
   // PR #8: Canvas metadata and persistence
   const {
     canvasMeta,
     isLoading: canvasMetaLoading,
     error: canvasMetaError,
-    initializeCanvas
-  } = useCanvasMeta(canvasId, user?.uid || '')
+    initializeCanvas,
+    updateCanvasMeta
+  } = useCanvasMeta(canvasId || '', effectiveUserId)
 
   const { saveViewport, restoreViewport } = useViewportPersistence(
-    canvasId,
-    user?.uid || ''
+    canvasId || '',
+    effectiveUserId
   )
 
   // AI Agent hook
-  useAIAgent(canvasId, user?.uid || '')
+  useAIAgent(canvasId || '', effectiveUserId)
 
   // Shared AI execution state for thinking indicator
   const { isExecuting } = useAIExecutionState()
@@ -61,7 +109,23 @@ const CanvasPage: React.FC = () => {
     shapes,
     isLoading: shapesLoading,
     error: shapesError
-  } = useShapes(canvasId)
+  } = useShapes(canvasId || '')
+
+  // Thumbnail generation
+  const { setStageRef } = useThumbnailGeneration({
+    canvasId: canvasId || '',
+    shapes,
+    viewport: restoreViewport(),
+    onThumbnailGenerated: useCallback(
+      (thumbnail: string) => {
+        // Update canvas metadata with thumbnail
+        if (canvasMeta && canvasId) {
+          updateCanvasMeta({ thumbnail })
+        }
+      },
+      [canvasMeta, canvasId, updateCanvasMeta]
+    )
+  })
 
   // Cache max zIndex calculation to avoid recalculating on every render
   const maxZIndex = useMemo(
@@ -76,32 +140,64 @@ const CanvasPage: React.FC = () => {
     batchCreateShapes,
     batchUpdateShapes,
     batchDeleteShapes
-  } = useShapeMutations(canvasId, user?.uid || '')
+  } = useShapeMutations(canvasId || '', effectiveUserId)
 
   // Get debounced update for real-time drag updates
   const { debouncedUpdate, debouncedBatchUpdate } = useShapeOperations(
-    canvasId,
-    user?.uid || ''
+    canvasId || '',
+    effectiveUserId
   )
 
-  // Presence functionality
+  // Presence functionality (disabled for guests)
   const {
     presence,
     updateCursor,
     error: presenceError
   } = usePresence({
-    canvasId,
-    enabled: !!user
+    canvasId: canvasId || '',
+    enabled: !!user && !!canvasId // Only enable for authenticated users
   })
 
   // Keyboard shortcuts will be added after function declarations
 
-  // PR #8: Initialize canvas on mount
+  // PR #8: Initialize canvas on mount (only if user has access)
   useEffect(() => {
-    if (user?.uid && !canvasMetaLoading) {
+    if (effectiveUserId && !canvasMetaLoading && hasAccess) {
       initializeCanvas()
     }
-  }, [user?.uid, canvasMetaLoading, initializeCanvas])
+  }, [effectiveUserId, canvasMetaLoading, hasAccess, initializeCanvas])
+
+  // Manage initialization state to prevent flashing
+  useEffect(() => {
+    if (
+      !isCheckingAccess &&
+      hasAccess &&
+      !shapesLoading &&
+      !canvasMetaLoading &&
+      canvasSize.width > 0 &&
+      canvasSize.height > 0
+    ) {
+      // Add a small delay to ensure smooth transition
+      const timer = setTimeout(() => {
+        setIsInitializing(false)
+      }, 300)
+      return () => clearTimeout(timer)
+    } else {
+      setIsInitializing(true)
+    }
+  }, [
+    isCheckingAccess,
+    hasAccess,
+    shapesLoading,
+    canvasMetaLoading,
+    canvasSize.width,
+    canvasSize.height
+  ])
+
+  // Handle password verification
+  const handlePasswordAccess = async (password: string): Promise<boolean> => {
+    return await verifyPassword(password)
+  }
 
   // PR #8: Save viewport on navigation/unload
   useEffect(() => {
@@ -182,7 +278,7 @@ const CanvasPage: React.FC = () => {
         'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'
       >
     ): Promise<Shape> => {
-      if (!user?.uid) {
+      if (!effectiveUserId) {
         throw new Error('User not authenticated')
       }
 
@@ -198,13 +294,13 @@ const CanvasPage: React.FC = () => {
         throw error
       }
     },
-    [createShape, user?.uid, showSuccess, showError, selectShape]
+    [createShape, effectiveUserId, showSuccess, showError, selectShape]
   )
 
   // PR #7: Handle shape updates with React Query
   const handleShapeUpdate = useCallback(
     async (id: string, updates: Partial<Shape>) => {
-      if (!user?.uid) return
+      if (!effectiveUserId) return
 
       try {
         await updateShape(id, updates)
@@ -213,25 +309,25 @@ const CanvasPage: React.FC = () => {
         showError('Failed to update shape', 'Your changes could not be saved')
       }
     },
-    [updateShape, user?.uid, showError]
+    [updateShape, effectiveUserId, showError]
   )
 
   // PR #13.1: Handle debounced shape updates for real-time drag
   const handleShapeUpdateDebounced = useCallback(
     (id: string, updates: Partial<Shape>) => {
-      if (!user?.uid) return
+      if (!effectiveUserId) return
       debouncedUpdate(id, updates)
     },
-    [debouncedUpdate, user?.uid]
+    [debouncedUpdate, effectiveUserId]
   )
 
   // PR #15.3: Handle debounced batch updates for multi-object movement
   const handleShapeBatchUpdateDebounced = useCallback(
     (updates: Array<{ objectId: string; updates: Partial<Shape> }>) => {
-      if (!user?.uid) return
+      if (!effectiveUserId) return
       debouncedBatchUpdate(updates)
     },
-    [debouncedBatchUpdate, user?.uid]
+    [debouncedBatchUpdate, effectiveUserId]
   )
 
   // PR #7: Handle shape deletion with React Query
@@ -258,7 +354,7 @@ const CanvasPage: React.FC = () => {
   // PR #7: Handle shape duplication with React Query
   const handleShapeDuplicate = useCallback(
     async (ids: string[]) => {
-      if (!user?.uid) return
+      if (!effectiveUserId) return
 
       const shapesToDuplicate = shapes.filter(shape => ids.includes(shape.id))
 
@@ -286,7 +382,14 @@ const CanvasPage: React.FC = () => {
         showError('Failed to duplicate shapes', 'Please try again')
       }
     },
-    [shapes, maxZIndex, batchCreateShapes, user?.uid, showSuccess, showError]
+    [
+      shapes,
+      maxZIndex,
+      batchCreateShapes,
+      effectiveUserId,
+      showSuccess,
+      showError
+    ]
   )
 
   // Toolbar handlers
@@ -328,7 +431,7 @@ const CanvasPage: React.FC = () => {
   // Handle Mermaid import
   const handleImportMermaid = useCallback(
     async (mermaidCode: string, diagramType: string) => {
-      if (!user?.uid) return
+      if (!effectiveUserId) return
 
       try {
         // Clear any existing selections
@@ -381,7 +484,7 @@ const CanvasPage: React.FC = () => {
       }
     },
     [
-      user?.uid,
+      effectiveUserId,
       canvasSize,
       maxZIndex,
       createShape,
@@ -392,8 +495,59 @@ const CanvasPage: React.FC = () => {
     ]
   )
 
+  // Show access checking loader
+  if (isCheckingAccess) {
+    return <CanvasAccessLoader message="Checking access..." />
+  }
+
+  // Show access denied if no access and no password needed
+  if (!hasAccess && !needsPassword) {
+    return (
+      <div className="h-full flex flex-col overflow-hidden">
+        <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-8 h-8 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                Access Denied
+              </h2>
+              <p className="text-gray-600 mb-4">
+                You don't have permission to access this canvas.
+              </p>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Back to Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
+      {/* Guest user banner */}
+      {isDefaultCanvas && !user && (
+        <GuestUserBanner guestName={guestUserName || 'Guest'} />
+      )}
+
       <ToolbarMUI
         selectedTool={selectedTool}
         onToolSelect={handleToolSelect}
@@ -408,6 +562,15 @@ const CanvasPage: React.FC = () => {
         onToggleLayers={handleToggleLayers}
         isLayersOpen={isLayersOpen}
         onImportMermaid={handleImportMermaid}
+        onBackToDashboard={() => navigate('/dashboard')}
+        onCanvasSettings={() => {
+          // TODO: Open canvas settings dialog
+          console.log('Open canvas settings')
+        }}
+        onShareCanvas={() => {
+          // TODO: Open share dialog
+          console.log('Share canvas')
+        }}
       />
 
       <div className="flex-1 relative">
@@ -426,10 +589,7 @@ const CanvasPage: React.FC = () => {
         )}
 
         {/* Loading or canvas content */}
-        {shapesLoading ||
-        canvasMetaLoading ||
-        canvasSize.width === 0 ||
-        canvasSize.height === 0 ? (
+        {isInitializing ? (
           <div className="flex items-center justify-center h-full bg-gray-50">
             <div className="text-center">
               <div className="relative mb-6">
@@ -438,11 +598,13 @@ const CanvasPage: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <p className="text-lg font-medium text-gray-900">
-                  {shapesLoading
-                    ? 'Loading shapes...'
-                    : canvasMetaLoading
-                      ? 'Loading canvas...'
-                      : 'Initializing...'}
+                  {isCheckingAccess
+                    ? 'Checking access...'
+                    : shapesLoading
+                      ? 'Loading shapes...'
+                      : canvasMetaLoading
+                        ? 'Loading canvas...'
+                        : 'Setting up canvas...'}
                 </p>
                 <p className="text-sm text-gray-500">
                   Setting up your collaborative workspace
@@ -470,6 +632,7 @@ const CanvasPage: React.FC = () => {
               onViewportChange={saveViewport}
               initialViewport={restoreViewport()}
               onToolSelect={handleToolSelect}
+              onStageRef={setStageRef}
             />
           </div>
         )}
@@ -488,7 +651,7 @@ const CanvasPage: React.FC = () => {
 
         {/* AI Panel */}
         <AIPanel
-          canvasId={canvasId}
+          canvasId={canvasId || ''}
           isOpen={isAIOpen}
           onClose={() => setIsAIOpen(false)}
         />
@@ -507,6 +670,18 @@ const CanvasPage: React.FC = () => {
         {/* AI Thinking Indicator */}
         <AIThinkingIndicator isExecuting={isExecuting} />
       </div>
+
+      {/* Password Access Dialog */}
+      <CanvasAccessDialog
+        open={showAccessDialog}
+        onClose={() => {
+          setShowAccessDialog(false)
+          navigate('/dashboard')
+        }}
+        onAccess={handlePasswordAccess}
+        canvasName={canvasMeta?.name || 'Untitled Canvas'}
+        isLoading={false}
+      />
     </div>
   )
 }

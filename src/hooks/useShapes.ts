@@ -397,11 +397,16 @@ export function useCanvasMeta(canvasId: string, userId: string) {
       if (!existingCanvas) {
         await createCanvasMutation.mutateAsync({
           name: 'Untitled Canvas',
-          viewport: { x: 0, y: 0, scale: 1 }
+          viewport: { x: 0, y: 0, scale: 1 },
+          permissions: {
+            ownerId: userId,
+            accessType: 'private',
+            accessedBy: []
+          }
         })
       }
     }
-  }, [canvasMeta, isLoading, createCanvasMutation, canvasId])
+  }, [canvasMeta, isLoading, createCanvasMutation, canvasId, userId])
 
   return {
     canvasMeta,

@@ -90,6 +90,7 @@ interface CanvasStageProps {
   ) => Promise<Shape[]>
   onCursorMove: (cursor: { x: number; y: number }) => void
   onViewportChange?: (viewport: ViewportState) => void
+  onStageRef?: (stage: Konva.Stage) => void
   initialViewport?: ViewportState
   onToolSelect?: (tool: ToolType) => void
 }
@@ -111,12 +112,20 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
     onShapeBatchCreate,
     onCursorMove,
     onViewportChange,
+    onStageRef,
     initialViewport,
     onToolSelect
   }) => {
     const stageRef = useRef<Konva.Stage>(null)
     const transformerRef = useRef<Konva.Transformer>(null)
     const { showSuccess, showError } = useToast()
+
+    // Pass stage reference to parent for thumbnail generation
+    useEffect(() => {
+      if (stageRef.current && onStageRef) {
+        onStageRef(stageRef.current)
+      }
+    }, [onStageRef])
 
     // Memoize sorted shapes to avoid re-sorting on every render
     const sortedShapes = useMemo(
@@ -360,7 +369,7 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
           }
 
           // Add optional properties only if they exist and are not undefined
-          const optionalProps: (keyof Shape)[] = [
+          const optionalProps: string[] = [
             'width',
             'height',
             'radius',
@@ -381,12 +390,38 @@ const CanvasStage: React.FC<CanvasStageProps> = memo(
             'cornerRadius',
             'zIndex',
             'opacity',
-            'blendMode'
+            'blendMode',
+            // Ellipse
+            'radiusX',
+            'radiusY',
+            // Hexagon
+            'sides',
+            // Star
+            'outerRadius',
+            'innerRadius',
+            'points',
+            'starType',
+            // Arrow & Line
+            'endX',
+            'endY',
+            'arrowType',
+            // Mermaid
+            'mermaidCode',
+            'renderedSvg',
+            'diagramType',
+            // Image
+            'imageUrl',
+            'imageName'
           ]
 
           optionalProps.forEach(prop => {
-            if (shapeData[prop] !== undefined) {
-              ;(newShape as Record<string, unknown>)[prop] = shapeData[prop]
+            if (
+              (shapeData as unknown as Record<string, unknown>)[prop] !==
+              undefined
+            ) {
+              ;(newShape as Record<string, unknown>)[prop] = (
+                shapeData as unknown as Record<string, unknown>
+              )[prop]
             }
           })
 

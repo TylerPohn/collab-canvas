@@ -35,7 +35,13 @@
 
 # delete everything
 
-// mermaid
+## Mermaid Diagram Import (20 seconds)
+
+"CollabCanvas supports importing Mermaid diagrams directly onto the canvas. This is perfect for creating flowcharts, sequence diagrams, and other technical diagrams.
+
+_[Demonstrate: click Mermaid tool, show import dialog, import a simple flowchart, show it rendered on canvas]_
+
+The Mermaid integration automatically converts diagram syntax into visual elements that can be manipulated like any other canvas object.
 
 "Under the hood, CollabCanvas uses a sophisticated architecture:
 
@@ -47,7 +53,7 @@
 - MUI components with Material Design for accessibility
 - DOMPurify for XSS protection and comprehensive input validation
 - OpenAI GPT-4o-mini with function calling for natural language processing (LangChain agent not working)
-- **Enhanced AI Agent with 25 commands** - creation, manipulation, layout, style, and complex operations
+- **Enhanced AI Agent with 27 commands** - creation, manipulation, layout, style, and complex operations
 - **Advanced Visual Effects** - 12 Canvas 2D blend modes and opacity controls for professional layering
 - **Layers Panel** - drag-to-reorder layer management with visibility controls and hierarchy visualization
 - **AI Thinking Indicator** - real-time visual feedback during AI processing with animated thought bubble
@@ -61,7 +67,7 @@ _[Show login page, then switch to canvas - highlight security features in browse
 
 "Here's our main canvas interface with a large, infinite workspace featuring smooth pan and zoom at 60fps. We have a modern toolbar with comprehensive drawing tools.
 
-_[Demo each tool: select, pan, rectangle, circle, text]_
+_[Demo each tool: select, pan, rectangle, circle, text, line, arrow, ellipse, hexagon, star, image]_
 
 The design palette on the right provides professional-grade styling controls. When I select a shape, I can see who last edited it and when - this is crucial for collaborative workflows.
 
@@ -93,6 +99,19 @@ _[Show simultaneous editing, conflict resolution, design palette updates]_
 
 Cursor tracking is throttled to 25ms via Firebase Realtime Database for smooth real-time feel, and object updates are debounced to 100ms for optimal performance.
 
+## Copy/Paste Functionality (30 seconds)
+
+"CollabCanvas includes comprehensive copy/paste functionality with system clipboard integration:
+
+- System clipboard integration - copy/paste objects to/from other applications
+- Multi-object support - copy/paste multiple objects while maintaining relative positions
+- Keyboard shortcuts: Cmd/Ctrl+C to copy, Cmd/Ctrl+V to paste, Cmd/Ctrl+D to duplicate
+- Smart positioning - paste objects at viewport center with 50px offset
+- Visual feedback with toast notifications for successful operations
+- Error handling with comprehensive user feedback
+
+_[Demonstrate: select multiple shapes, Cmd+C to copy, Cmd+V to paste, show relative positioning maintained]_
+
 ## Productivity Features (30 seconds)
 
 "CollabCanvas includes several productivity features:
@@ -106,6 +125,17 @@ Cursor tracking is throttled to 25ms via Firebase Realtime Database for smooth r
 
 _[Demonstrate keyboard shortcuts, text editing, multi-selection, refresh to show persistence]_
 
+## Keyboard Shortcuts (15 seconds)
+
+"CollabCanvas includes comprehensive keyboard shortcuts for power users:
+
+- Tool selection: V (select), H (pan), R (rectangle), C (circle), T (text), M (Mermaid)
+- Canvas operations: Cmd/Ctrl+C (copy), Cmd/Ctrl+V (paste), Cmd/Ctrl+D (duplicate), Delete (remove)
+- Precision control: Arrow keys for 5-pixel nudging
+- Text editing: Double-click to edit inline
+
+_[Demonstrate: press V for select tool, R for rectangle, create shape, Cmd+D to duplicate, arrow keys to nudge]_
+
 ## AI-Powered Canvas Manipulation (60 seconds)
 
 "Now for the exciting part - our AI agent that can manipulate the canvas through natural language. Let me demonstrate by clicking the AI button in the toolbar.
@@ -116,7 +146,7 @@ Watch this - I can say 'create a red rectangle' and the AI will understand and e
 
 _[Demonstrate: "create a red rectangle", "make a blue circle", "add some text"]_
 
-The AI uses OpenAI's gpt-4o-mini with function calling to understand natural language and convert it into precise canvas operations. It supports 19 different commands covering creation, manipulation, layout, and complex operations. (Note: LangChain agent implementation is not working)
+The AI uses OpenAI's gpt-4o-mini with function calling to understand natural language and convert it into precise canvas operations. It supports 27 different commands covering creation, manipulation, layout, and complex operations. (Note: LangChain agent implementation is not working)
 
 _[Show sample command buttons and demonstrate complex commands]_
 
@@ -134,7 +164,7 @@ All AI-generated changes sync across all users instantly, just like manual opera
 - MUI components with Material Design for accessibility
 - DOMPurify for XSS protection and comprehensive input validation
 - OpenAI GPT-4o-mini with function calling for natural language processing (LangChain agent not working)
-- **Enhanced AI Agent with 25 commands** - creation, manipulation, layout, style, and complex operations
+- **Enhanced AI Agent with 27 commands** - creation, manipulation, layout, style, and complex operations
 - **Advanced Visual Effects** - 12 Canvas 2D blend modes and opacity controls for professional layering
 - **Layers Panel** - drag-to-reorder layer management with visibility controls and hierarchy visualization
 - **AI Thinking Indicator** - real-time visual feedback during AI processing with animated thought bubble
@@ -143,3 +173,18 @@ All AI-generated changes sync across all users instantly, just like manual opera
 - Last-write-wins conflict resolution with visual feedback in design palette
 
 The system supports 500+ objects and 5+ concurrent users with enterprise-grade security, AI-powered canvas manipulation, advanced visual effects, and professional layer management.
+
+## Canvas Management & Collaboration (30 seconds)
+
+"CollabCanvas includes comprehensive canvas management features:
+
+- Dashboard with canvas gallery and recent canvases
+- Canvas sharing with access control and permissions
+- Guest user support for easy collaboration
+- Canvas settings and metadata management
+- Thumbnail generation for visual canvas previews
+- Multi-canvas workspace organization
+
+_[Show dashboard, create new canvas, demonstrate sharing dialog, show guest access]_
+
+All canvases are automatically saved and synchronized across all users with real-time updates and conflict resolution.

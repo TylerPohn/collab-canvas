@@ -393,7 +393,7 @@ For duplication commands:
 For multi-shape creation commands:
 1. For createMultipleShapes: create multiple shapes with optional layout parameter
 2. Examples: "create 3 red squares" (row by default), "create 5 blue circles in a column", "create 9 green stars in a grid"
-3. Parameters: count (1-20), type (rect/circle/ellipse/star/hexagon/line/arrow), properties (size/fill/stroke/opacity/blendMode), layout (row/column/grid)
+3. Parameters: count (1-500), type (rect/circle/ellipse/star/hexagon/line/arrow), properties (size/fill/stroke/opacity/blendMode), layout (row/column/grid)
 4. Layout types:
    - row (default): shapes in horizontal row
    - column: shapes in vertical column  

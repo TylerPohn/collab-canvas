@@ -185,34 +185,69 @@ const LandingPage: React.FC = () => {
                 real-time collaborative canvas platform
               </Typography>
 
-              {/* Call-to-Action Button */}
+              {/* Call-to-Action Buttons */}
               <Slide direction="up" in timeout={1500}>
-                <Button
-                  component="a"
-                  href="/login"
-                  variant="contained"
-                  size="large"
-                  endIcon={<ArrowForwardIcon />}
+                <Box
                   sx={{
-                    fontSize: '1.25rem',
-                    fontWeight: 600,
-                    px: 6,
-                    py: 2,
-                    borderRadius: 3,
-                    minWidth: 200,
-                    height: 60,
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                    boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.3)}`,
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.4)}`,
-                      background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`
-                    },
-                    transition: 'all 0.3s ease-in-out'
+                    display: 'flex',
+                    gap: 2,
+                    justifyContent: 'center',
+                    flexWrap: 'wrap'
                   }}
                 >
-                  Get Started
-                </Button>
+                  <Button
+                    component="a"
+                    href="/login"
+                    variant="contained"
+                    size="large"
+                    endIcon={<ArrowForwardIcon />}
+                    sx={{
+                      fontSize: '1.25rem',
+                      fontWeight: 600,
+                      px: 6,
+                      py: 2,
+                      borderRadius: 3,
+                      minWidth: 200,
+                      height: 60,
+                      background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                      boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.3)}`,
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.4)}`,
+                        background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`
+                      },
+                      transition: 'all 0.3s ease-in-out'
+                    }}
+                  >
+                    Get Started
+                  </Button>
+
+                  <Button
+                    component="a"
+                    href="/canvas/default-canvas"
+                    variant="outlined"
+                    size="large"
+                    sx={{
+                      fontSize: '1.25rem',
+                      fontWeight: 600,
+                      px: 6,
+                      py: 2,
+                      borderRadius: 3,
+                      minWidth: 200,
+                      height: 60,
+                      borderColor: theme.palette.primary.main,
+                      color: theme.palette.primary.main,
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        borderColor: theme.palette.primary.dark,
+                        backgroundColor: alpha(theme.palette.primary.main, 0.05)
+                      },
+                      transition: 'all 0.3s ease-in-out'
+                    }}
+                  >
+                    Try Demo
+                  </Button>
+                </Box>
               </Slide>
             </Box>
           </Fade>
@@ -386,32 +421,67 @@ const LandingPage: React.FC = () => {
                 Join thousands of creators who are already using Collab Canvas
                 to bring their ideas to life
               </Typography>
-              <Button
-                component="a"
-                href="/login"
-                variant="contained"
-                size="large"
-                endIcon={<ArrowForwardIcon />}
+              <Box
                 sx={{
-                  fontSize: '1.25rem',
-                  fontWeight: 600,
-                  px: 6,
-                  py: 2,
-                  borderRadius: 3,
-                  minWidth: 200,
-                  height: 60,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.3)}`,
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.4)}`,
-                    background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`
-                  },
-                  transition: 'all 0.3s ease-in-out'
+                  display: 'flex',
+                  gap: 2,
+                  justifyContent: 'center',
+                  flexWrap: 'wrap'
                 }}
               >
-                Start Creating Now
-              </Button>
+                <Button
+                  component="a"
+                  href="/login"
+                  variant="contained"
+                  size="large"
+                  endIcon={<ArrowForwardIcon />}
+                  sx={{
+                    fontSize: '1.25rem',
+                    fontWeight: 600,
+                    px: 6,
+                    py: 2,
+                    borderRadius: 3,
+                    minWidth: 200,
+                    height: 60,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.3)}`,
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.4)}`,
+                      background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`
+                    },
+                    transition: 'all 0.3s ease-in-out'
+                  }}
+                >
+                  Start Creating Now
+                </Button>
+
+                <Button
+                  component="a"
+                  href="/canvas/default-canvas"
+                  variant="outlined"
+                  size="large"
+                  sx={{
+                    fontSize: '1.25rem',
+                    fontWeight: 600,
+                    px: 6,
+                    py: 2,
+                    borderRadius: 3,
+                    minWidth: 200,
+                    height: 60,
+                    borderColor: theme.palette.primary.main,
+                    color: theme.palette.primary.main,
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      borderColor: theme.palette.primary.dark,
+                      backgroundColor: alpha(theme.palette.primary.main, 0.05)
+                    },
+                    transition: 'all 0.3s ease-in-out'
+                  }}
+                >
+                  Try Demo
+                </Button>
+              </Box>
             </Box>
           </Paper>
         </Fade>

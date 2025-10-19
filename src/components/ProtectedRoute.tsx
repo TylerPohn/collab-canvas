@@ -1,5 +1,5 @@
 import React from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
 interface ProtectedRouteProps {
@@ -8,6 +8,10 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth()
+  const location = useLocation()
+
+  // Check if accessing default-canvas
+  const isDefaultCanvas = location.pathname === '/canvas/default-canvas'
 
   if (loading) {
     return (
@@ -20,6 +24,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     )
   }
 
+  // Allow unauthenticated access to default-canvas
+  if (isDefaultCanvas) {
+    return <>{children}</>
+  }
+
+  // Existing authentication check for other routes
   if (!user) {
     return <Navigate to="/login" replace />
   }

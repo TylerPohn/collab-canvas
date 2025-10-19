@@ -127,19 +127,50 @@ export const ShapeSchema = z.discriminatedUnion('type', [
   ImageShapeSchema
 ])
 
+// Canvas access type schema
+export const CanvasAccessTypeSchema = z.enum(['private', 'link', 'public'])
+
+// Canvas permissions schema
+export const CanvasPermissionsSchema = z.object({
+  ownerId: z.string(),
+  accessType: CanvasAccessTypeSchema,
+  password: z.string().optional(),
+  accessedBy: z.array(z.string())
+})
+
 // Canvas metadata schema
 export const CanvasMetaSchema = z.object({
   id: z.string(),
   name: z.string().optional(),
+  description: z.string().optional(),
+  thumbnail: z.string().optional(),
   viewport: z.object({
     x: z.number(),
     y: z.number(),
     scale: z.number()
   }),
+  permissions: CanvasPermissionsSchema,
+  lastAccessedAt: z.number().optional(),
   createdAt: z.number(),
   createdBy: z.string(),
   updatedAt: z.number(),
   updatedBy: z.string()
+})
+
+// Canvas list item schema for dashboard/gallery
+export const CanvasListItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  thumbnail: z.string().optional(),
+  ownerId: z.string(),
+  ownerName: z.string(),
+  accessType: CanvasAccessTypeSchema,
+  hasPassword: z.boolean(),
+  lastModified: z.number(),
+  lastAccessedAt: z.number().optional(),
+  isOwner: z.boolean(),
+  hasAccessed: z.boolean()
 })
 
 // Presence schema
@@ -216,6 +247,14 @@ export function validateCanvasDocument(data: unknown) {
   return CanvasDocumentSchema.parse(data)
 }
 
+export function validateCanvasPermissions(data: unknown) {
+  return CanvasPermissionsSchema.parse(data)
+}
+
+export function validateCanvasListItem(data: unknown) {
+  return CanvasListItemSchema.parse(data)
+}
+
 // Type exports for use in other files
 export type ShapeType = z.infer<typeof ShapeTypeSchema>
 export type ShapeBase = z.infer<typeof ShapeBaseSchema>
@@ -230,6 +269,9 @@ export type HexagonShape = z.infer<typeof HexagonShapeSchema>
 export type StarShape = z.infer<typeof StarShapeSchema>
 export type ImageShape = z.infer<typeof ImageShapeSchema>
 export type Shape = z.infer<typeof ShapeSchema>
+export type CanvasAccessType = z.infer<typeof CanvasAccessTypeSchema>
+export type CanvasPermissions = z.infer<typeof CanvasPermissionsSchema>
 export type CanvasMeta = z.infer<typeof CanvasMetaSchema>
+export type CanvasListItem = z.infer<typeof CanvasListItemSchema>
 export type UserPresence = z.infer<typeof UserPresenceSchema>
 export type CanvasDocument = z.infer<typeof CanvasDocumentSchema>

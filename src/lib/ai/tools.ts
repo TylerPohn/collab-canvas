@@ -197,7 +197,7 @@ export const AIToolSchemas = {
 
   // NEW: Multi-Shape Creation (PR #25)
   createMultipleShapes: z.object({
-    count: z.number().min(1).max(20),
+    count: z.number().min(1).max(500),
     type: z.enum([
       'rect',
       'circle',
@@ -237,8 +237,8 @@ export const AIToolSchemas = {
     layout: z
       .object({
         type: z.enum(['row', 'column', 'grid']),
-        rows: z.number().min(1).max(10).optional(),
-        cols: z.number().min(1).max(10).optional()
+        rows: z.number().min(1).max(50).optional(),
+        cols: z.number().min(1).max(50).optional()
       })
       .optional()
   }),
@@ -286,14 +286,14 @@ export const AIToolSchemas = {
       )
       .min(2)
       .max(5), // Pattern must have 2-5 shape types
-    count: z.number().min(2).max(20), // Total number of shapes to create
+    count: z.number().min(2).max(500), // Total number of shapes to create
     initialPosition: PositionSchema.optional(),
     spacing: z.number().min(0).default(20),
     layout: z
       .object({
         type: z.enum(['row', 'column', 'grid']),
-        rows: z.number().min(1).max(10).optional(),
-        cols: z.number().min(1).max(10).optional()
+        rows: z.number().min(1).max(50).optional(),
+        cols: z.number().min(1).max(50).optional()
       })
       .optional()
   }),

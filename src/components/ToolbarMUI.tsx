@@ -1,15 +1,19 @@
 import {
   AccountTree,
   AddPhotoAlternate,
+  ArrowBack,
   ContentCopy,
   Delete,
   Hexagon,
   Info,
   Layers,
+  MoreVert,
   OpenWith,
   Palette,
   RadioButtonUnchecked,
   Rectangle,
+  Settings,
+  Share,
   ShowChart,
   SmartToy,
   Star,
@@ -22,6 +26,8 @@ import {
   Box,
   Divider,
   IconButton,
+  Menu,
+  MenuItem,
   Toolbar as MUIToolbar,
   Paper,
   Tooltip,
@@ -47,6 +53,9 @@ interface ToolbarMUIProps {
   onToggleLayers?: () => void
   isLayersOpen?: boolean
   onImportMermaid?: (mermaidCode: string, diagramType: string) => void
+  onBackToDashboard?: () => void
+  onCanvasSettings?: () => void
+  onShareCanvas?: () => void
 }
 
 const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
@@ -62,10 +71,14 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
   isAIOpen = false,
   onToggleLayers,
   isLayersOpen = false,
-  onImportMermaid
+  onImportMermaid,
+  onBackToDashboard,
+  onCanvasSettings,
+  onShareCanvas
 }) => {
   const theme = useTheme()
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
 
   const tools: {
     type: ToolType
@@ -149,6 +162,35 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
   const handleImportMermaid = (mermaidCode: string, diagramType: string) => {
     if (onImportMermaid) {
       onImportMermaid(mermaidCode, diagramType)
+    }
+  }
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setMenuAnchorEl(event.currentTarget)
+  }
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null)
+  }
+
+  const handleBackToDashboard = () => {
+    handleMenuClose()
+    if (onBackToDashboard) {
+      onBackToDashboard()
+    }
+  }
+
+  const handleCanvasSettings = () => {
+    handleMenuClose()
+    if (onCanvasSettings) {
+      onCanvasSettings()
+    }
+  }
+
+  const handleShareCanvas = () => {
+    handleMenuClose()
+    if (onShareCanvas) {
+      onShareCanvas()
     }
   }
 
@@ -426,6 +468,28 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
           </>
         )}
 
+        {/* Canvas Menu */}
+        <Divider orientation="vertical" flexItem />
+        <Tooltip title="Canvas Menu" arrow>
+          <IconButton
+            onClick={handleMenuOpen}
+            sx={{
+              width: 36,
+              height: 36,
+              color: theme.palette.text.secondary,
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: 1,
+              '&:hover': {
+                backgroundColor: theme.palette.action.hover,
+                borderColor: theme.palette.primary.main
+              },
+              transition: 'all 0.2s ease-in-out'
+            }}
+          >
+            <MoreVert sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
+
         {/* Tool Info */}
         <Box sx={{ ml: 'auto', display: { xs: 'none', xl: 'block' } }}>
           <Paper
@@ -455,6 +519,50 @@ const ToolbarMUI: React.FC<ToolbarMUIProps> = ({
           </Paper>
         </Box>
       </MUIToolbar>
+
+      {/* Canvas Menu */}
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right'
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right'
+        }}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            minWidth: 200,
+            '& .MuiMenuItem-root': {
+              px: 2,
+              py: 1.5
+            }
+          }
+        }}
+      >
+        {onBackToDashboard && (
+          <MenuItem onClick={handleBackToDashboard}>
+            <ArrowBack sx={{ mr: 2, fontSize: 20 }} />
+            Back to Dashboard
+          </MenuItem>
+        )}
+        {onCanvasSettings && (
+          <MenuItem onClick={handleCanvasSettings}>
+            <Settings sx={{ mr: 2, fontSize: 20 }} />
+            Canvas Settings
+          </MenuItem>
+        )}
+        {onShareCanvas && (
+          <MenuItem onClick={handleShareCanvas}>
+            <Share sx={{ mr: 2, fontSize: 20 }} />
+            Share Canvas
+          </MenuItem>
+        )}
+      </Menu>
 
       {/* Mermaid Import Dialog */}
       {onImportMermaid && (
