@@ -16,7 +16,6 @@ interface UseThumbnailGenerationProps {
 export function useThumbnailGeneration({
   canvasId,
   shapes,
-  viewport,
   onThumbnailGenerated,
   pollingInterval = 10000 // 10 seconds between polls
 }: UseThumbnailGenerationProps) {

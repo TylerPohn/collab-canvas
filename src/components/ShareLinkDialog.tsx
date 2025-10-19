@@ -232,7 +232,7 @@ const ShareLinkDialog: React.FC<ShareLinkDialogProps> = ({
                   }
                 }}
               >
-                {navigator.share ? 'Share' : 'Copy Link'}
+                {typeof navigator.share === 'function' ? 'Share' : 'Copy Link'}
               </Button>
 
               <Button

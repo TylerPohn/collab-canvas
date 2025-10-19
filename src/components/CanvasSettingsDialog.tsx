@@ -53,7 +53,6 @@ const CanvasSettingsDialog: React.FC<CanvasSettingsDialogProps> = ({
   )
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [isGeneratingLink, setIsGeneratingLink] = useState(false)
 
   // Update canvas permissions mutation
   const updatePermissionsMutation = useMutation({
@@ -131,14 +130,6 @@ const CanvasSettingsDialog: React.FC<CanvasSettingsDialogProps> = ({
     updatePermissionsMutation,
     onClose
   ])
-
-  const handleGenerateLink = useCallback(() => {
-    setIsGeneratingLink(true)
-    // In a real implementation, you'd generate a shareable link
-    setTimeout(() => {
-      setIsGeneratingLink(false)
-    }, 1000)
-  }, [])
 
   const getShareableLink = () => {
     const baseUrl = window.location.origin

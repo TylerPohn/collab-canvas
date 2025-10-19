@@ -9,7 +9,6 @@ import {
   Button,
   Container,
   Fade,
-  Grid,
   IconButton,
   InputAdornment,
   Menu,
@@ -51,21 +50,18 @@ const GalleryPage: React.FC = () => {
         error
       )
       return failureCount < 3
-    },
-    onError: error => {
-      console.error('❌ [GalleryPage] Failed to load public canvases:', error)
     }
   })
 
   // Filter and sort canvases
-  const filteredCanvases = publicCanvases
+  const filteredCanvases = (publicCanvases as any[])
     .filter(
-      canvas =>
+      (canvas: any) =>
         canvas.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         canvas.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         canvas.ownerName.toLowerCase().includes(searchQuery.toLowerCase())
     )
-    .sort((a, b) => {
+    .sort((a: any, b: any) => {
       switch (sortBy) {
         case 'name':
           return a.name.localeCompare(b.name)
@@ -149,7 +145,7 @@ const GalleryPage: React.FC = () => {
   }
 
   // Show empty state
-  if (publicCanvases.length === 0) {
+  if ((publicCanvases as any[]).length === 0) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <EmptyGallery />
@@ -246,9 +242,15 @@ const GalleryPage: React.FC = () => {
           </Box>
 
           {/* Canvas grid */}
-          <Grid container spacing={3}>
-            {filteredCanvases.map(canvas => (
-              <Grid item xs={12} sm={6} md={4} lg={4} xl={3} key={canvas.id}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              gap: 3
+            }}
+          >
+            {filteredCanvases.map((canvas: any) => (
+              <Box key={canvas.id}>
                 <CanvasCard
                   canvas={canvas}
                   onEdit={handleCanvasEdit}
@@ -256,9 +258,9 @@ const GalleryPage: React.FC = () => {
                   onShare={handleCanvasShare}
                   showOwner={true}
                 />
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
 
           {/* No results */}
           {filteredCanvases.length === 0 && searchQuery && (

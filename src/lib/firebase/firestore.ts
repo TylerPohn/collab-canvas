@@ -484,9 +484,9 @@ export async function getCanvasList(userId: string): Promise<CanvasListItem[]> {
   } catch (error) {
     console.error('❌ [getCanvasList] Error fetching canvas list:', error)
     console.error('❌ [getCanvasList] Error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
+      name: (error as any).name,
+      message: (error as any).message,
+      stack: (error as any).stack
     })
     throw error
   }

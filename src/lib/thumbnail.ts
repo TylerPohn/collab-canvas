@@ -66,15 +66,13 @@ export function generateCanvasThumbnail(
     const contentHeight = maxY - minY + padding * 2
 
     // Calculate scale to fit content in thumbnail dimensions
-    const scaleX = (width - padding * 2) / contentWidth
-    const scaleY = (height - padding * 2) / contentHeight
-    const scale = Math.min(scaleX, scaleY, 1) // Don't scale up, only down
+    // const scaleX = (width - padding * 2) / contentWidth
+    // const scaleY = (height - padding * 2) / contentHeight
+    // const scale = Math.min(scaleX, scaleY, 1) // Don't scale up, only down
 
     // Calculate final dimensions and position
-    const finalWidth = contentWidth * scale
-    const finalHeight = contentHeight * scale
-    const offsetX = (width - finalWidth) / 2
-    const offsetY = (height - finalHeight) / 2
+    // const finalWidth = contentWidth * scale
+    // const finalHeight = contentHeight * scale
 
     // Generate thumbnail with content bounds
     const dataURL = stage.toDataURL({

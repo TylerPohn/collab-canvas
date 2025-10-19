@@ -9,7 +9,6 @@ import {
   Button,
   Container,
   Fade,
-  Grid,
   IconButton,
   InputAdornment,
   Menu,
@@ -79,12 +78,6 @@ const DashboardPage: React.FC = () => {
         error
       )
       return failureCount < 3
-    },
-    onSuccess: data => {
-      console.log('✅ [DashboardPage] Query onSuccess:', data)
-    },
-    onError: error => {
-      console.error('❌ [DashboardPage] Query onError:', error)
     }
   })
 
@@ -116,13 +109,13 @@ const DashboardPage: React.FC = () => {
   // }, [recentCanvasId, isLoadingRecent, canvasList.length, navigate])
 
   // Filter and sort canvases
-  const filteredCanvases = canvasList
+  const filteredCanvases = (canvasList as any[])
     .filter(
-      canvas =>
+      (canvas: any) =>
         canvas.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         canvas.description?.toLowerCase().includes(searchQuery.toLowerCase())
     )
-    .sort((a, b) => {
+    .sort((a: any, b: any) => {
       switch (sortBy) {
         case 'name':
           return a.name.localeCompare(b.name)
@@ -144,14 +137,15 @@ const DashboardPage: React.FC = () => {
 
   const handleCanvasEdit = useCallback((canvas: CanvasListItem) => {
     // Convert CanvasListItem to CanvasMeta format for the dialog
-    const canvasMeta: CanvasMeta = {
+    const canvasMeta: any = {
       id: canvas.id,
       name: canvas.name,
       description: canvas.description,
       permissions: {
         ownerId: canvas.ownerId,
         accessType: canvas.accessType,
-        password: canvas.hasPassword ? '***' : undefined
+        password: canvas.hasPassword ? '***' : undefined,
+        accessedBy: []
       }
     }
     setSelectedCanvas(canvasMeta)
@@ -242,7 +236,7 @@ const DashboardPage: React.FC = () => {
   // }
 
   // Show empty state
-  if (canvasList.length === 0) {
+  if ((canvasList as any[]).length === 0) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <EmptyDashboard onCreateCanvas={handleCreateCanvas} />
@@ -332,9 +326,15 @@ const DashboardPage: React.FC = () => {
           </Box>
 
           {/* Canvas grid */}
-          <Grid container spacing={3}>
-            {filteredCanvases.map(canvas => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={canvas.id}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              gap: 3
+            }}
+          >
+            {filteredCanvases.map((canvas: any) => (
+              <Box key={canvas.id}>
                 <CanvasCard
                   canvas={canvas}
                   onEdit={handleCanvasEdit}
@@ -342,9 +342,9 @@ const DashboardPage: React.FC = () => {
                   onShare={handleCanvasShare}
                   showOwner={true}
                 />
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
 
           {/* No results */}
           {filteredCanvases.length === 0 && searchQuery && (
